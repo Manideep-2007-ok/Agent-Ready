@@ -1,0 +1,125 @@
+{
+  "id": "rep_20261031_demo_myntra",
+  "url": "https://www.myntra.com",
+  "source": "web",
+  "testedAt": "2026-10-31T09:45:00.000Z",
+  "pack": "shopping",
+  "status": "complete",
+  "score": 5,
+  "botWall": "blocks-cloud-agents",
+  "costRupees": 23.94,
+  "framework": "unknown",
+  "instantScan": null,
+  "tasks": [
+    {
+      "taskId": "find_price",
+      "goal": "Find any product on this site and report its exact name and price. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "IN",
+      "runId": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+      "status": "passed",
+      "answer": "Product: WROGN Men Printed Slim Fit T-shirt, Price: ₹659 (Maximum Retail Price: Rs. 1199, 45% OFF)",
+      "blocker": null,
+      "stuckUrl": null,
+      "streamingUrl": null,
+      "steps": [
+        {
+          "id": "1cacd2cc-6357-43b3-b648-9615412158b2",
+          "label": "Visit Myntra homepage to find men's t-shirt",
+          "seconds": 8.4,
+          "screenshotUrl": "/api/shot/3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334/1cacd2cc-6357-43b3-b648-9615412158b2",
+          "usedWebSearch": false,
+          "at": "2026-10-31T10:48:41Z"
+        },
+        {
+          "id": "d12d8ffc-1d06-4279-9f0a-df5a9c7ed90c",
+          "label": "Navigate to men's t-shirts page",
+          "seconds": 13,
+          "screenshotUrl": "/api/shot/3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334/d12d8ffc-1d06-4279-9f0a-df5a9c7ed90c",
+          "usedWebSearch": false,
+          "at": "2026-10-31T10:48:52Z"
+        },
+        {
+          "id": "b39468b1-c5dc-4f74-806e-dde4ab419f78",
+          "label": "Navigate to men's t-shirts page directly",
+          "seconds": 16.6,
+          "screenshotUrl": "/api/shot/3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334/b39468b1-c5dc-4f74-806e-dde4ab419f78",
+          "usedWebSearch": false,
+          "at": "2026-10-31T10:49:07Z"
+        },
+        {
+          "id": "f959d7b0-1ea6-496c-9653-33646fb5791e",
+          "label": "Click on first men's t-shirt to view details",
+          "seconds": 6.3,
+          "screenshotUrl": "/api/shot/3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334/f959d7b0-1ea6-496c-9653-33646fb5791e",
+          "usedWebSearch": false,
+          "at": "2026-10-31T10:49:28Z"
+        },
+        {
+          "id": "e8b111d1-63ae-431f-8130-e5232f26b4e2",
+          "label": "Return men's t-shirt name and price",
+          "seconds": 1.5,
+          "screenshotUrl": "/api/shot/3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334/e8b111d1-63ae-431f-8130-e5232f26b4e2",
+          "usedWebSearch": false,
+          "at": "2026-10-31T10:49:39Z"
+        }
+      ],
+      "numSteps": 5,
+      "seconds": 61,
+      "points": 5,
+      "findings": [
+        {
+          "taskId": "find_price",
+          "verified": true,
+          "screenshotUrl": "/api/shot/4741fa7e-7116-4084-bf82-a87943ff26a1/682172dd-c8ba-46ff-86a3-7cde8cbd72ab",
+          "type": "blocks-cloud-agents",
+          "severity": "critical",
+          "text": "The site refused AI agents that arrive from cloud servers, but let them in through an Indian proxy address. What the agent saw without a proxy: \"The Myntra website is completely unavailable. Every URL attempted (homepage, men's tshirts category page, and specific product pages) either displays an \"Oops! Something went wrong / Please contact yo\".",
+          "likelyCause": "Your bot protection treats visitors from cloud-server addresses as hostile and shows an error page instead of the site.",
+          "fix": "Ask your security team or bot-protection vendor (Cloudflare, Akamai, etc.) to allow verified AI agents on product, cart, policy and contact pages, and to stop serving error pages to cloud-hosted browsers.",
+          "standard": "Bot protection allowlisting for verified AI agents",
+          "passCheck": "The same task passes on the first attempt, without a proxy, in a normal cloud browser.",
+          "pointsIfFixed": 20,
+          "frameworkExample": "In your WAF/CDN dashboard, add an allow or skip rule for verified AI agent traffic ahead of the challenge or block rule."
+        }
+      ],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+          "passed": false,
+          "numSteps": 12,
+          "blocker": "The Myntra website is completely unavailable. Every URL attempted (homepage, men's tshirts category page, and specific product pages) either displays an \"Oops! Something went wrong / Please contact your administrator\" error message or loads with empty content (no elements, links, or images visible). This appears to be a server-side outage or website malfunction preventing any access to product information.",
+          "screenshotUrl": "/api/shot/4741fa7e-7116-4084-bf82-a87943ff26a1/682172dd-c8ba-46ff-86a3-7cde8cbd72ab"
+        },
+        {
+          "mode": "lite",
+          "proxy": "IN",
+          "runId": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+          "passed": true,
+          "numSteps": 5,
+          "blocker": null,
+          "screenshotUrl": "/api/shot/3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334/e8b111d1-63ae-431f-8130-e5232f26b4e2"
+        }
+      ],
+      "verdict": "blocks-cloud-agents"
+    }
+  ],
+  "topFixes": [
+    {
+      "taskId": "find_price",
+      "verified": true,
+      "screenshotUrl": "/api/shot/4741fa7e-7116-4084-bf82-a87943ff26a1/682172dd-c8ba-46ff-86a3-7cde8cbd72ab",
+      "type": "blocks-cloud-agents",
+      "severity": "critical",
+      "text": "The site refused AI agents that arrive from cloud servers, but let them in through an Indian proxy address. What the agent saw without a proxy: \"The Myntra website is completely unavailable. Every URL attempted (homepage, men's tshirts category page, and specific product pages) either displays an \"Oops! Something went wrong / Please contact yo\".",
+      "likelyCause": "Your bot protection treats visitors from cloud-server addresses as hostile and shows an error page instead of the site.",
+      "fix": "Ask your security team or bot-protection vendor (Cloudflare, Akamai, etc.) to allow verified AI agents on product, cart, policy and contact pages, and to stop serving error pages to cloud-hosted browsers.",
+      "standard": "Bot protection allowlisting for verified AI agents",
+      "passCheck": "The same task passes on the first attempt, without a proxy, in a normal cloud browser.",
+      "pointsIfFixed": 20,
+      "frameworkExample": "In your WAF/CDN dashboard, add an allow or skip rule for verified AI agent traffic ahead of the challenge or block rule."
+    }
+  ]
+}

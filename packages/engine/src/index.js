@@ -9,3 +9,4 @@ export { GOAL_SUFFIX, TASK_GOALS, TASK_LABELS, DEFAULT_TASK_ORDER, buildGoal } f
 export * from './types.js';
 // fixes.js is written by another teammate; keep this line last.
 export { buildFixReport, FIX_TEMPLATES, detectFramework } from './fixes.js';
+export { instantScan, instantScanFindings, auditPage } from './instantScan.js';

@@ -1,0 +1,236 @@
+{
+  "id": "rep_20261031_demo_swiggy",
+  "url": "https://www.swiggy.com",
+  "source": "web",
+  "testedAt": "2026-10-31T09:55:00.000Z",
+  "pack": "shopping",
+  "status": "complete",
+  "score": 0,
+  "botWall": "none",
+  "costRupees": 28.16,
+  "framework": "unknown",
+  "instantScan": null,
+  "tasks": [
+    {
+      "taskId": "add_to_cart",
+      "goal": "Find any product, open its product page and add it to the cart. Then open the cart and report the cart total. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "off",
+      "runId": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+      "status": "failed",
+      "answer": null,
+      "blocker": "After setting the delivery location to Koramangala, Bangalore and adding '2 Pc McSpicy Chicken Wings' (₹100) from McDonald's to the cart, the cart total could not be retrieved. Swiggy's interface did not display a visible 'View Cart' button, floating cart icon, or cart total on the restaurant menu page. The page only showed menu categories in a browse menu modal, with no cart summary or order button visible anywhere on the page. Without being able to access the cart page or see a cart total, the final cart total (which would include item price, taxes, and delivery fees) could not be determined.",
+      "stuckUrl": null,
+      "streamingUrl": null,
+      "steps": [
+        {
+          "id": "c42db0f0-01fd-4d48-8a2c-5eb20647cea4",
+          "label": "Navigate to Swiggy food ordering website",
+          "seconds": 2,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/c42db0f0-01fd-4d48-8a2c-5eb20647cea4",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:41:05Z"
+        },
+        {
+          "id": "c5ca5ec4-84e1-45bc-a35e-a90f0c3ac1f8",
+          "label": "Find location setting mechanism on Swiggy homepage",
+          "seconds": 2.4,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/c5ca5ec4-84e1-45bc-a35e-a90f0c3ac1f8",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:41:15Z"
+        },
+        {
+          "id": "c6fa64da-9d0c-493a-8d0e-d4dd6f402116",
+          "label": "Set delivery location to Koramangala, Bangalore",
+          "seconds": 1.3,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/c6fa64da-9d0c-493a-8d0e-d4dd6f402116",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:41:22Z"
+        },
+        {
+          "id": "dcf92419-0c35-47f5-82d3-0f62ad1b1a01",
+          "label": "Check location search results for Koramangala",
+          "seconds": 1.9,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/dcf92419-0c35-47f5-82d3-0f62ad1b1a01",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:41:26Z"
+        },
+        {
+          "id": "b219c9e1-885c-437d-808e-48487176f8a2",
+          "label": "Select Koramangala as delivery location",
+          "seconds": 5.3,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/b219c9e1-885c-437d-808e-48487176f8a2",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:41:31Z"
+        },
+        {
+          "id": "c1a10691-7828-4a2a-b32a-3d2839b28089",
+          "label": "Search for restaurants in Koramangala",
+          "seconds": 10.6,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/c1a10691-7828-4a2a-b32a-3d2839b28089",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:41:43Z"
+        },
+        {
+          "id": "315eaada-f52a-4028-9bf2-091cc6f20f4d",
+          "label": "Navigate to search results for food delivery",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/315eaada-f52a-4028-9bf2-091cc6f20f4d",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:41:57Z"
+        },
+        {
+          "id": "fb614783-4003-4df4-8442-f0db2c1e4df8",
+          "label": "Find restaurant listings on search page",
+          "seconds": 1.5,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/fb614783-4003-4df4-8442-f0db2c1e4df8",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:42:00Z"
+        },
+        {
+          "id": "455aaf7c-65f4-453d-b2d7-5bc7eb45846e",
+          "label": "Browse all restaurants in Koramangala",
+          "seconds": 2.6,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/455aaf7c-65f4-453d-b2d7-5bc7eb45846e",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:42:03Z"
+        },
+        {
+          "id": "29702061-0cde-4832-994b-bfa54c030ae6",
+          "label": "Open McDonald's restaurant page in Koramangala",
+          "seconds": 2.5,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/29702061-0cde-4832-994b-bfa54c030ae6",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:42:09Z"
+        },
+        {
+          "id": "8646de9e-060c-4782-b298-1304a682d444",
+          "label": "Add 2 Pc McSpicy Chicken Wings to cart",
+          "seconds": 2.2,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/8646de9e-060c-4782-b298-1304a682d444",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:42:17Z"
+        },
+        {
+          "id": "d104ab9e-f21f-4fd0-99f3-6d631b919795",
+          "label": "Find cart button and total amount",
+          "seconds": 1.9,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/d104ab9e-f21f-4fd0-99f3-6d631b919795",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:42:21Z"
+        },
+        {
+          "id": "0c14e43c-ee64-4932-ad16-af0447601aa0",
+          "label": "Find cart button and total amount on McDonald's page",
+          "seconds": 2.5,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/0c14e43c-ee64-4932-ad16-af0447601aa0",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:42:26Z"
+        },
+        {
+          "id": "55bc8f2d-8f41-40a7-ad43-1e9e968cca5f",
+          "label": "Find cart button to see total",
+          "seconds": 2.1,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/55bc8f2d-8f41-40a7-ad43-1e9e968cca5f",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:42:31Z"
+        },
+        {
+          "id": "4ed8ae44-1ecd-43b3-8a07-db698e808e14",
+          "label": "List all elements to find cart",
+          "seconds": 4.1,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/4ed8ae44-1ecd-43b3-8a07-db698e808e14",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:42:37Z"
+        },
+        {
+          "id": "631d1d73-bdbb-43a9-8051-97df4306cfa5",
+          "label": "Click floating menu button to find cart",
+          "seconds": 1.7,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/631d1d73-bdbb-43a9-8051-97df4306cfa5",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:42:43Z"
+        },
+        {
+          "id": "b7c085f8-31e3-4956-b799-4206a7a792db",
+          "label": "Find cart button on the page",
+          "seconds": 2.3,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/b7c085f8-31e3-4956-b799-4206a7a792db",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:42:48Z"
+        },
+        {
+          "id": "67cc7b3c-1835-474a-b247-fcbd8dd0062f",
+          "label": "Find cart button visually",
+          "seconds": 2,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/67cc7b3c-1835-474a-b247-fcbd8dd0062f",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:42:54Z"
+        },
+        {
+          "id": "fb1d8743-6011-4fdf-9d33-44ba9537c1bb",
+          "label": "Find cart button on current page",
+          "seconds": 2,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/fb1d8743-6011-4fdf-9d33-44ba9537c1bb",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:43:02Z"
+        },
+        {
+          "id": "b6841849-b048-41f9-9e4b-54277bc24e27",
+          "label": "Report findings on Swiggy task - could not find cart total",
+          "seconds": 0,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/b6841849-b048-41f9-9e4b-54277bc24e27",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:43:08Z"
+        }
+      ],
+      "numSteps": 20,
+      "seconds": 130,
+      "points": 0,
+      "findings": [
+        {
+          "taskId": "add_to_cart",
+          "verified": true,
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/b6841849-b048-41f9-9e4b-54277bc24e27",
+          "type": "cart-not-found",
+          "severity": "high",
+          "text": "Add to cart or the cart total could not be found. What the agent saw: \"After setting the delivery location to Koramangala, Bangalore and adding '2 Pc McSpicy Chicken Wings' (₹100) from McDonald's to the cart, the cart total could not be retrieved. Swiggy's interface did \".",
+          "likelyCause": "The Add to cart control or the cart page is hard to find or identify: it may be an icon without a text label, or covered by another element.",
+          "fix": "Give the add-to-cart button visible text or an aria-label, keep it free of overlays, and make the cart total readable as text on the cart page.",
+          "standard": "WCAG 4.1.2 Name, Role, Value",
+          "passCheck": "Add to cart and reading the cart total passes in 5 steps or fewer.",
+          "pointsIfFixed": 25,
+          "frameworkExample": "<button type=\"button\" aria-label=\"Add to cart\">Add to cart</button>"
+        }
+      ],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+          "passed": false,
+          "numSteps": 20,
+          "blocker": "After setting the delivery location to Koramangala, Bangalore and adding '2 Pc McSpicy Chicken Wings' (₹100) from McDonald's to the cart, the cart total could not be retrieved. Swiggy's interface did not display a visible 'View Cart' button, floating cart icon, or cart total on the restaurant menu page. The page only showed menu categories in a browse menu modal, with no cart summary or order button visible anywhere on the page. Without being able to access the cart page or see a cart total, the final cart total (which would include item price, taxes, and delivery fees) could not be determined.",
+          "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/b6841849-b048-41f9-9e4b-54277bc24e27"
+        }
+      ],
+      "verdict": "none"
+    }
+  ],
+  "topFixes": [
+    {
+      "taskId": "add_to_cart",
+      "verified": true,
+      "screenshotUrl": "/api/shot/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/b6841849-b048-41f9-9e4b-54277bc24e27",
+      "type": "cart-not-found",
+      "severity": "high",
+      "text": "Add to cart or the cart total could not be found. What the agent saw: \"After setting the delivery location to Koramangala, Bangalore and adding '2 Pc McSpicy Chicken Wings' (₹100) from McDonald's to the cart, the cart total could not be retrieved. Swiggy's interface did \".",
+      "likelyCause": "The Add to cart control or the cart page is hard to find or identify: it may be an icon without a text label, or covered by another element.",
+      "fix": "Give the add-to-cart button visible text or an aria-label, keep it free of overlays, and make the cart total readable as text on the cart page.",
+      "standard": "WCAG 4.1.2 Name, Role, Value",
+      "passCheck": "Add to cart and reading the cart total passes in 5 steps or fewer.",
+      "pointsIfFixed": 25,
+      "frameworkExample": "<button type=\"button\" aria-label=\"Add to cart\">Add to cart</button>"
+    }
+  ]
+}
