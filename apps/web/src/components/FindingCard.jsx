@@ -10,7 +10,7 @@ const taskList = (ids) => ids.map((id) => TASK_LABELS[id] ?? id).join(', ');
 
 /** "While trying to: Find a price", or for a grouped finding "Blocked all 4 tasks: ..." / "Found on 2 tasks: ...". */
 function whereText(finding, taskIds, totalTasks) {
-  if (!taskIds.length) return 'On the home page (Instant Scan)';
+  if (!taskIds.length) return 'Found by the Instant Scan';
   if (taskIds.length === 1) return `While trying to: ${TASK_LABELS[taskIds[0]] ?? taskIds[0]}`;
   const verb = BOT_WALL_TYPES.includes(finding.type) ? 'Blocked' : 'Found on';
   const count = taskIds.length === totalTasks ? `all ${taskIds.length} tasks` : `${taskIds.length} tasks`;

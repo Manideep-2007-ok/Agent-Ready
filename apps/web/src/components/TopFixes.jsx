@@ -20,7 +20,7 @@ export default function TopFixes({ fixes, onJump }) {
               <span className="top-fix-text">
                 <b>{f.fix || f.text}</b>
                 <span className="muted">
-                  {f.taskCount > 1 ? `${f.taskCount} tasks` : f.taskId ? TASK_LABELS[f.taskId] ?? f.taskId : 'Home page (Instant Scan)'}
+                  {f.taskCount > 1 ? `${f.taskCount} tasks` : f.taskId ? TASK_LABELS[f.taskId] ?? f.taskId : 'Instant Scan'}
                   {' · '}
                   {f.pointsIfFixed > 0 ? `up to +${f.pointsIfFixed} points` : 'not part of the score'}
                 </span>
