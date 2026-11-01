@@ -55,21 +55,37 @@ async function runInBackground(report, { tasks, customText, instantScan }, { eng
   const reportId = report.id;
   const save = () => store.saveReport(report).catch((err) => console.error(`[${reportId}] save failed:`, err));
 
+  const findTask = (taskId) => report.tasks.find((t) => t.taskId === taskId);
+
+  // While running, keep the longer step list so a task-update never drops saved steps. Once finished, the
+  // task's own list wins: those are the real run steps with screenshots (live progress steps have none).
   const upsertTask = (task) => {
     const at = report.tasks.findIndex((t) => t.taskId === task.taskId);
-    if (at === -1) report.tasks.push(task);
-    else report.tasks[at] = task;
+    if (at === -1) return report.tasks.push(task);
+    const previous = report.tasks[at];
+    const finished = ['passed', 'failed', 'blocked'].includes(task.status);
+    const steps = finished || task.steps?.length >= previous.steps.length ? task.steps : previous.steps;
+    report.tasks[at] = { ...task, steps, streamingUrl: task.streamingUrl ?? previous.streamingUrl };
   };
 
   // Engine events -> LiveEvents (shapes in types.js). 'attempt' events are engine-internal.
+  // Steps are saved as they arrive, so a page refreshed mid-run replays them.
   const onEvent = (e) => {
     if (e.kind === 'task-update') {
       upsertTask(e.task);
       save();
       events.publish({ type: 'task-update', reportId, task: e.task });
     } else if (e.kind === 'step') {
+      const task = findTask(e.taskId);
+      if (task && !task.steps.some((s) => s.id === e.step.id)) {
+        task.steps = [...task.steps, e.step];
+        task.numSteps = task.steps.length;
+        save();
+      }
       events.publish({ type: 'step', reportId, taskId: e.taskId, step: e.step });
     } else if (e.kind === 'streaming-url') {
+      const task = findTask(e.taskId);
+      if (task) task.streamingUrl = e.url;
       events.publish({ type: 'streaming-url', reportId, taskId: e.taskId, url: e.url });
     }
   };
