@@ -258,10 +258,12 @@ export default function TestPage({ reportId, beforeId }) {
             onApplyFixes={onApplyFixes}
           />
           {live.report ? <ScoreCard report={live.report} onJump={jumpToFix} /> : <Progress url={url} tasks={tasks} connection={live.connection} />}
-          {(live.scan || !live.report) && <InstantScanCard scan={live.scan} loading={!live.scan} />}
-          <section className="lanes">
+          {/* While agents run, their lanes come first (side by side); the scan card follows. After, the scan leads. */}
+          {live.report && live.scan && <InstantScanCard scan={live.scan} loading={false} />}
+          <section className={`lanes${tasks.length >= 4 ? ' lanes-4' : ''}`} aria-label="Agents">
             {tasks.map((task) => <Lane key={task.taskId} task={task} onShotClick={setShot} />)}
           </section>
+          {!live.report && <InstantScanCard scan={live.scan} loading={!live.scan} />}
           {live.report && <Findings report={live.report} onShotClick={setShot} />}
         </>
       )}

@@ -190,6 +190,9 @@ button.secondary:hover:not(:disabled) { background: var(--line-strong); }
 .progress { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
 .progress .big { font-family: var(--display); font-size: 1.75rem; font-weight: 700; letter-spacing: -0.025em; }
 .lanes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+/* Four agents in one row on any laptop-width screen; 2 x 2 on tablets, one column on phones. */
+@media (min-width: 1000px) { .lanes-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; } }
+@media (min-width: 640px) and (max-width: 999px) { .lanes-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* ---------- Score card ---------- */
 .score-card { display: grid; gap: 22px; }
