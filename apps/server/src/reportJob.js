@@ -5,6 +5,16 @@ import * as store from './store.js';
 
 /** @typedef {import('@agentready/engine/types').SiteReport} SiteReport */
 
+/**
+ * Top 3 (D25): task findings plus Instant Scan findings, ranked by the engine (severity, then pointsIfFixed,
+ * one per finding type). Scan findings score 0 points, so they rank after point-scoring findings of the same severity.
+ * @param {SiteReport} report
+ * @param {{rankFixes:Function}} engine
+ */
+export function rankTopFixes(report, engine) {
+  return engine.rankFixes([...report.tasks.flatMap((t) => t.findings ?? []), ...(report.scanFindings ?? [])]);
+}
+
 const slug = (url) => new URL(url).hostname.replace(/^www\./, '').split('.')[0].replace(/[^\w]/g, '') || 'site';
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -95,6 +105,8 @@ async function runInBackground(report, { tasks, customText, instantScan }, { eng
         .instantScan(report.url)
         .then((result) => {
           report.instantScan = result;
+          report.scanFindings = engine.instantScanFindings?.(result) ?? [];
+          report.topFixes = rankTopFixes(report, engine);
           save();
           events.publish({ type: 'instant-scan', reportId, scan: result });
         })
@@ -113,15 +125,19 @@ async function runInBackground(report, { tasks, customText, instantScan }, { eng
         task.blocker = 'The test could not finish. Please try again.';
       }
     }
+    await scan;
     report.status = 'complete';
+    report.topFixes = rankTopFixes(report, engine);
     await save();
     events.publish({ type: 'report-complete', reportId, report });
     return;
   }
 
   await scan;
-  // Our id and scan win; everything else (score, tasks, findings, botWall, cost) comes from the engine.
+  // Our id and scan win; score, tasks, findings, botWall and cost come from the engine.
   Object.assign(report, result, { id: reportId, instantScan: report.instantScan ?? result.instantScan, status: 'complete' });
+  report.scanFindings ??= [];
+  report.topFixes = rankTopFixes(report, engine);
   await save();
   events.publish({ type: 'report-complete', reportId, report });
 }

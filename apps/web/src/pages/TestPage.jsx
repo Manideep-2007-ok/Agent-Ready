@@ -1,10 +1,11 @@
-// Test page: URL box -> live lanes -> score. The report id lives in the URL (#/test/<id>), so a refresh,
+// Test page: URL box -> live lanes -> score -> findings. The report id lives in the URL (#/test/<id>), so a refresh,
 // a shared link or a saved demo report (e.g. #/test/rep_20261031_demo_nykaa) opens straight into the result.
 import { useEffect, useState } from 'react';
 import { getReport, listReports, startTest, useLiveEvents } from '../api.js';
 import { navigate } from '../nav.js';
 import Lane from '../components/Lane.jsx';
 import InstantScanCard from '../components/InstantScanCard.jsx';
+import FindingCard from '../components/FindingCard.jsx';
 import ShotViewer from '../components/ShotViewer.jsx';
 
 const BOT_WALL_TEXT = {
@@ -13,6 +14,9 @@ const BOT_WALL_TEXT = {
   'blocks-automation': 'This site blocks automated browsers. Agents only got in with stealth mode.',
   'site-broken': 'Agents could not use this site at all, even with every workaround.',
 };
+
+const SEVERITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 };
+const findingKey = (f) => `${f.type}|${f.taskId ?? ''}`;
 
 function TestForm({ busy, onStart }) {
   const [url, setUrl] = useState('');
@@ -84,6 +88,23 @@ function Progress({ url, tasks, report, connection }) {
   );
 }
 
+/** Task findings and Instant Scan findings (D25), most serious first; the Top 3 are marked. */
+function Findings({ report, onShotClick }) {
+  const all = [...report.tasks.flatMap((t) => t.findings ?? []), ...(report.scanFindings ?? [])].sort(
+    (a, b) => (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9) || (b.pointsIfFixed ?? 0) - (a.pointsIfFixed ?? 0),
+  );
+  const ranks = new Map((report.topFixes ?? []).map((f, i) => [findingKey(f), i + 1]));
+  if (!all.length) return <section className="card">No problems found: AI agents could do every task.</section>;
+  return (
+    <section className="findings">
+      <h2>What to fix ({all.length})</h2>
+      {all.map((f, i) => (
+        <FindingCard key={`${findingKey(f)}-${i}`} finding={f} rank={ranks.get(findingKey(f))} onShotClick={onShotClick} />
+      ))}
+    </section>
+  );
+}
+
 function RecentReports() {
   const [reports, setReports] = useState([]);
   useEffect(() => {
@@ -145,6 +166,7 @@ export default function TestPage({ reportId }) {
           <section className="lanes">
             {tasks.map((task) => <Lane key={task.taskId} task={task} onShotClick={setShot} />)}
           </section>
+          {live.report && <Findings report={live.report} onShotClick={setShot} />}
         </>
       )}
       {!reportId && <RecentReports />}

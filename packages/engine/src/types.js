@@ -69,6 +69,9 @@
  * @property {ProxySetting} proxy
  * @property {string|null} runId
  * @property {boolean} passed
+ * @property {number} [numSteps]
+ * @property {string|null} [blocker]
+ * @property {string} [screenshotUrl]
  */
 
 /**
@@ -89,6 +92,7 @@
  * @property {number} points            0-25
  * @property {Finding[]} findings
  * @property {Attempt[]} [attempts]
+ * @property {BotWallVerdict} [verdict]
  */
 
 /**
@@ -121,7 +125,8 @@
  * @property {Framework} framework
  * @property {InstantScan|null} instantScan
  * @property {TaskResult[]} tasks
- * @property {Finding[]} topFixes       top 3 by pointsIfFixed
+ * @property {Finding[]} topFixes       top 3: task findings + scanFindings, ranked as in D25
+ * @property {Finding[]} [scanFindings]  Instant Scan findings (not part of the 100 score)
  */
 
 /**
