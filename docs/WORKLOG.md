@@ -42,11 +42,31 @@ What was built, how it was built, and what went wrong. Code lives on branch `man
 | F13 | The Browser API call put `country_code` at the top level; TinyFish docs say unknown fields return 400 | Checked against docs.tinyfish.ai | Moved into `proxy_config: {country_code}` |
 | F14 | Fetch results were matched by position; failed URLs come back in `errors[]`, so positions shift | Checked against docs | Matched by URL / `final_url` |
 | F15 | Real test blocked: the session's network policy refused `agent.tinyfish.ai` | First real-run attempt | Manideep opened network access (now reachable) |
-| F16 | Real test still blocked: `TINYFISH_API_KEY` saved in the environment settings is only visible to new sessions | Env check | **Open:** start a new session on `manideep/engine`, then run `node scripts/smoke.js https://example.com find_price` with `TINYFISH_MOCK=0` (about 5 steps, roughly ₹7) |
+| F16 | Real test still blocked: `TINYFISH_API_KEY` saved in the environment settings is only visible to new sessions | Env check | **Fixed:** a new session sees the key; first real run done (below) |
+
+## 1 Nov 2026: first real run
+
+`cd packages/engine && TINYFISH_MOCK=0 node scripts/smoke.js https://example.com find_price`
+
+| Field | Value |
+|---|---|
+| Run ID | `acc6892e-bb2f-4d34-af56-efb3631275fc` |
+| Mode / proxy | `lite` / `off` (attempt 1 only) |
+| Steps | 3: "Navigate to example.com to find product information" -> "Check for product and price information on the page" -> "Report that no product exists on example.com" |
+| Time | 11 s agent time, 14 s wall clock |
+| Result | `failed`, answer `null`, blocker: "No product or price information exists on this site. example.com is a placeholder domain ...", `stuckUrl` `https://example.com` |
+| Bot-wall | Verdict `none`; no re-run (3 steps, blocker does not match the block pattern), as intended |
+| Cost | 3 steps x $0.016 = $0.048 (about ₹4.2) |
+
+What this proves: real `run-sse` works end to end (STARTED, STREAMING_URL, PROGRESS steps, COMPLETE), the JSON answer is parsed, the step screenshot URL is built (`/api/shot/<runId>/<stepId>`), the queue ran one at a time. The fail is the correct answer: example.com has no products.
+
+Notes from the run:
+- `points: 0` and `findings: []` on the TaskResult: the smoke script calls `runTaskWithBotWall` only; scoring and the `price-not-found` finding are applied in `runSiteTest`. Not a bug.
+- Two `task-update failed` events at the end (one from `runner.js`, one final from `botwall.js`). Harmless (same state), could be de-duplicated.
 
 ## Open items
 
-- **First real run.** None has been made yet (F16). Allowed: example.com or the demo store, max 3 runs without asking.
+- **Next real run: the demo store** once it is on Vercel (expect ~30 s per task). Allowed: example.com or the demo store, max 3 runs without asking (1 used).
 - **Sai Shakti: mount routes.** `apps/server/src/index.js` has to mount `/api/watch` and `/api/webhooks` and call `startWatches()` (lines in PR #1).
 - **`store.js` / `events.js`.** Not on main yet. `watch.js` uses a TODO fallback until they land.
 - **Team decision: extra fields.** `verdict` on TaskResult, and `numSteps`, `blocker` and `screenshotUrl` on Attempt, go beyond `types.js`.
