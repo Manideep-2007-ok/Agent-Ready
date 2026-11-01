@@ -1,4 +1,6 @@
 // AgentReady server: Express on PORT (default 4000). Routes live in routes/, storage in store.js.
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import express from 'express';
 import cors from 'cors';
 import { config } from './config.js';
@@ -48,6 +50,12 @@ app.use('/api/watch', watchRouter);
 app.use('/api/webhooks', webhooksRouter);
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Unknown API route.' }));
+
+// The built dashboard, so links printed by the CLI and Watch alerts (<server>/#/test/<id>) open without Vite.
+// Hash routing: index.html at / serves every page.
+const webDist = path.join(config.repoRoot, 'apps/web/dist');
+if (existsSync(path.join(webDist, 'index.html'))) app.use(express.static(webDist));
+else app.get('/', (_req, res) => res.type('text').send('Dashboard not built yet: run "npm run build -w @agentready/web", or use the dev dashboard on http://localhost:5173.'));
 
 // Plain JSON errors; never echo internals or keys.
 app.use((err, _req, res, _next) => {
