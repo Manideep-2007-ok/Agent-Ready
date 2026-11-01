@@ -1,0 +1,464 @@
+{
+  "id": "rep_20261031_demo_nykaa",
+  "url": "https://www.nykaa.com",
+  "source": "web",
+  "testedAt": "2026-10-31T09:30:00.000Z",
+  "pack": "shopping",
+  "status": "complete",
+  "score": 76,
+  "botWall": "none",
+  "costRupees": 40.83,
+  "framework": "unknown",
+  "instantScan": null,
+  "tasks": [
+    {
+      "taskId": "find_returns",
+      "goal": "Find this site's return or refund policy. Report how many days customers have to return a product and the URL of the policy page. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "off",
+      "runId": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+      "status": "passed",
+      "answer": "return_days: 15 days; policy_url: https://www.nykaa.com/cancellation-policy/lp",
+      "blocker": null,
+      "stuckUrl": null,
+      "streamingUrl": null,
+      "steps": [
+        {
+          "id": "df8fcd61-548a-4148-a638-43609ec614ae",
+          "label": "Visit Nykaa homepage to find return/refund policy",
+          "seconds": 4.4,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/df8fcd61-548a-4148-a638-43609ec614ae",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:26:21Z"
+        },
+        {
+          "id": "a2628384-f3b3-4185-9cec-8b481425cc32",
+          "label": "Visit help center to find return policy",
+          "seconds": 2.3,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/a2628384-f3b3-4185-9cec-8b481425cc32",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:26:53Z"
+        },
+        {
+          "id": "919a04dc-77a4-4eb2-a540-722daf6b3b5a",
+          "label": "Click Shopping to find return policy",
+          "seconds": 1.2,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/919a04dc-77a4-4eb2-a540-722daf6b3b5a",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:27:21Z"
+        },
+        {
+          "id": "7e882553-9c0d-4d78-ba97-d779e75419b0",
+          "label": "Wait for page to load",
+          "seconds": 2.2,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/7e882553-9c0d-4d78-ba97-d779e75419b0",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:27:48Z"
+        },
+        {
+          "id": "0a42d3c4-6bd5-4505-bcd8-3f58d0be5f76",
+          "label": "Click Shipping and Delivery Policies topic",
+          "seconds": 1.1,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/0a42d3c4-6bd5-4505-bcd8-3f58d0be5f76",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:27:54Z"
+        },
+        {
+          "id": "66083e9f-9928-4230-be83-c3f6742f65f1",
+          "label": "Try to see more sub-topics in Shopping section",
+          "seconds": 1.1,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/66083e9f-9928-4230-be83-c3f6742f65f1",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:28:22Z"
+        },
+        {
+          "id": "d6e2b477-9fea-4411-b0b7-65aee0dbaf62",
+          "label": "Search for Nykaa return policy page",
+          "seconds": 1.3,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/d6e2b477-9fea-4411-b0b7-65aee0dbaf62",
+          "usedWebSearch": true,
+          "at": "2026-10-31T09:28:49Z"
+        },
+        {
+          "id": "49938501-0fee-45cc-a55a-2d1b62bbd76a",
+          "label": "Visit Nykaa returns and refunds policy page",
+          "seconds": 1.9,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/49938501-0fee-45cc-a55a-2d1b62bbd76a",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:28:58Z"
+        },
+        {
+          "id": "5d46d69d-0cd9-4e65-baf0-bf5d7372a8e2",
+          "label": "Click Nykaa Return Policy article",
+          "seconds": 1.4,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/5d46d69d-0cd9-4e65-baf0-bf5d7372a8e2",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:29:27Z"
+        },
+        {
+          "id": "631d22c8-8ccb-4f5a-9d02-6b90a7f23079",
+          "label": "Extract return days from policy",
+          "seconds": 1.3,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/631d22c8-8ccb-4f5a-9d02-6b90a7f23079",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:29:54Z"
+        },
+        {
+          "id": "43d19f2a-9087-4802-bf5f-d70d2b311eb0",
+          "label": "Extract full return policy details including days",
+          "seconds": 1.5,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/43d19f2a-9087-4802-bf5f-d70d2b311eb0",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:29:58Z"
+        },
+        {
+          "id": "3077710c-33c0-40a0-9f16-209a3ecd2cb9",
+          "label": "Verify policy page URL and details",
+          "seconds": 2.5,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/3077710c-33c0-40a0-9f16-209a3ecd2cb9",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:30:03Z"
+        },
+        {
+          "id": "4304864e-1d2f-4c41-87c3-143d0c1a214b",
+          "label": "Submit final answer with return policy details",
+          "seconds": 0.6,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/4304864e-1d2f-4c41-87c3-143d0c1a214b",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:30:32Z"
+        }
+      ],
+      "numSteps": 13,
+      "seconds": 257,
+      "points": 10,
+      "findings": [
+        {
+          "taskId": "find_returns",
+          "verified": true,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/4304864e-1d2f-4c41-87c3-143d0c1a214b",
+          "type": "needed-web-search",
+          "severity": "medium",
+          "text": "The agent could not reach the page through the site itself and had to fall back to a web search.",
+          "likelyCause": "The page the shopper needs is not reachable from your navigation, so visitors have to search the wider web to find it.",
+          "fix": "Link the page directly from the header or footer with a clear label, and list it in your sitemap.xml.",
+          "passCheck": "The page is found by following site links only, without any web search.",
+          "pointsIfFixed": 5,
+          "standard": "Sitemaps protocol and clear navigation labels (WCAG 2.4.5 Multiple Ways)",
+          "frameworkExample": "Add a footer link with the page name (for example \"Returns\") on every page."
+        },
+        {
+          "taskId": "find_returns",
+          "verified": true,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/4304864e-1d2f-4c41-87c3-143d0c1a214b",
+          "type": "too-many-steps",
+          "severity": "medium",
+          "text": "It took 13 steps to finish this task; a clear page needs about 5.",
+          "likelyCause": "The path to this page takes many clicks because of nested menus or an unclear layout.",
+          "fix": "Shorten the path: link the key page from the home page or footer and use clear link labels.",
+          "passCheck": "The task finishes in 5 steps or fewer.",
+          "pointsIfFixed": 6,
+          "standard": "Clear navigation labels (WCAG 2.4.5 Multiple Ways)"
+        },
+        {
+          "taskId": "find_returns",
+          "verified": true,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/4304864e-1d2f-4c41-87c3-143d0c1a214b",
+          "type": "slow",
+          "severity": "low",
+          "text": "The task took 257 seconds; a clear page takes under 90.",
+          "likelyCause": "Pages load slowly or the flow needs many page loads, often because of heavy scripts, banners or third-party widgets.",
+          "fix": "Defer third-party scripts, compress images and avoid blocking banners on key pages.",
+          "passCheck": "The task finishes in under 90 seconds.",
+          "pointsIfFixed": 4,
+          "standard": "Web performance (Core Web Vitals)"
+        }
+      ],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+          "passed": true,
+          "numSteps": 13,
+          "blocker": null,
+          "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/4304864e-1d2f-4c41-87c3-143d0c1a214b"
+        }
+      ],
+      "verdict": "none"
+    },
+    {
+      "taskId": "add_to_cart",
+      "goal": "Find any product, open its product page and add it to the cart. Then open the cart and report the cart total. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "off",
+      "runId": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+      "status": "passed",
+      "answer": "cart_total: ₹467",
+      "blocker": null,
+      "stuckUrl": null,
+      "streamingUrl": null,
+      "steps": [
+        {
+          "id": "f2e11751-213e-4256-83c8-9048f87e1842",
+          "label": "Visit Nykaa homepage to find lipstick products",
+          "seconds": 3.6,
+          "screenshotUrl": "/api/shot/d96fa38f-090c-4c18-bf25-ddd2fab788e2/f2e11751-213e-4256-83c8-9048f87e1842",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:26:22Z"
+        },
+        {
+          "id": "ec65173b-6c26-4b4d-96b5-191a8e23be53",
+          "label": "Visit Nykaa homepage to search for lipsticks",
+          "seconds": 3.8,
+          "screenshotUrl": "/api/shot/d96fa38f-090c-4c18-bf25-ddd2fab788e2/ec65173b-6c26-4b4d-96b5-191a8e23be53",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:26:52Z"
+        },
+        {
+          "id": "adfa360c-931b-4dc4-b57a-c00aabe96ec2",
+          "label": "Navigate to lipstick category page",
+          "seconds": 4.1,
+          "screenshotUrl": "/api/shot/d96fa38f-090c-4c18-bf25-ddd2fab788e2/adfa360c-931b-4dc4-b57a-c00aabe96ec2",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:27:28Z"
+        },
+        {
+          "id": "ec731ae0-0129-4738-87da-5d90d5bc2c31",
+          "label": "Navigate to Maybelline lipstick product page",
+          "seconds": 4.8,
+          "screenshotUrl": "/api/shot/d96fa38f-090c-4c18-bf25-ddd2fab788e2/ec731ae0-0129-4738-87da-5d90d5bc2c31",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:28:05Z"
+        },
+        {
+          "id": "a856e66e-4688-41c7-970c-2a1507b23c81",
+          "label": "Add Maybelline lipstick to the shopping bag",
+          "seconds": 3.2,
+          "screenshotUrl": "/api/shot/d96fa38f-090c-4c18-bf25-ddd2fab788e2/a856e66e-4688-41c7-970c-2a1507b23c81",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:28:38Z"
+        },
+        {
+          "id": "e127335d-5d3b-4e63-b4a3-488c3ac3e674",
+          "label": "Open shopping bag/cart to view total",
+          "seconds": 2.4,
+          "screenshotUrl": "/api/shot/d96fa38f-090c-4c18-bf25-ddd2fab788e2/e127335d-5d3b-4e63-b4a3-488c3ac3e674",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:28:48Z"
+        },
+        {
+          "id": "8e7cbd2c-fd18-41ac-b29e-280b906b9cda",
+          "label": "Extract cart total and price details",
+          "seconds": 3.1,
+          "screenshotUrl": "/api/shot/d96fa38f-090c-4c18-bf25-ddd2fab788e2/8e7cbd2c-fd18-41ac-b29e-280b906b9cda",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:28:54Z"
+        },
+        {
+          "id": "fc4079a8-51a9-4af6-a195-91a8f76ea0a2",
+          "label": "Report final cart total for the lipstick added to bag",
+          "seconds": 2.6,
+          "screenshotUrl": "/api/shot/d96fa38f-090c-4c18-bf25-ddd2fab788e2/fc4079a8-51a9-4af6-a195-91a8f76ea0a2",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:29:01Z"
+        }
+      ],
+      "numSteps": 8,
+      "seconds": 163,
+      "points": 20,
+      "findings": [],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+          "passed": true,
+          "numSteps": 8,
+          "blocker": null,
+          "screenshotUrl": "/api/shot/d96fa38f-090c-4c18-bf25-ddd2fab788e2/fc4079a8-51a9-4af6-a195-91a8f76ea0a2"
+        }
+      ],
+      "verdict": "none"
+    },
+    {
+      "taskId": "find_price",
+      "goal": "Find any product on this site and report its exact name and price. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "off",
+      "runId": "fb4c8188-881f-4633-ac4e-b5f0619feb3e",
+      "status": "passed",
+      "answer": "product: Maybelline Serum Matte Lipstick - 8Hr hydration, One-Swipe Bold Color; price: ₹467",
+      "blocker": null,
+      "stuckUrl": null,
+      "streamingUrl": null,
+      "steps": [
+        {
+          "id": "e9a486d5-60d3-4451-9d67-8174018e1f6c",
+          "label": "Visit Nykaa homepage to find lipstick product",
+          "seconds": 4.6,
+          "screenshotUrl": "/api/shot/fb4c8188-881f-4633-ac4e-b5f0619feb3e/e9a486d5-60d3-4451-9d67-8174018e1f6c",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:24:58Z"
+        },
+        {
+          "id": "444c039e-233c-475e-9482-8870d996eca7",
+          "label": "Navigate to lipstick category page",
+          "seconds": 3.4,
+          "screenshotUrl": "/api/shot/fb4c8188-881f-4633-ac4e-b5f0619feb3e/444c039e-233c-475e-9482-8870d996eca7",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:25:31Z"
+        },
+        {
+          "id": "2e29ef42-4fa5-40d2-8738-a0f6e88de511",
+          "label": "Submit lipstick product name and price",
+          "seconds": 0,
+          "screenshotUrl": "/api/shot/fb4c8188-881f-4633-ac4e-b5f0619feb3e/2e29ef42-4fa5-40d2-8738-a0f6e88de511",
+          "usedWebSearch": false,
+          "at": "2026-10-31T09:26:03Z"
+        }
+      ],
+      "numSteps": 3,
+      "seconds": 68,
+      "points": 25,
+      "findings": [],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "fb4c8188-881f-4633-ac4e-b5f0619feb3e",
+          "passed": true,
+          "numSteps": 3,
+          "blocker": null,
+          "screenshotUrl": "/api/shot/fb4c8188-881f-4633-ac4e-b5f0619feb3e/2e29ef42-4fa5-40d2-8738-a0f6e88de511"
+        }
+      ],
+      "verdict": "none"
+    },
+    {
+      "taskId": "find_contact",
+      "goal": "Find a way to contact this company's customer support (phone, email, chat or contact form) and report it with the page URL where you found it. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "off",
+      "runId": "c9687ab7-fdfb-4619-bf7f-eb6036f89e70",
+      "status": "passed",
+      "answer": "Nykaa offers customer support through multiple channels:\n\n1. **Chat Support** - Available on the homepage at the bottom right corner via a button labeled 'How may we help you' which opens a live chat widget (Messaging window/iframe).\n\n2. **Help Center** - Accessible via the 'Help' link in the header navigation at: https://www.nykaa.com/gateway-api/omsApis/helpCenter?domain=NYKAA\n\nThese are the primary contact options I found on the website. Specific phone numbers and email addresses were not visible on the homepage but may be available within the Help Center page or through the chat support.",
+      "blocker": null,
+      "stuckUrl": null,
+      "streamingUrl": null,
+      "steps": [
+        {
+          "id": "89ab9138-e9b9-4432-b930-ba05d837ae8e",
+          "label": "Visit Nykaa homepage to find customer support contact information",
+          "seconds": 4.2,
+          "screenshotUrl": "/api/shot/c9687ab7-fdfb-4619-bf7f-eb6036f89e70/89ab9138-e9b9-4432-b930-ba05d837ae8e",
+          "usedWebSearch": false,
+          "at": "2026-10-31T14:03:58Z"
+        },
+        {
+          "id": "e39fcdfd-c6bb-46c2-83dd-14b9ef62ca04",
+          "label": "Navigate to help center to find customer support contact info",
+          "seconds": 4.8,
+          "screenshotUrl": "/api/shot/c9687ab7-fdfb-4619-bf7f-eb6036f89e70/e39fcdfd-c6bb-46c2-83dd-14b9ef62ca04",
+          "usedWebSearch": false,
+          "at": "2026-10-31T14:05:14Z"
+        },
+        {
+          "id": "b26f7709-83e5-4277-89b9-756eb1251cfc",
+          "label": "Find Nykaa customer support contact info",
+          "seconds": 3.1,
+          "screenshotUrl": "/api/shot/c9687ab7-fdfb-4619-bf7f-eb6036f89e70/b26f7709-83e5-4277-89b9-756eb1251cfc",
+          "usedWebSearch": false,
+          "at": "2026-10-31T14:05:57Z"
+        },
+        {
+          "id": "1d73c803-3aad-4740-97e6-1e44c78966c5",
+          "label": "Open chat support to find customer service contact info",
+          "seconds": 1.9,
+          "screenshotUrl": "/api/shot/c9687ab7-fdfb-4619-bf7f-eb6036f89e70/1d73c803-3aad-4740-97e6-1e44c78966c5",
+          "usedWebSearch": false,
+          "at": "2026-10-31T14:06:42Z"
+        },
+        {
+          "id": "29588183-bd7b-47ec-9f4c-3edadf1f0e22",
+          "label": "Report Nykaa customer support contact info found on homepage",
+          "seconds": 0.2,
+          "screenshotUrl": "/api/shot/c9687ab7-fdfb-4619-bf7f-eb6036f89e70/29588183-bd7b-47ec-9f4c-3edadf1f0e22",
+          "usedWebSearch": false,
+          "at": "2026-10-31T14:07:48Z"
+        }
+      ],
+      "numSteps": 5,
+      "seconds": 232,
+      "points": 21,
+      "findings": [
+        {
+          "taskId": "find_contact",
+          "verified": true,
+          "screenshotUrl": "/api/shot/c9687ab7-fdfb-4619-bf7f-eb6036f89e70/29588183-bd7b-47ec-9f4c-3edadf1f0e22",
+          "type": "slow",
+          "severity": "low",
+          "text": "The task took 232 seconds; a clear page takes under 90.",
+          "likelyCause": "Pages load slowly or the flow needs many page loads, often because of heavy scripts, banners or third-party widgets.",
+          "fix": "Defer third-party scripts, compress images and avoid blocking banners on key pages.",
+          "passCheck": "The task finishes in under 90 seconds.",
+          "pointsIfFixed": 4,
+          "standard": "Web performance (Core Web Vitals)"
+        }
+      ],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "c9687ab7-fdfb-4619-bf7f-eb6036f89e70",
+          "passed": true,
+          "numSteps": 5,
+          "blocker": null,
+          "screenshotUrl": "/api/shot/c9687ab7-fdfb-4619-bf7f-eb6036f89e70/29588183-bd7b-47ec-9f4c-3edadf1f0e22"
+        }
+      ],
+      "verdict": "none"
+    }
+  ],
+  "topFixes": [
+    {
+      "taskId": "find_returns",
+      "verified": true,
+      "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/4304864e-1d2f-4c41-87c3-143d0c1a214b",
+      "type": "too-many-steps",
+      "severity": "medium",
+      "text": "It took 13 steps to finish this task; a clear page needs about 5.",
+      "likelyCause": "The path to this page takes many clicks because of nested menus or an unclear layout.",
+      "fix": "Shorten the path: link the key page from the home page or footer and use clear link labels.",
+      "passCheck": "The task finishes in 5 steps or fewer.",
+      "pointsIfFixed": 6,
+      "standard": "Clear navigation labels (WCAG 2.4.5 Multiple Ways)"
+    },
+    {
+      "taskId": "find_returns",
+      "verified": true,
+      "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/4304864e-1d2f-4c41-87c3-143d0c1a214b",
+      "type": "needed-web-search",
+      "severity": "medium",
+      "text": "The agent could not reach the page through the site itself and had to fall back to a web search.",
+      "likelyCause": "The page the shopper needs is not reachable from your navigation, so visitors have to search the wider web to find it.",
+      "fix": "Link the page directly from the header or footer with a clear label, and list it in your sitemap.xml.",
+      "passCheck": "The page is found by following site links only, without any web search.",
+      "pointsIfFixed": 5,
+      "standard": "Sitemaps protocol and clear navigation labels (WCAG 2.4.5 Multiple Ways)",
+      "frameworkExample": "Add a footer link with the page name (for example \"Returns\") on every page."
+    },
+    {
+      "taskId": "find_returns",
+      "verified": true,
+      "screenshotUrl": "/api/shot/c4b33086-bf2c-49d3-9899-c4b6039efc19/4304864e-1d2f-4c41-87c3-143d0c1a214b",
+      "type": "slow",
+      "severity": "low",
+      "text": "The task took 257 seconds; a clear page takes under 90.",
+      "likelyCause": "Pages load slowly or the flow needs many page loads, often because of heavy scripts, banners or third-party widgets.",
+      "fix": "Defer third-party scripts, compress images and avoid blocking banners on key pages.",
+      "passCheck": "The task finishes in under 90 seconds.",
+      "pointsIfFixed": 4,
+      "standard": "Web performance (Core Web Vitals)"
+    }
+  ]
+}
