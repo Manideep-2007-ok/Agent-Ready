@@ -332,7 +332,8 @@ Plain HTML/CSS/JS deployed on Vercel (static). Pages: `index.html` (products), `
 - **priceImg:** price rendered only as `price.png` image, no text, no alt.
 - **iconCart:** Add to cart is an icon-only `<button>` with no text and no `aria-label`; the header cart link is an icon with a number, no "Cart" text.
 - **hiddenReturns:** no "Returns" link in the footer; reachable only via Help -> Policies -> Shipping -> More shipping information -> "Other information" -> "Read the full document" (vague labels, one page deeper than with flaws off).
-With flaws off: normal text price, labelled button, footer Returns link, no popup. Expect ~30 s per task.
+With flaws off: normal text price, labelled button, footer Returns link, no popup.
+`release.js` (`window.RELEASE = {cartBroken:false}`) simulates a bad deploy for the Watch demo: when `true`, Add to cart shows "Something went wrong" and adds nothing. Flip it, push to `main` (Vercel redeploys), run the watch, then revert. Expect ~30 s per task.
 
 ---
 
