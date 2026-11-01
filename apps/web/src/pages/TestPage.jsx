@@ -63,6 +63,26 @@ function TestForm({ busy, onStart, onDemo }) {
   );
 }
 
+/** Landing hero (no test open): the question, the URL box and how it works. */
+function Hero({ children }) {
+  return (
+    <section className="hero" aria-labelledby="hero-title">
+      <span className="hero-burst" aria-hidden="true">REAL AGENTS!</span>
+      <h1 id="hero-title">Can an AI agent actually use your website?</h1>
+      <p className="hero-sub">
+        Real TinyFish web agents try four everyday tasks on your site, live: find a price, add to cart, find the
+        return policy, contact support. You get a score, the exact step where they got stuck, and the fixes.
+      </p>
+      {children}
+      <ol className="how">
+        <li><b>1</b>Drop your URL</li>
+        <li><b>2</b>Agents try your site, live</li>
+        <li><b>3</b>Get a score and the top fixes</li>
+      </ol>
+    </section>
+  );
+}
+
 /** Shown while the test runs; ScoreCard takes over once the report is complete. */
 function Progress({ url, tasks, connection }) {
   const finished = tasks.filter((t) => ['passed', 'failed', 'blocked'].includes(t.status)).length;
@@ -178,9 +198,11 @@ export default function TestPage({ reportId, beforeId }) {
   const tasks = Object.values(live.tasks);
   const running = Boolean(reportId) && live.connection !== 'done' && !error;
 
+  const form = <TestForm busy={starting || running} onStart={onStart} onDemo={demoStoreUrl ? onDemo : null} />;
+
   return (
     <>
-      <TestForm busy={starting || running} onStart={onStart} onDemo={demoStoreUrl ? onDemo : null} />
+      {reportId ? form : <Hero>{form}</Hero>}
       {error && <section className="card error">{error}</section>}
       {reportId && !error && (
         <>
