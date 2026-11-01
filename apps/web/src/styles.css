@@ -335,7 +335,8 @@ button.secondary:hover:not(:disabled) { background: var(--line-strong); }
 .bento-bg-green { background: radial-gradient(90% 70% at 100% 0%, color-mix(in srgb, var(--pass) 18%, transparent), transparent 70%); }
 .bento-bg-red { background: radial-gradient(90% 70% at 100% 0%, color-mix(in srgb, var(--fail) 16%, transparent), transparent 70%); }
 .bento-bg-amber { background: radial-gradient(90% 70% at 100% 0%, color-mix(in srgb, #ff9f0a 20%, transparent), transparent 70%); }
-.features h3 { letter-spacing: -0.01em; }
+.features h3 { letter-spacing: -0.01em; margin: 10px 0 4px; }
+.features .group p { margin: 0; line-height: 1.5; }
 .agent-cloud { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 380px); align-items: center; gap: 24px; overflow: hidden; }
 .agent-cloud-text h2 { font-size: clamp(1.5rem, 2.6vw, 2rem); letter-spacing: -0.025em; }
 .agent-cloud-text p { margin: 0; max-width: 52ch; font-size: 1.0625rem; }
