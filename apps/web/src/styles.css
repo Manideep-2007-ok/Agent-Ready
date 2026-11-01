@@ -344,3 +344,16 @@ button.secondary:hover:not(:disabled) { background: var(--line-strong); }
 @media (max-width: 760px) { .agent-cloud { grid-template-columns: 1fr; } }
 .celebrate-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 60; }
 .celebrate-burst { position: fixed; inset: 0; z-index: 61; display: grid; place-items: center; pointer-events: none; animation: fade-in 0.2s ease-out; }
+
+/* ---------- iPad-style pointer (PointerCursor.jsx) ---------- */
+.has-pointer-cursor, .has-pointer-cursor * { cursor: none !important; }
+.has-pointer-cursor :is(input, textarea, [contenteditable='true']) { cursor: text !important; }
+.pointer-cursor { position: fixed; left: 0; top: 0; z-index: 9999; pointer-events: none; will-change: transform; }
+.pointer-cursor-dot {
+  position: absolute; left: 0; top: 0; translate: -50% -50%; display: block; border-radius: 50%;
+  background: rgba(60, 60, 67, 0.42); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55), 0 2px 8px rgba(0, 0, 0, 0.12);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+}
+.pointer-cursor--hover .pointer-cursor-dot { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--accent) 16%, transparent); box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent); }
+:root[data-theme='dark'] .pointer-cursor-dot { background: rgba(235, 235, 245, 0.45); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4); }
+:root[data-theme='dark'] .pointer-cursor--hover .pointer-cursor-dot { background: color-mix(in srgb, var(--accent) 22%, transparent); }
