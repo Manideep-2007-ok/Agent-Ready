@@ -35,7 +35,7 @@ Dependencies (add only these unless the team agrees):
 | root | `concurrently` (dev) |
 | `packages/engine` | `playwright-core` |
 | `apps/server` | `express`, `cors`, `dotenv`, `node-cron`, `@agentready/engine` |
-| `apps/web` | `react`, `react-dom`, `vite`, `@vitejs/plugin-react` (optional: `react-router-dom`) |
+| `apps/web` | `react`, `react-dom`, `vite`, `@vitejs/plugin-react`; Magic UI / shadcn pieces (D27): `tailwindcss` + `@tailwindcss/vite`, `motion`, `cobe`, `canvas-confetti`, `lucide-react`, `@radix-ui/react-icons`, `radix-ui`, `class-variance-authority`, `clsx`, `tailwind-merge` |
 | `apps/cli` | `@agentready/engine`, `dotenv` (uses system `cloudflared`) |
 | `apps/demo-store` | none (plain HTML/CSS/JS) |
 
