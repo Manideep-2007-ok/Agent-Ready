@@ -115,3 +115,39 @@ Open items (server):
 | F19 | robots.txt / sitemap shown as "error" when the site just doesn't have them | Real run 2 | Shown as "missing"; "error" only if the Fetch call itself failed |
 | F20 | Lane showed attempt 1's steps during attempt 2; retry pause could go negative | Opus review | Lane hides earlier attempts' steps; pause is a constant, sped up only in mock mode |
 | F21 | Vercel connector got 403 for team `manideep-2007-oks-projects` | Deploy attempt | Deployed by hand at vercel.com/new |
+
+## 1 Nov 2026: dashboard, Watch page, CLI upload (Sai Shakti)
+
+Built with Claude Code; every change reviewed and tested together by Sai Shakti before commit, one small PR per feature (#14 and #15 still open when this was written). All tests in mock mode (`TINYFISH_MOCK=1`) plus Manideep's real demo-store backups; no credits spent.
+
+| Piece | Files | Proof it works | PR |
+|---|---|---|---|
+| Dashboard shell | `web/src/main.jsx`, `App.jsx`, `nav.js`, `api.js` | Tabs + hash routes (`#/test/<id>`, `#/test/<id>/<before>`); `useLiveEvents` follows a test over SSE and survives a refresh | #5 |
+| Test page | `pages/TestPage.jsx`, `FindingCard.jsx`, `ShotViewer.jsx` | Live lanes (Akhil's `Lane`), Instant Scan card, finding cards answering the six questions, screenshots enlarge; Myntra's 4 identical bot-wall findings shown as one card, "Blocked all 4 tasks" | #5 |
+| Instant Scan findings in reports (D25) | `engine/src/types.js`, `server/src/reportJob.js`, docs | `SiteReport.scanFindings`; Top 3 via `engine.rankFixes`. Mock Myntra Top 3 = bot wall, unlabelled buttons, no product schema | #5 |
+| Score card + Top 3 | `ScoreCard.jsx`, `TopFixes.jsx` | Myntra: red bot-wall banner, 20/100 "Not ready", "0 of 4 tasks passed (4 more only with a workaround)", bot-wall fix "+80 points, 4 tasks"; clicking a fix jumps to its card | #9 |
+| Demo store before/after | `DemoStoreCard.jsx` | "Try it on our demo store" + "Apply fixes and re-test" (`?flaws=on` -> `?flaws=off`). Real backups: **91 -> 97, 35 -> 19 steps, ₹49 -> ₹27**, add to cart 17 -> 7 steps; mock runs get a "Mock mode" note | #11, #14 |
+| Watch page | `pages/WatchPage.jsx` | Create a watch, Run now with live lanes, Pause/Resume, history with report links, live alert banner | #12 |
+| CLI upload + dashboard on :4000 | `server/src/routes/tests.js`, `index.js` | Real CLI (mock) uploaded to `POST /api/reports` and its printed `<server>/#/test/<id>` link opened from the API server alone; bad uploads 400, id clash 409, flag off 404 | #15 |
+
+## Dashboard: failures and fixes
+
+| # | What went wrong | Found by | Fix |
+|---|---|---|---|
+| W1 | Both PR #5 and Manideep's #6 added D25, so the docs conflicted | Rebase on main | One D25 row; server Top 3 now calls `engine.rankFixes` (severity, points, one per finding type) |
+| W2 | Refreshing mid-test lost the steps; a finished task kept step labels without screenshots | Manual test | Steps saved as they arrive; once a task finishes, its own step list wins |
+| W3 | Myntra showed the same bot-wall card four times | Manideep | Identical findings grouped into one card; points add up |
+| W4 | "4 of 4 tasks passed" next to a red "Blocked" banner | Review of the score card | Passing only via proxy or stealth counts as "only with a workaround" |
+| W5 | Clicking a Top 3 fix did not scroll (smooth scroll did not move in one browser) | Browser test | Instant jump instead |
+| W6 | The demo-store link disappeared once the custom-task box was opened | Code review | Link moved out of that slot |
+| W7 | Mock before/after showed 100 -> 100, "No change", which looked like a bug | Sai Shakti | Mock replays one recording for any address; the card now says so (run ids `mock-...`) |
+| W8 | After a git rebase the dev dashboard kept serving old files | Labels did not change | Vite's watcher misses git rewrites on Windows: restart the dev server after a rebase or branch switch |
+| W9 | Port 4000 would have served an old dashboard build (12:58) | CLI upload test | Rebuilt; `apps/web/dist` is gitignored, so rebuild on the demo machine after the last merge |
+| W10 | `npm install` changed `package-lock.json` and the CLI file's line endings | `git status` | Left out of our commits; Manideep fixed the lockfile (#8) |
+| W11 | PR #15 showed a red Vercel check | GitHub | Not a code error: the demo store's Vercel project refuses previews from authors outside its team; the check is optional and the PR is mergeable |
+
+Open items (dashboard):
+- The red Watch alert banner is untested: mock checks always pass. Needs one real failing check (Manideep's cart switch).
+- A CLI run of only some tasks shows "50/100, Partly ready" next to "2 of 2 tasks passed" (score counts all four tasks).
+- Not built: step replay, Race page, Leaderboard page (dropped for time, in the D24 / cut-line order).
+- Before the demo: pull main, `npm install`, `npm run build -w @agentready/web`, restart the server.
