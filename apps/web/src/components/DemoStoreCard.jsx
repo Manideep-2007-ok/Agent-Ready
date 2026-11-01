@@ -1,6 +1,7 @@
 // Demo store before/after (ARCHITECTURE.md section 14). The store reads ?flaws=on|off, so "Apply fixes" means:
 // re-test the same store at ?flaws=off. The new report's URL keeps the old one (#/test/<new>/<before>) to compare.
 import { useEffect, useState } from 'react';
+import { TASK_LABELS } from '@agentready/engine/goals';
 import { getReport } from '../api.js';
 
 /** @typedef {import('@agentready/engine/types').SiteReport} SiteReport */
@@ -13,6 +14,28 @@ const sameHost = (a, b) => {
 const flawsOn = (url) => {
   try { return new URL(url).searchParams.get('flaws') === 'on'; } catch { return false; }
 };
+
+// Steps an agent spent on a task, counting every attempt (the cost meter counts them too).
+const stepsOf = (t) => (t.attempts?.length ? t.attempts.reduce((n, a) => n + (a.numSteps || 0), 0) : t.numSteps ?? t.steps?.length ?? 0);
+const totalSteps = (r) => r.tasks.reduce((n, t) => n + stepsOf(t), 0);
+
+/** The effort the fixes saved: total steps, cost, and each task that needed noticeably more steps before. */
+function Effort({ before, after }) {
+  const slower = after.tasks
+    .map((t) => ({ t, was: before.tasks.find((b) => b.taskId === t.taskId) }))
+    .filter(({ t, was }) => was && stepsOf(was) - stepsOf(t) >= 3);
+  return (
+    <ul className="ba-effort">
+      <li>Agent steps: <b>{totalSteps(before)} → {totalSteps(after)}</b></li>
+      <li>Agent cost: <b>₹{Math.round(before.costRupees)} → ₹{Math.round(after.costRupees)}</b></li>
+      {slower.map(({ t, was }) => (
+        <li key={t.taskId}>
+          {TASK_LABELS[t.taskId] ?? t.taskId}: <b>{stepsOf(was)} → {stepsOf(t)} steps</b>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 /**
  * @param {{report: SiteReport|null, beforeId?: string|null, demoStoreUrl: string|null, url: string,
@@ -50,6 +73,7 @@ export default function DemoStoreCard({ report, beforeId, demoStoreUrl, url, bus
             </span>
           )}
         </div>
+        {report && <Effort before={before} after={report} />}
       </section>
     );
   }

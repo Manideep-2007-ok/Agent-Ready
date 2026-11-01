@@ -110,5 +110,6 @@ button.secondary { background: var(--wait-bg); color: var(--text); }
 .ba-before { background: var(--fail-bg); }
 .ba-after { background: var(--pass-bg); }
 .ba-arrow { font-size: 28px; color: var(--muted); }
+.ba-effort { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
 
 .recent { font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
