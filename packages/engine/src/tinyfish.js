@@ -153,10 +153,16 @@ export async function fetchPages(urls) {
   const res = await fetch(FETCH_API, { method: 'POST', headers: headers(true), body: JSON.stringify({ urls }) });
   await check(res, 'fetch pages');
   const j = await res.json();
-  const byUrl = new Map((j.results || []).map((r) => [r.url, r]));
-  return urls.map((u, i) => {
-    const r = byUrl.get(u) || (j.results || [])[i];
-    return r && r.text != null ? { url: u, text: r.text, error: null } : { url: u, text: '', error: r?.error || 'No content returned' };
+  // Failed URLs come back in errors[], not results[], so match by URL (ignoring a trailing slash), never by position.
+  const norm = (u) => String(u || '').replace(/\/$/, '');
+  const byUrl = new Map();
+  for (const r of j.results || []) { byUrl.set(norm(r.url), r); if (r.final_url) byUrl.set(norm(r.final_url), r); }
+  const errByUrl = new Map((j.errors || []).map((e) => [norm(e.url), e]));
+  return urls.map((u) => {
+    const r = byUrl.get(norm(u));
+    if (r && r.text != null) return { url: u, text: typeof r.text === 'string' ? r.text : JSON.stringify(r.text), error: null };
+    const e = errByUrl.get(norm(u));
+    return { url: u, text: '', error: e?.error || e?.message || 'No content returned' };
   });
 }
 
@@ -172,7 +178,7 @@ export async function search(query) {
 /** Open a cloud browser. Returns {sessionId, cdpUrl} for playwright connectOverCDP. */
 export async function createBrowserSession({ url, countryCode = 'IN', timeoutSeconds = 60 } = {}) {
   if (config.mock) return mock.createBrowserSession({ url, countryCode, timeoutSeconds });
-  const res = await fetch(BROWSER_API, { method: 'POST', headers: headers(true), body: JSON.stringify({ url, country_code: countryCode, timeout_seconds: timeoutSeconds }) });
+  const res = await fetch(BROWSER_API, { method: 'POST', headers: headers(true), body: JSON.stringify({ url, timeout_seconds: timeoutSeconds, proxy_config: { country_code: countryCode } }) });
   await check(res, 'open browser');
   const j = await res.json();
   const sessionId = j.session_id || j.sessionId || j.id;
