@@ -178,7 +178,7 @@ detectFramework(page)                       // Playwright page -> 'nextjs'|'shop
 
 1. Attempt 1: `mode 'lite'`, `proxy 'off'` (how cloud AI agents arrive).
 2. If not `success` AND looks blocked (blocker matches `/access denied|denied|error page|blocked|captcha|something went wrong|blank|empty page|could not load|not available|\(null\)/i`, or fewer than 2 steps): attempt 2 `lite` + `IN`.
-3. If attempt 2 still looks blocked: attempt 3 `stealth` + `IN`.
+3. If attempt 2 still looks blocked: attempt 3 `stealth` + `IN`. **Except (D26):** if attempt 2 took 5+ steps, the agent clearly used the site from an Indian home address, so the "block" is the site's own error (e.g. a broken cart's "Something went wrong"): stop, verdict `none`, normal failure finding.
 4. Verdict per task: passed on 1 -> `none`; passed on 2 -> `blocks-cloud-agents`; passed on 3 -> `blocks-automation`; never -> `site-broken`. Site verdict = worst task verdict.
 5. A task that failed for a non-blocking reason (could not find returns) does not re-run.
 

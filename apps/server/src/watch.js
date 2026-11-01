@@ -119,7 +119,7 @@ const hhmm = (iso) =>
 const lowerFirst = (s) => s.charAt(0).toLowerCase() + s.slice(1);
 const hostOf = (url) => { try { return new URL(url).host; } catch { return url; } };
 const dashLink = (reportId) =>
-  `${process.env.PUBLIC_DASHBOARD_URL || process.env.PUBLIC_BASE_URL || 'http://localhost:5173'}/#/test/${reportId}`;
+  `${process.env.PUBLIC_DASHBOARD_URL || process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 4000}`}/#/test/${reportId}`;
 
 /**
  * @param {{watch:Watch, lastGood:SiteReport|null, current:SiteReport, task:TaskResult}} a
