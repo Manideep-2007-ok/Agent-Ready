@@ -3,6 +3,7 @@ import { Router } from 'express';
 import crypto from 'node:crypto';
 import { DEFAULT_TASK_ORDER } from '@agentready/engine';
 import { subscribe } from '../events.js';
+import { assertReplayable } from '../replay.js';
 import { listWatches, getWatch, createWatch, updateWatch, getHistory, runCheck, isRunning } from '../watch.js';
 
 const router = Router();
@@ -27,6 +28,7 @@ router.post('/', async (req, res) => {
     if (!parsed || !['http:', 'https:'].includes(parsed.protocol)) {
       return res.status(400).json({ error: 'Please give a full web address starting with http:// or https://' });
     }
+    try { assertReplayable(parsed.href); } catch (e) { return res.status(400).json({ error: e.message }); }
     if (!validMinutes(Number(everyMinutes))) return res.status(400).json({ error: 'everyMinutes must be between 1 and 1440' });
     if (!Array.isArray(tasks) || !tasks.length || !tasks.every((t) => VALID_TASKS.includes(t))) {
       return res.status(400).json({ error: 'tasks must be a list of: ' + VALID_TASKS.join(', ') });
