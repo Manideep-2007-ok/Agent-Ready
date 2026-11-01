@@ -4,5 +4,12 @@
   "private": true,
   "type": "module",
   "main": "src/index.js",
-  "exports": { ".": "./src/index.js", "./types": "./src/types.js", "./goals": "./src/goals.js" }
+  "exports": {
+    ".": "./src/index.js",
+    "./types": "./src/types.js",
+    "./goals": "./src/goals.js"
+  },
+  "dependencies": {
+    "playwright-core": "^1.48.0"
+  }
 }
