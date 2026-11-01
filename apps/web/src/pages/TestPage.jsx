@@ -88,18 +88,40 @@ function Progress({ url, tasks, report, connection }) {
   );
 }
 
-/** Task findings and Instant Scan findings (D25), most serious first; the Top 3 are marked. */
+/**
+ * The same finding on several tasks (e.g. one bot wall that blocked all four) becomes one card: one fix covers
+ * them all. Points add up, since fixing it gives every one of those tasks its points back.
+ */
+function groupFindings(findings) {
+  const groups = new Map();
+  for (const f of findings) {
+    const key = `${f.type}|${f.text}`;
+    const group = groups.get(key);
+    if (!group) groups.set(key, { ...f, taskIds: f.taskId ? [f.taskId] : [], members: [f] });
+    else {
+      if (f.taskId && !group.taskIds.includes(f.taskId)) group.taskIds.push(f.taskId);
+      group.pointsIfFixed = (group.pointsIfFixed ?? 0) + (f.pointsIfFixed ?? 0);
+      group.screenshotUrl ??= f.screenshotUrl;
+      group.members.push(f);
+    }
+  }
+  return [...groups.values()];
+}
+
+/** Task findings and Instant Scan findings (D25), grouped, most serious first; the Top 3 are marked. */
 function Findings({ report, onShotClick }) {
-  const all = [...report.tasks.flatMap((t) => t.findings ?? []), ...(report.scanFindings ?? [])].sort(
+  const groups = groupFindings([...report.tasks.flatMap((t) => t.findings ?? []), ...(report.scanFindings ?? [])]).sort(
     (a, b) => (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9) || (b.pointsIfFixed ?? 0) - (a.pointsIfFixed ?? 0),
   );
   const ranks = new Map((report.topFixes ?? []).map((f, i) => [findingKey(f), i + 1]));
-  if (!all.length) return <section className="card">No problems found: AI agents could do every task.</section>;
+  const rankOf = (group) => group.members.map((f) => ranks.get(findingKey(f))).find(Boolean);
+  const totalTasks = report.tasks.filter((t) => t.taskId !== 'custom').length;
+  if (!groups.length) return <section className="card">No problems found: AI agents could do every task.</section>;
   return (
     <section className="findings">
-      <h2>What to fix ({all.length})</h2>
-      {all.map((f, i) => (
-        <FindingCard key={`${findingKey(f)}-${i}`} finding={f} rank={ranks.get(findingKey(f))} onShotClick={onShotClick} />
+      <h2>What to fix ({groups.length})</h2>
+      {groups.map((g, i) => (
+        <FindingCard key={`${findingKey(g)}-${i}`} finding={g} taskIds={g.taskIds} totalTasks={totalTasks} rank={rankOf(g)} onShotClick={onShotClick} />
       ))}
     </section>
   );

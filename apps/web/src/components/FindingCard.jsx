@@ -5,6 +5,18 @@ import { TASK_LABELS } from '@agentready/engine/goals';
 
 /** @typedef {import('@agentready/engine/types').Finding} Finding */
 
+const BOT_WALL_TYPES = ['blocks-cloud-agents', 'blocks-automation', 'site-broken'];
+const taskList = (ids) => ids.map((id) => TASK_LABELS[id] ?? id).join(', ');
+
+/** "While trying to: Find a price", or for a grouped finding "Blocked all 4 tasks: ..." / "Found on 2 tasks: ...". */
+function whereText(finding, taskIds, totalTasks) {
+  if (!taskIds.length) return 'On the home page (Instant Scan)';
+  if (taskIds.length === 1) return `While trying to: ${TASK_LABELS[taskIds[0]] ?? taskIds[0]}`;
+  const verb = BOT_WALL_TYPES.includes(finding.type) ? 'Blocked' : 'Found on';
+  const count = taskIds.length === totalTasks ? `all ${taskIds.length} tasks` : `${taskIds.length} tasks`;
+  return `${verb} ${count}: ${taskList(taskIds)}`;
+}
+
 const SEVERITY = {
   critical: 'Critical: AI shoppers cannot get in',
   high: 'High: blocks an everyday task',
@@ -13,13 +25,14 @@ const SEVERITY = {
 };
 
 /**
- * @param {{finding: Finding, rank?: number, onShotClick?: (url:string)=>void}} props
+ * @param {{finding: Finding, taskIds?: string[], totalTasks?: number, rank?: number, onShotClick?: (url:string)=>void}} props
+ * taskIds: every task this (grouped) finding hit; defaults to the finding's own task.
  * rank: 1-3 when this finding is one of the Top 3 fixes.
  */
-export default function FindingCard({ finding, rank, onShotClick }) {
+export default function FindingCard({ finding, taskIds = finding.taskId ? [finding.taskId] : [], totalTasks, rank, onShotClick }) {
   // Some steps have no screenshot (e.g. the agent's final "report" step): hide the picture instead of a broken icon.
   const [shotFailed, setShotFailed] = useState(false);
-  const where = finding.taskId ? `While trying to: ${TASK_LABELS[finding.taskId] ?? finding.taskId}` : 'On the home page (Instant Scan)';
+  const where = whereText(finding, taskIds, totalTasks);
   const impact = finding.pointsIfFixed > 0
     ? `Fixing this can add up to ${finding.pointsIfFixed} points to the score.`
     : 'Not part of the 100-point score, but it gets in AI shoppers’ way.';
