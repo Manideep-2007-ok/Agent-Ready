@@ -4,11 +4,15 @@
   const page = document.body.dataset.page;
   const F = window.Flaws;
   const money = (n) => '₹' + n;
+  const CART_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 11.5a2 2 0 0 0 2 1.5h7.8a2 2 0 0 0 2-1.5L21 7H6"/></svg>';
   // Price element: text normally, image when the priceImg flaw is on.
   const price = (n) => '<span class="price">' + (F.priceImg ? window.priceImgHTML(n) : money(n)) + '</span>';
 
   const header = '<header class="site-header"><a class="logo" href="' + root + 'index.html">Chai &amp; Co.</a>' +
-    '<nav><a href="' + root + 'index.html">Shop</a><a href="' + root + 'cart.html">Cart (<span id="cart-count">' + Cart.count() + '</span>)</a></nav></header>';
+    '<nav><a href="' + root + 'index.html">Shop</a>' + (F.iconCart
+      // iconCart flaw: the header cart link is an icon with a number, no text and no label.
+      ? '<a class="cart-icon-link" href="' + root + 'cart.html">' + CART_SVG + '<span id="cart-count">' + Cart.count() + '</span></a>'
+      : '<a href="' + root + 'cart.html">Cart (<span id="cart-count">' + Cart.count() + '</span>)</a>') + '</nav></header>';
   const footer = '<footer class="site-footer"><a href="' + root + 'contact.html">Contact</a><a href="' + root + 'help/index.html">Help</a>' +
     (F.hiddenReturns ? '' : '<a href="' + root + 'help/policies/shipping/more/returns.html">Returns</a>') +
     '<span>&copy; 2026 Chai &amp; Co.</span></footer>';
@@ -62,6 +66,13 @@
   if (page === 'contact') {
     const f = main.querySelector('form');
     f.addEventListener('submit', (e) => { e.preventDefault(); f.outerHTML = '<p class="big" role="status">Thanks! We will reply within one working day.</p>'; });
+  }
+
+  // hiddenReturns flaw: the help page's Returns link becomes a vague "Other information" link one page deeper.
+  if (F.hiddenReturns) {
+    document.querySelectorAll('main a[href="returns.html"]').forEach((a) => {
+      if (/^returns$/i.test(a.textContent.trim())) { a.textContent = 'Other information'; a.setAttribute('href', 'other.html'); }
+    });
   }
 
   // Product list page add buttons (none on home). Delegated for product page handled above.

@@ -21,3 +21,4 @@ form label { display:block; margin:12px 0 4px; }
 form input, form textarea { width:100%; max-width:420px; padding:8px; border:1px solid var(--line); border-radius:6px; font:inherit; }
 .site-footer { display:flex; gap:20px; flex-wrap:wrap; padding:18px 24px; background:#fff; border-top:1px solid var(--line); }
 .site-footer span { margin-left:auto; color:#7b6a5c; }
+.cart-icon-link { display:inline-flex; align-items:center; gap:4px; vertical-align:middle; }
