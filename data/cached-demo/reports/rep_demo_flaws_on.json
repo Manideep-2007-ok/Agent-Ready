@@ -1,0 +1,512 @@
+{
+  "id": "rep_20261101_0809_agentreadydemo",
+  "url": "https://agent-ready-demo.vercel.app/?flaws=on",
+  "source": "web",
+  "testedAt": "2026-11-01T08:10:46.614Z",
+  "pack": "shopping",
+  "status": "complete",
+  "score": 91,
+  "botWall": "none",
+  "costRupees": 49.28,
+  "framework": "unknown",
+  "instantScan": {
+    "unlabelledButtons": 0,
+    "totalButtonsAndLinks": 17,
+    "imagesWithoutAlt": 6,
+    "totalImages": 6,
+    "priceAsText": false,
+    "overlayCoveringPage": true,
+    "productSchema": false,
+    "framework": "unknown",
+    "pageTextChars": 372,
+    "robotsTxt": "error",
+    "sitemap": "error",
+    "seconds": 7
+  },
+  "tasks": [
+    {
+      "taskId": "find_returns",
+      "goal": "Find this site's return or refund policy. Report how many days customers have to return a product and the URL of the policy page. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "off",
+      "runId": "3809a961-0bbb-4e99-aa4f-7166ae4a6aeb",
+      "status": "passed",
+      "answer": "Customers have 10 days from delivery to return a product for a full refund. The return/refund policy page is located at https://agent-ready-demo.vercel.app/help/policies/shipping/more/returns.html",
+      "blocker": null,
+      "stuckUrl": null,
+      "streamingUrl": "https://ip-52-53-255-115.tetra-data.production.tinyfish.io/tf-73438eb4-a3f0-44f8-b9f3-61488a207c63/stream/0",
+      "steps": [
+        {
+          "id": "5f0b10c6-9fa9-45e0-a778-d4c00511c2f7",
+          "label": "Navigate to the site to find return/refund policy",
+          "seconds": 1.1,
+          "screenshotUrl": "/api/shot/3809a961-0bbb-4e99-aa4f-7166ae4a6aeb/5f0b10c6-9fa9-45e0-a778-d4c00511c2f7",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:32Z"
+        },
+        {
+          "id": "b46df015-c3cf-497c-86b8-0507c970fef9",
+          "label": "Check help page for return/refund policy",
+          "seconds": 1.2,
+          "screenshotUrl": "/api/shot/3809a961-0bbb-4e99-aa4f-7166ae4a6aeb/b46df015-c3cf-497c-86b8-0507c970fef9",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:36Z"
+        },
+        {
+          "id": "a5fca897-1dd4-493e-8fc8-20d68e78bfe0",
+          "label": "Navigate to policies page to find return/refund policy",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/3809a961-0bbb-4e99-aa4f-7166ae4a6aeb/a5fca897-1dd4-493e-8fc8-20d68e78bfe0",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:38Z"
+        },
+        {
+          "id": "0afd66c8-8c3d-4f1f-81e6-841509ae1b4a",
+          "label": "Find return/refund policy details on policies page",
+          "seconds": 1.2,
+          "screenshotUrl": "/api/shot/3809a961-0bbb-4e99-aa4f-7166ae4a6aeb/0afd66c8-8c3d-4f1f-81e6-841509ae1b4a",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:41Z"
+        },
+        {
+          "id": "8fcbb591-2dc3-426f-8d73-118b66839a03",
+          "label": "Check main site for return/refund policy links",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/3809a961-0bbb-4e99-aa4f-7166ae4a6aeb/8fcbb591-2dc3-426f-8d73-118b66839a03",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:43Z"
+        },
+        {
+          "id": "fb25ee7b-8042-4745-a8a5-7db54b02fe79",
+          "label": "Check shipping policy page for any return/refund links",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/3809a961-0bbb-4e99-aa4f-7166ae4a6aeb/fb25ee7b-8042-4745-a8a5-7db54b02fe79",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:48Z"
+        },
+        {
+          "id": "977160a3-63ab-4f77-9b6a-d8c415c156c1",
+          "label": "Check more shipping information for return/refund links",
+          "seconds": 1.3,
+          "screenshotUrl": "/api/shot/3809a961-0bbb-4e99-aa4f-7166ae4a6aeb/977160a3-63ab-4f77-9b6a-d8c415c156c1",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:50Z"
+        },
+        {
+          "id": "511afbec-20d7-4f1e-87c0-c456178eca33",
+          "label": "Visit the returns policy page to get details",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/3809a961-0bbb-4e99-aa4f-7166ae4a6aeb/511afbec-20d7-4f1e-87c0-c456178eca33",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:53Z"
+        },
+        {
+          "id": "d605db75-4d10-43eb-82f3-08f69bc290a6",
+          "label": "Extract return policy details including number of days for returns",
+          "seconds": 1.1,
+          "screenshotUrl": "/api/shot/3809a961-0bbb-4e99-aa4f-7166ae4a6aeb/d605db75-4d10-43eb-82f3-08f69bc290a6",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:00Z"
+        },
+        {
+          "id": "4d3c2093-d291-444b-87c0-52a06258988d",
+          "label": "Report return policy findings",
+          "seconds": 0,
+          "screenshotUrl": "/api/shot/3809a961-0bbb-4e99-aa4f-7166ae4a6aeb/4d3c2093-d291-444b-87c0-52a06258988d",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:05Z"
+        }
+      ],
+      "numSteps": 10,
+      "seconds": 37,
+      "points": 22,
+      "findings": [],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "3809a961-0bbb-4e99-aa4f-7166ae4a6aeb",
+          "passed": true,
+          "numSteps": 10,
+          "blocker": null,
+          "screenshotUrl": "/api/shot/3809a961-0bbb-4e99-aa4f-7166ae4a6aeb/4d3c2093-d291-444b-87c0-52a06258988d"
+        }
+      ],
+      "verdict": "none"
+    },
+    {
+      "taskId": "add_to_cart",
+      "goal": "Find any product, open its product page and add it to the cart. Then open the cart and report the cart total. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "off",
+      "runId": "da854f91-0a13-4a75-8dfb-52da93227bdc",
+      "status": "passed",
+      "answer": "The cart total is 998. I navigated to the shop, added 2 units of Masala Chai Blend (250 g) to the cart, opened the cart page, and the cart total displayed was 998.",
+      "blocker": null,
+      "stuckUrl": null,
+      "streamingUrl": "https://ip-184-169-213-135.tetra-data.production.tinyfish.io/tf-26404152-a03b-49e0-a879-2e9a27fbf9f3/stream/0",
+      "steps": [
+        {
+          "id": "b193f739-2557-451e-8d54-98b1a2ae3cb4",
+          "label": "Visit the demo store to find products",
+          "seconds": 1.1,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/b193f739-2557-451e-8d54-98b1a2ae3cb4",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:32Z"
+        },
+        {
+          "id": "c81c4147-285a-4b82-859d-7d97bd6d80dd",
+          "label": "Open a product page to add to cart",
+          "seconds": 1.1,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/c81c4147-285a-4b82-859d-7d97bd6d80dd",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:35Z"
+        },
+        {
+          "id": "99fc0887-47b3-4e97-9b21-0db196a3da76",
+          "label": "Add Masala Chai Blend to cart",
+          "seconds": 2,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/99fc0887-47b3-4e97-9b21-0db196a3da76",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:43Z"
+        },
+        {
+          "id": "dba406db-fa61-4f8e-9ff6-3df61286ec05",
+          "label": "Navigate to cart page to see total",
+          "seconds": 1.9,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/dba406db-fa61-4f8e-9ff6-3df61286ec05",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:48Z"
+        },
+        {
+          "id": "3573818c-07ba-4505-8edd-a4def5b86983",
+          "label": "Find the actual cart link element to navigate to cart page",
+          "seconds": 0.1,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/3573818c-07ba-4505-8edd-a4def5b86983",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:52Z"
+        },
+        {
+          "id": "9bc8dc27-75df-493f-baf3-5d8d0bca1e9e",
+          "label": "Find cart link and total information",
+          "seconds": 1.4,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/9bc8dc27-75df-493f-baf3-5d8d0bca1e9e",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:54Z"
+        },
+        {
+          "id": "f20b3b38-e81b-4112-8544-a50d7ffacbaa",
+          "label": "Open cart page to see the total",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/f20b3b38-e81b-4112-8544-a50d7ffacbaa",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:09:58Z"
+        },
+        {
+          "id": "08d1a1e1-f1b5-486c-8ffa-73357d460c35",
+          "label": "Find cart total price on cart page",
+          "seconds": 1.9,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/08d1a1e1-f1b5-486c-8ffa-73357d460c35",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:01Z"
+        },
+        {
+          "id": "22675402-b7d8-4e68-81df-d85f40bd38d2",
+          "label": "Read cart total price from image",
+          "seconds": 0.2,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/22675402-b7d8-4e68-81df-d85f40bd38d2",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:05Z"
+        },
+        {
+          "id": "cd507add-1623-4236-ba31-ebd5309aa992",
+          "label": "Find the price of the product to calculate cart total",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/cd507add-1623-4236-ba31-ebd5309aa992",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:07Z"
+        },
+        {
+          "id": "f0f802ed-45ee-43df-b034-ebc46be76871",
+          "label": "Extract cart total and product prices",
+          "seconds": 1.4,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/f0f802ed-45ee-43df-b034-ebc46be76871",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:12Z"
+        },
+        {
+          "id": "9a3082f9-10bd-4e47-8009-69509e76c334",
+          "label": "Revisit cart page to try to find total price",
+          "seconds": 1.1,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/9a3082f9-10bd-4e47-8009-69509e76c334",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:16Z"
+        },
+        {
+          "id": "cc2b827c-5b5a-4ecf-9e06-294eb48df793",
+          "label": "Visit shop page to see product prices",
+          "seconds": 0.9,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/cc2b827c-5b5a-4ecf-9e06-294eb48df793",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:19Z"
+        },
+        {
+          "id": "81f419d5-17d3-47ce-a648-1b0a017aecee",
+          "label": "Find product prices on shop page",
+          "seconds": 1.5,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/81f419d5-17d3-47ce-a648-1b0a017aecee",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:22Z"
+        },
+        {
+          "id": "d5b48190-bd3b-4a64-a6d6-59e6652f0054",
+          "label": "Go to cart page to check total price",
+          "seconds": 0.9,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/d5b48190-bd3b-4a64-a6d6-59e6652f0054",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:25Z"
+        },
+        {
+          "id": "0954dcd2-3408-4df2-9812-f19ddff27a33",
+          "label": "Read cart total price from screenshot",
+          "seconds": 1.3,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/0954dcd2-3408-4df2-9812-f19ddff27a33",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:27Z"
+        },
+        {
+          "id": "a95cf10a-da5e-4ed0-9368-1b9ece8d423b",
+          "label": "Return cart total finding",
+          "seconds": 0,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/a95cf10a-da5e-4ed0-9368-1b9ece8d423b",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:42Z"
+        }
+      ],
+      "numSteps": 17,
+      "seconds": 75,
+      "points": 19,
+      "findings": [
+        {
+          "taskId": "add_to_cart",
+          "verified": true,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/a95cf10a-da5e-4ed0-9368-1b9ece8d423b",
+          "type": "too-many-steps",
+          "severity": "medium",
+          "text": "It took 17 steps to finish this task; a clear page needs about 5.",
+          "likelyCause": "The path to the answer is buried several menus deep or uses unclear link names.",
+          "fix": "Shorten the path: put the key link in the header or footer and name it plainly.",
+          "passCheck": "The task passes in 5 steps or fewer",
+          "pointsIfFixed": 6
+        }
+      ],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "da854f91-0a13-4a75-8dfb-52da93227bdc",
+          "passed": true,
+          "numSteps": 17,
+          "blocker": null,
+          "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/a95cf10a-da5e-4ed0-9368-1b9ece8d423b"
+        }
+      ],
+      "verdict": "none"
+    },
+    {
+      "taskId": "find_price",
+      "goal": "Find any product on this site and report its exact name and price. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "off",
+      "runId": "c3b537b0-59e7-46ea-aa0e-5462163e6d21",
+      "status": "passed",
+      "answer": "Product Name: Masala Chai Blend (250 g), Price: $499",
+      "blocker": null,
+      "stuckUrl": null,
+      "streamingUrl": "https://ip-13-57-19-29.tetra-data.production.tinyfish.io/tf-2285c722-30f0-4823-b045-33acb4896978/stream/0",
+      "steps": [
+        {
+          "id": "86c7ab9d-e92f-4435-88ae-77f2159a2824",
+          "label": "Navigate to the site to find product name and price",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/c3b537b0-59e7-46ea-aa0e-5462163e6d21/86c7ab9d-e92f-4435-88ae-77f2159a2824",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:15Z"
+        },
+        {
+          "id": "c4a0d0df-1e23-4cb7-95db-bdd94dacd940",
+          "label": "View Masala Chai Blend product details for name and price",
+          "seconds": 1.2,
+          "screenshotUrl": "/api/shot/c3b537b0-59e7-46ea-aa0e-5462163e6d21/c4a0d0df-1e23-4cb7-95db-bdd94dacd940",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:21Z"
+        },
+        {
+          "id": "3d58dadc-694c-4778-a5df-3b78c5b698fe",
+          "label": "Extract product name and price from the product page",
+          "seconds": 1.3,
+          "screenshotUrl": "/api/shot/c3b537b0-59e7-46ea-aa0e-5462163e6d21/3d58dadc-694c-4778-a5df-3b78c5b698fe",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:24Z"
+        },
+        {
+          "id": "14c15ff6-3601-48ed-b4a1-e7fa05fef320",
+          "label": "Extract product name and price from the page",
+          "seconds": 1.4,
+          "screenshotUrl": "/api/shot/c3b537b0-59e7-46ea-aa0e-5462163e6d21/14c15ff6-3601-48ed-b4a1-e7fa05fef320",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:26Z"
+        },
+        {
+          "id": "7be48bfd-7a95-4561-850e-53fd31214c27",
+          "label": "Report product name and price found on the site",
+          "seconds": 0,
+          "screenshotUrl": "/api/shot/c3b537b0-59e7-46ea-aa0e-5462163e6d21/7be48bfd-7a95-4561-850e-53fd31214c27",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:29Z"
+        }
+      ],
+      "numSteps": 5,
+      "seconds": 21,
+      "points": 25,
+      "findings": [],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "c3b537b0-59e7-46ea-aa0e-5462163e6d21",
+          "passed": true,
+          "numSteps": 5,
+          "blocker": null,
+          "screenshotUrl": "/api/shot/c3b537b0-59e7-46ea-aa0e-5462163e6d21/7be48bfd-7a95-4561-850e-53fd31214c27"
+        }
+      ],
+      "verdict": "none"
+    },
+    {
+      "taskId": "find_contact",
+      "goal": "Find a way to contact this company's customer support (phone, email, chat or contact form) and report it with the page URL where you found it. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "off",
+      "runId": "7fefcb7d-ca7e-4f1a-8f61-35d2f626e781",
+      "status": "passed",
+      "answer": "Customer support can be contacted via: Email: support@chaiandco.example, Phone: +91 80 4000 1234 (Mon-Sat, 9am-6pm IST). Found on page URL: https://agent-ready-demo.vercel.app/contact.html",
+      "blocker": null,
+      "stuckUrl": null,
+      "streamingUrl": "https://ip-13-56-82-219.tetra-data.production.tinyfish.io/tf-30ecc181-96eb-49cb-9541-9432c44260b0/stream/0",
+      "steps": [
+        {
+          "id": "d6233726-e578-4d24-9b6b-228e88599b9d",
+          "label": "Visit company page to find customer support contact info",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/7fefcb7d-ca7e-4f1a-8f61-35d2f626e781/d6233726-e578-4d24-9b6b-228e88599b9d",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:37Z"
+        },
+        {
+          "id": "efd5205d-09a0-4e34-a7e4-912ad51ac2b3",
+          "label": "Find customer support contact information",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/7fefcb7d-ca7e-4f1a-8f61-35d2f626e781/efd5205d-09a0-4e34-a7e4-912ad51ac2b3",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:39Z"
+        },
+        {
+          "id": "a1178d71-e436-491f-aa6c-2c5a99c6d36e",
+          "label": "Return contact info found on the contact page",
+          "seconds": 0.9,
+          "screenshotUrl": "/api/shot/7fefcb7d-ca7e-4f1a-8f61-35d2f626e781/a1178d71-e436-491f-aa6c-2c5a99c6d36e",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:10:42Z"
+        }
+      ],
+      "numSteps": 3,
+      "seconds": 8,
+      "points": 25,
+      "findings": [],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "7fefcb7d-ca7e-4f1a-8f61-35d2f626e781",
+          "passed": true,
+          "numSteps": 3,
+          "blocker": null,
+          "screenshotUrl": "/api/shot/7fefcb7d-ca7e-4f1a-8f61-35d2f626e781/a1178d71-e436-491f-aa6c-2c5a99c6d36e"
+        }
+      ],
+      "verdict": "none"
+    }
+  ],
+  "topFixes": [
+    {
+      "type": "popup-blocking",
+      "severity": "high",
+      "text": "A pop-up or banner covers most of the page, so an AI shopper cannot see or click what is underneath.",
+      "likelyCause": "A full-page pop-up or banner covers the content and has no easy close control.",
+      "fix": "Give every pop-up a labelled close button, let it be dismissed with Escape, and do not cover the whole page on first load.",
+      "standard": "WCAG 2.1.2 No Keyboard Trap; WCAG 4.1.2 Name, Role, Value",
+      "passCheck": "The page content is reachable without dismissing a pop-up, or the pop-up closes with one click.",
+      "pointsIfFixed": 0,
+      "verified": true
+    },
+    {
+      "type": "price-in-image",
+      "severity": "high",
+      "text": "No price was found as text on the page; it may be drawn inside an image, which AI shoppers cannot read.",
+      "likelyCause": "The price appears only inside an image, so it has no text a screen reader or an agent can read.",
+      "fix": "Show the price as real text and, if an image must be used, add matching alt text.",
+      "standard": "WCAG 1.1.1 Non-text Content",
+      "passCheck": "The price is found as text in the page, in 5 steps or fewer.",
+      "pointsIfFixed": 0,
+      "verified": true
+    },
+    {
+      "taskId": "add_to_cart",
+      "verified": true,
+      "screenshotUrl": "/api/shot/da854f91-0a13-4a75-8dfb-52da93227bdc/a95cf10a-da5e-4ed0-9368-1b9ece8d423b",
+      "type": "too-many-steps",
+      "severity": "medium",
+      "text": "It took 17 steps to finish this task; a clear page needs about 5.",
+      "likelyCause": "The path to the answer is buried several menus deep or uses unclear link names.",
+      "fix": "Shorten the path: put the key link in the header or footer and name it plainly.",
+      "passCheck": "The task passes in 5 steps or fewer",
+      "pointsIfFixed": 6
+    }
+  ],
+  "scanFindings": [
+    {
+      "type": "popup-blocking",
+      "severity": "high",
+      "text": "A pop-up or banner covers most of the page, so an AI shopper cannot see or click what is underneath.",
+      "likelyCause": "A full-page pop-up or banner covers the content and has no easy close control.",
+      "fix": "Give every pop-up a labelled close button, let it be dismissed with Escape, and do not cover the whole page on first load.",
+      "standard": "WCAG 2.1.2 No Keyboard Trap; WCAG 4.1.2 Name, Role, Value",
+      "passCheck": "The page content is reachable without dismissing a pop-up, or the pop-up closes with one click.",
+      "pointsIfFixed": 0,
+      "verified": true
+    },
+    {
+      "type": "price-in-image",
+      "severity": "high",
+      "text": "No price was found as text on the page; it may be drawn inside an image, which AI shoppers cannot read.",
+      "likelyCause": "The price appears only inside an image, so it has no text a screen reader or an agent can read.",
+      "fix": "Show the price as real text and, if an image must be used, add matching alt text.",
+      "standard": "WCAG 1.1.1 Non-text Content",
+      "passCheck": "The price is found as text in the page, in 5 steps or fewer.",
+      "pointsIfFixed": 0,
+      "verified": true
+    },
+    {
+      "type": "no-product-schema",
+      "severity": "low",
+      "text": "The page has no schema.org Product data, so agents must guess product details from the page layout.",
+      "likelyCause": "The product page has no schema.org Product/Offer markup, so machines must guess the name and price from the layout.",
+      "fix": "Add JSON-LD Product markup with name, image, offers.price and offers.priceCurrency.",
+      "standard": "schema.org Product",
+      "passCheck": "Google Rich Results Test shows a valid Product on the page.",
+      "pointsIfFixed": 0,
+      "verified": true
+    }
+  ]
+}

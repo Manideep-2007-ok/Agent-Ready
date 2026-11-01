@@ -227,6 +227,8 @@ Run in parallel:
   - `overlayCoveringPage`: any visible element with `position: fixed|sticky` covering >30% of the viewport.
   - `productSchema`: any `script[type="application/ld+json"]` containing `Product` or `Offer`.
   - `framework`: `detectFramework(page)`.
+- Then open one same-origin product link from the home page (`/product`, `/products/`, `/p/`, `/dp/`, 12 s cap) and run the same audit there; counts add up, a problem on either page counts. Many flaws (icon-only Add to cart, price images) live on product pages.
+- robots.txt / sitemap that Fetch could not read are reported as `missing`; `error` only when the whole Fetch call failed.
 - Always `closeBrowserSession` in `finally`. Instant Scan findings: `popup-blocking`, `unlabelled-buttons`, `price-in-image` (no price text but price expected), `no-product-schema` (low severity).
 - The server stores them as `SiteReport.scanFindings` (`instantScanFindings(scan)`) as soon as the scan finishes. They are not part of the 100-point score (`pointsIfFixed: 0`), are shown in the findings list next to task findings, and can enter the Top 3 (D25).
 
@@ -328,8 +330,8 @@ Plain HTML/CSS/JS deployed on Vercel (static). Pages: `index.html` (products), `
 `flaws.js` reads `?flaws=on|off` (or individual `popup, priceImg, iconCart, hiddenReturns`), saves to localStorage, applies on every page:
 - **popup:** full-screen fixed overlay, no close button.
 - **priceImg:** price rendered only as `price.png` image, no text, no alt.
-- **iconCart:** Add to cart is an icon-only `<button>` with no text and no `aria-label`.
-- **hiddenReturns:** no "Returns" link in the footer; reachable only via Help -> Policies -> Shipping -> More -> Returns.
+- **iconCart:** Add to cart is an icon-only `<button>` with no text and no `aria-label`; the header cart link is an icon with a number, no "Cart" text.
+- **hiddenReturns:** no "Returns" link in the footer; reachable only via Help -> Policies -> Shipping -> More shipping information -> "Other information" -> "Read the full document" (vague labels, one page deeper than with flaws off).
 With flaws off: normal text price, labelled button, footer Returns link, no popup. Expect ~30 s per task.
 
 ---
