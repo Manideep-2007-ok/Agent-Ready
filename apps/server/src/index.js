@@ -32,10 +32,14 @@ const safe = (router) => {
 const requireFeature = (name) => (_req, res, next) =>
   config.features[name] ? next() : res.status(404).json({ error: `The ${name.toLowerCase()} feature is turned off.` });
 
+// Flags gate only their own paths, before any router, so one switched-off feature never hides another.
+app.use('/api/race', requireFeature('RACE'));
+app.use('/api/leaderboard', requireFeature('LEADERBOARD'));
+
 app.get('/api/health', (_req, res) => res.json({ ok: true, mock: config.mock }));
 app.use('/api', safe(testsRoutes(deps)));
-app.use('/api', requireFeature('RACE'), safe(raceRoutes(deps)));
-app.use('/api', requireFeature('LEADERBOARD'), safe(extrasRoutes(deps)));
+app.use('/api', safe(raceRoutes(deps)));
+app.use('/api', safe(extrasRoutes(deps)));
 
 // Agent-Ready Watch (Manideep's routes; they check FEATURE_WATCH and handle their own errors).
 setPublisher(events.publish);
