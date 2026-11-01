@@ -47,6 +47,8 @@ const BentoCard = ({
     key={name}
     className={cn(
       "group relative col-span-3 flex flex-col justify-between overflow-hidden rounded-xl",
+      // AgentReady: the whole card lifts on hover (content stays put), no motion with reduced-motion
+      "transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:-translate-y-1 hover:[box-shadow:0_2px_4px_rgba(0,0,0,.05),0_18px_40px_rgba(0,0,0,.12)] motion-reduce:transition-none motion-reduce:hover:translate-y-0",
       // light styles
       "bg-background [box-shadow:0_0_0_1px_rgba(0,0,0,.03),0_2px_4px_rgba(0,0,0,.05),0_12px_24px_rgba(0,0,0,.05)]",
       // dark styles
@@ -56,9 +58,9 @@ const BentoCard = ({
     {...props}
   >
     <div>{background}</div>
-    <div className="p-4">
-      <div className="pointer-events-none z-10 flex transform-gpu flex-col gap-1 transition-all duration-300 lg:group-hover:-translate-y-10">
-        <Icon className="h-12 w-12 origin-left transform-gpu text-neutral-700 transition-all duration-300 ease-in-out group-hover:scale-75" />
+    <div className="p-4 lg:pb-12">
+      <div className="pointer-events-none z-10 flex transform-gpu flex-col gap-1 transition-all duration-300">
+        <Icon className="h-12 w-12 origin-left transform-gpu text-neutral-700 transition-all duration-300 ease-in-out group-hover:scale-90" />
         <h3 className="text-xl font-semibold text-neutral-700 dark:text-neutral-300">
           {name}
         </h3>
@@ -86,7 +88,7 @@ const BentoCard = ({
 
     <div
       className={cn(
-        "pointer-events-none absolute bottom-0 hidden w-full translate-y-10 transform-gpu flex-row items-center p-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 lg:flex"
+        "pointer-events-none absolute bottom-0 hidden w-full transform-gpu flex-row items-center p-4 lg:flex [&_svg]:transition-transform [&_svg]:duration-300 group-hover:[&_svg]:translate-x-1"
       )}
     >
       <Button
