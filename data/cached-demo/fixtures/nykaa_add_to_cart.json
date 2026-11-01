@@ -1,0 +1,217 @@
+{
+ "name": "nykaa_add_to_cart",
+ "runId": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+ "sseEvents": [
+  {
+   "type": "STARTED",
+   "run_id": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+   "timestamp": "2026-10-31T09:26:18.812Z"
+  },
+  {
+   "type": "STREAMING_URL",
+   "run_id": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+   "streaming_url": "https://ip-13-57-19-29.tetra-data.production.tinyfish.io/tf-6b4f6861-91a3-4ccc-b176-86fef12f64a8/stream/0",
+   "timestamp": "2026-10-31T09:26:20.507Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+   "purpose": "Visit Nykaa homepage to find lipstick products",
+   "timestamp": "2026-10-31T09:26:22.205Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:26:37.207Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:26:52.207Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+   "purpose": "Visit Nykaa homepage to search for lipsticks",
+   "timestamp": "2026-10-31T09:26:52.943Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:27:07.952Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:27:22.952Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+   "purpose": "Navigate to lipstick category page",
+   "timestamp": "2026-10-31T09:27:28.142Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:27:43.144Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:27:58.144Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+   "purpose": "Navigate to Maybelline lipstick product page",
+   "timestamp": "2026-10-31T09:28:05.472Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:28:20.475Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:28:35.475Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+   "purpose": "Add Maybelline lipstick to the shopping bag",
+   "timestamp": "2026-10-31T09:28:38.746Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+   "purpose": "Open shopping bag/cart to view total",
+   "timestamp": "2026-10-31T09:28:48.030Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+   "purpose": "Extract cart total and price details",
+   "timestamp": "2026-10-31T09:28:54.317Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+   "purpose": "Report final cart total for the lipstick added to bag",
+   "timestamp": "2026-10-31T09:29:01.559Z"
+  },
+  {
+   "type": "COMPLETE",
+   "run_id": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+   "status": "COMPLETED",
+   "timestamp": "2026-10-31T09:29:04.193Z",
+   "result": {
+    "success": true,
+    "cart_total": "₹467",
+    "steps_taken": 7,
+    "blocker": null
+   }
+  }
+ ],
+ "runRecord": {
+  "run_id": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+  "status": "COMPLETED",
+  "goal": "Navigate to https://www.nykaa.com to complete the goal: Find any lipstick, open its product page and add it to the cart. Then open the cart and report the cart total. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, OTP), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"cart_total\": string or null, \"steps_taken\": number, \"blocker\": string or null}",
+  "created_at": "2026-10-31T09:26:18Z",
+  "started_at": "2026-10-31T09:26:21Z",
+  "finished_at": "2026-10-31T09:29:04Z",
+  "num_of_steps": 8,
+  "result": {
+   "blocker": null,
+   "success": true,
+   "cart_total": "₹467",
+   "steps_taken": 7
+  },
+  "output_schema": null,
+  "profile_attached": false,
+  "profile_id": null,
+  "error": null,
+  "streaming_url": "https://ip-13-57-19-29.tetra-data.production.tinyfish.io/tf-6b4f6861-91a3-4ccc-b176-86fef12f64a8/stream/0",
+  "browser_config": {
+   "proxy_enabled": false,
+   "proxy_country_code": null
+  },
+  "video_url": null,
+  "steps": [
+   {
+    "id": "f2e11751-213e-4256-83c8-9048f87e1842",
+    "timestamp": "2026-10-31T09:26:22Z",
+    "status": "RUNNING",
+    "action": "Visit Nykaa homepage to find lipstick products",
+    "screenshot": "https://agent.tinyfish.ai/runs/d96fa38f-090c-4c18-bf25-ddd2fab788e2/steps/f2e11751-213e-4256-83c8-9048f87e1842/screenshot",
+    "html": null,
+    "duration": "3.6s"
+   },
+   {
+    "id": "ec65173b-6c26-4b4d-96b5-191a8e23be53",
+    "timestamp": "2026-10-31T09:26:52Z",
+    "status": "RUNNING",
+    "action": "Visit Nykaa homepage to search for lipsticks",
+    "screenshot": "https://agent.tinyfish.ai/runs/d96fa38f-090c-4c18-bf25-ddd2fab788e2/steps/ec65173b-6c26-4b4d-96b5-191a8e23be53/screenshot",
+    "html": null,
+    "duration": "3.8s"
+   },
+   {
+    "id": "adfa360c-931b-4dc4-b57a-c00aabe96ec2",
+    "timestamp": "2026-10-31T09:27:28Z",
+    "status": "RUNNING",
+    "action": "Navigate to lipstick category page",
+    "screenshot": "https://agent.tinyfish.ai/runs/d96fa38f-090c-4c18-bf25-ddd2fab788e2/steps/adfa360c-931b-4dc4-b57a-c00aabe96ec2/screenshot",
+    "html": null,
+    "duration": "4.1s"
+   },
+   {
+    "id": "ec731ae0-0129-4738-87da-5d90d5bc2c31",
+    "timestamp": "2026-10-31T09:28:05Z",
+    "status": "RUNNING",
+    "action": "Navigate to Maybelline lipstick product page",
+    "screenshot": "https://agent.tinyfish.ai/runs/d96fa38f-090c-4c18-bf25-ddd2fab788e2/steps/ec731ae0-0129-4738-87da-5d90d5bc2c31/screenshot",
+    "html": null,
+    "duration": "4.8s"
+   },
+   {
+    "id": "a856e66e-4688-41c7-970c-2a1507b23c81",
+    "timestamp": "2026-10-31T09:28:38Z",
+    "status": "RUNNING",
+    "action": "Add Maybelline lipstick to the shopping bag",
+    "screenshot": "https://agent.tinyfish.ai/runs/d96fa38f-090c-4c18-bf25-ddd2fab788e2/steps/a856e66e-4688-41c7-970c-2a1507b23c81/screenshot",
+    "html": null,
+    "duration": "3.2s"
+   },
+   {
+    "id": "e127335d-5d3b-4e63-b4a3-488c3ac3e674",
+    "timestamp": "2026-10-31T09:28:48Z",
+    "status": "RUNNING",
+    "action": "Open shopping bag/cart to view total",
+    "screenshot": "https://agent.tinyfish.ai/runs/d96fa38f-090c-4c18-bf25-ddd2fab788e2/steps/e127335d-5d3b-4e63-b4a3-488c3ac3e674/screenshot",
+    "html": null,
+    "duration": "2.4s"
+   },
+   {
+    "id": "8e7cbd2c-fd18-41ac-b29e-280b906b9cda",
+    "timestamp": "2026-10-31T09:28:54Z",
+    "status": "RUNNING",
+    "action": "Extract cart total and price details",
+    "screenshot": "https://agent.tinyfish.ai/runs/d96fa38f-090c-4c18-bf25-ddd2fab788e2/steps/8e7cbd2c-fd18-41ac-b29e-280b906b9cda/screenshot",
+    "html": null,
+    "duration": "3.1s"
+   },
+   {
+    "id": "fc4079a8-51a9-4af6-a195-91a8f76ea0a2",
+    "timestamp": "2026-10-31T09:29:01Z",
+    "status": "RUNNING",
+    "action": "Report final cart total for the lipstick added to bag",
+    "screenshot": "https://agent.tinyfish.ai/runs/d96fa38f-090c-4c18-bf25-ddd2fab788e2/steps/fc4079a8-51a9-4af6-a195-91a8f76ea0a2/screenshot",
+    "html": null,
+    "duration": "2.6s"
+   },
+   {
+    "id": "7906771c-c66a-4a4f-818d-acb67cd99180",
+    "timestamp": "2026-10-31T09:29:04Z",
+    "status": "COMPLETED",
+    "action": "Task completed",
+    "screenshot": null,
+    "html": null,
+    "duration": null
+   }
+  ]
+ }
+}

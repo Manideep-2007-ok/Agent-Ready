@@ -1,5 +1,8 @@
 {
   "name": "@agentready/server",
   "version": "0.1.0",
-  "private": true
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": { "dev": "node --watch --env-file=../../.env src/index.js", "start": "node --env-file=../../.env src/index.js" }
 }

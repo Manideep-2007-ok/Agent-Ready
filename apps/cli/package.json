@@ -1,5 +1,7 @@
 {
   "name": "@agentready/cli",
   "version": "0.1.0",
-  "private": true
+  "private": true,
+  "type": "module",
+  "bin": { "agentready": "bin/agentready.js" }
 }

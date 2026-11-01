@@ -1,0 +1,363 @@
+{
+ "name": "swiggy_add_to_cart",
+ "runId": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+ "sseEvents": [
+  {
+   "type": "STARTED",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "timestamp": "2026-10-31T09:41:02.303Z"
+  },
+  {
+   "type": "STREAMING_URL",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "streaming_url": "https://ip-18-144-154-238.tetra-data.production.tinyfish.io/tf-5eedf295-771a-44a5-b7d4-9fad586da6cd/stream/0",
+   "timestamp": "2026-10-31T09:41:03.823Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Navigate to Swiggy food ordering website",
+   "timestamp": "2026-10-31T09:41:05.097Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Find location setting mechanism on Swiggy homepage",
+   "timestamp": "2026-10-31T09:41:15.261Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Set delivery location to Koramangala, Bangalore",
+   "timestamp": "2026-10-31T09:41:22.149Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Check location search results for Koramangala",
+   "timestamp": "2026-10-31T09:41:26.009Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Select Koramangala as delivery location",
+   "timestamp": "2026-10-31T09:41:31.761Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Search for restaurants in Koramangala",
+   "timestamp": "2026-10-31T09:41:43.984Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Navigate to search results for food delivery",
+   "timestamp": "2026-10-31T09:41:57.074Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Find restaurant listings on search page",
+   "timestamp": "2026-10-31T09:42:00.636Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Browse all restaurants in Koramangala",
+   "timestamp": "2026-10-31T09:42:03.630Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Open McDonald's restaurant page in Koramangala",
+   "timestamp": "2026-10-31T09:42:09.880Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Add 2 Pc McSpicy Chicken Wings to cart",
+   "timestamp": "2026-10-31T09:42:17.177Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Find cart button and total amount",
+   "timestamp": "2026-10-31T09:42:21.371Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Find cart button and total amount on McDonald's page",
+   "timestamp": "2026-10-31T09:42:26.436Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Find cart button to see total",
+   "timestamp": "2026-10-31T09:42:31.995Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "List all elements to find cart",
+   "timestamp": "2026-10-31T09:42:37.416Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Click floating menu button to find cart",
+   "timestamp": "2026-10-31T09:42:43.687Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Find cart button on the page",
+   "timestamp": "2026-10-31T09:42:48.524Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Find cart button visually",
+   "timestamp": "2026-10-31T09:42:54.611Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Find cart button on current page",
+   "timestamp": "2026-10-31T09:43:02.625Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "purpose": "Report findings on Swiggy task - could not find cart total",
+   "timestamp": "2026-10-31T09:43:08.997Z"
+  },
+  {
+   "type": "COMPLETE",
+   "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+   "status": "COMPLETED",
+   "timestamp": "2026-10-31T09:43:14.126Z",
+   "result": {
+    "success": false,
+    "answer": null,
+    "blocker": "After setting the delivery location to Koramangala, Bangalore and adding '2 Pc McSpicy Chicken Wings' (₹100) from McDonald's to the cart, the cart total could not be retrieved. Swiggy's interface did not display a visible 'View Cart' button, floating cart icon, or cart total on the restaurant menu page. The page only showed menu categories in a browse menu modal, with no cart summary or order button visible anywhere on the page. Without being able to access the cart page or see a cart total, the final cart total (which would include item price, taxes, and delivery fees) could not be determined."
+   }
+  }
+ ],
+ "runRecord": {
+  "run_id": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+  "status": "COMPLETED",
+  "goal": "Navigate to https://www.swiggy.com to complete the goal: Set the delivery location to Koramangala, Bangalore, open any restaurant, add one item to the cart and report the cart total. Do NOT log in or pay. If anything blocks you (login wall, OTP, captcha, location error), stop and describe exactly what blocked you. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null}",
+  "created_at": "2026-10-31T09:41:02Z",
+  "started_at": "2026-10-31T09:41:04Z",
+  "finished_at": "2026-10-31T09:43:14Z",
+  "num_of_steps": 20,
+  "result": {
+   "answer": null,
+   "blocker": "After setting the delivery location to Koramangala, Bangalore and adding '2 Pc McSpicy Chicken Wings' (₹100) from McDonald's to the cart, the cart total could not be retrieved. Swiggy's interface did not display a visible 'View Cart' button, floating cart icon, or cart total on the restaurant menu page. The page only showed menu categories in a browse menu modal, with no cart summary or order button visible anywhere on the page. Without being able to access the cart page or see a cart total, the final cart total (which would include item price, taxes, and delivery fees) could not be determined.",
+   "success": false
+  },
+  "output_schema": null,
+  "profile_attached": false,
+  "profile_id": null,
+  "error": null,
+  "streaming_url": "https://ip-18-144-154-238.tetra-data.production.tinyfish.io/tf-5eedf295-771a-44a5-b7d4-9fad586da6cd/stream/0",
+  "browser_config": {
+   "proxy_enabled": false,
+   "proxy_country_code": null
+  },
+  "video_url": null,
+  "steps": [
+   {
+    "id": "c42db0f0-01fd-4d48-8a2c-5eb20647cea4",
+    "timestamp": "2026-10-31T09:41:05Z",
+    "status": "RUNNING",
+    "action": "Navigate to Swiggy food ordering website",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/c42db0f0-01fd-4d48-8a2c-5eb20647cea4/screenshot",
+    "html": null,
+    "duration": "2.0s"
+   },
+   {
+    "id": "c5ca5ec4-84e1-45bc-a35e-a90f0c3ac1f8",
+    "timestamp": "2026-10-31T09:41:15Z",
+    "status": "RUNNING",
+    "action": "Find location setting mechanism on Swiggy homepage",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/c5ca5ec4-84e1-45bc-a35e-a90f0c3ac1f8/screenshot",
+    "html": null,
+    "duration": "2.4s"
+   },
+   {
+    "id": "c6fa64da-9d0c-493a-8d0e-d4dd6f402116",
+    "timestamp": "2026-10-31T09:41:22Z",
+    "status": "RUNNING",
+    "action": "Set delivery location to Koramangala, Bangalore",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/c6fa64da-9d0c-493a-8d0e-d4dd6f402116/screenshot",
+    "html": null,
+    "duration": "1.3s"
+   },
+   {
+    "id": "dcf92419-0c35-47f5-82d3-0f62ad1b1a01",
+    "timestamp": "2026-10-31T09:41:26Z",
+    "status": "RUNNING",
+    "action": "Check location search results for Koramangala",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/dcf92419-0c35-47f5-82d3-0f62ad1b1a01/screenshot",
+    "html": null,
+    "duration": "1.9s"
+   },
+   {
+    "id": "b219c9e1-885c-437d-808e-48487176f8a2",
+    "timestamp": "2026-10-31T09:41:31Z",
+    "status": "RUNNING",
+    "action": "Select Koramangala as delivery location",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/b219c9e1-885c-437d-808e-48487176f8a2/screenshot",
+    "html": null,
+    "duration": "5.3s"
+   },
+   {
+    "id": "c1a10691-7828-4a2a-b32a-3d2839b28089",
+    "timestamp": "2026-10-31T09:41:43Z",
+    "status": "RUNNING",
+    "action": "Search for restaurants in Koramangala",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/c1a10691-7828-4a2a-b32a-3d2839b28089/screenshot",
+    "html": null,
+    "duration": "10.6s"
+   },
+   {
+    "id": "315eaada-f52a-4028-9bf2-091cc6f20f4d",
+    "timestamp": "2026-10-31T09:41:57Z",
+    "status": "RUNNING",
+    "action": "Navigate to search results for food delivery",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/315eaada-f52a-4028-9bf2-091cc6f20f4d/screenshot",
+    "html": null,
+    "duration": "1.0s"
+   },
+   {
+    "id": "fb614783-4003-4df4-8442-f0db2c1e4df8",
+    "timestamp": "2026-10-31T09:42:00Z",
+    "status": "RUNNING",
+    "action": "Find restaurant listings on search page",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/fb614783-4003-4df4-8442-f0db2c1e4df8/screenshot",
+    "html": null,
+    "duration": "1.5s"
+   },
+   {
+    "id": "455aaf7c-65f4-453d-b2d7-5bc7eb45846e",
+    "timestamp": "2026-10-31T09:42:03Z",
+    "status": "RUNNING",
+    "action": "Browse all restaurants in Koramangala",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/455aaf7c-65f4-453d-b2d7-5bc7eb45846e/screenshot",
+    "html": null,
+    "duration": "2.6s"
+   },
+   {
+    "id": "29702061-0cde-4832-994b-bfa54c030ae6",
+    "timestamp": "2026-10-31T09:42:09Z",
+    "status": "RUNNING",
+    "action": "Open McDonald's restaurant page in Koramangala",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/29702061-0cde-4832-994b-bfa54c030ae6/screenshot",
+    "html": null,
+    "duration": "2.5s"
+   },
+   {
+    "id": "8646de9e-060c-4782-b298-1304a682d444",
+    "timestamp": "2026-10-31T09:42:17Z",
+    "status": "RUNNING",
+    "action": "Add 2 Pc McSpicy Chicken Wings to cart",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/8646de9e-060c-4782-b298-1304a682d444/screenshot",
+    "html": null,
+    "duration": "2.2s"
+   },
+   {
+    "id": "d104ab9e-f21f-4fd0-99f3-6d631b919795",
+    "timestamp": "2026-10-31T09:42:21Z",
+    "status": "RUNNING",
+    "action": "Find cart button and total amount",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/d104ab9e-f21f-4fd0-99f3-6d631b919795/screenshot",
+    "html": null,
+    "duration": "1.9s"
+   },
+   {
+    "id": "0c14e43c-ee64-4932-ad16-af0447601aa0",
+    "timestamp": "2026-10-31T09:42:26Z",
+    "status": "RUNNING",
+    "action": "Find cart button and total amount on McDonald's page",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/0c14e43c-ee64-4932-ad16-af0447601aa0/screenshot",
+    "html": null,
+    "duration": "2.5s"
+   },
+   {
+    "id": "55bc8f2d-8f41-40a7-ad43-1e9e968cca5f",
+    "timestamp": "2026-10-31T09:42:31Z",
+    "status": "RUNNING",
+    "action": "Find cart button to see total",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/55bc8f2d-8f41-40a7-ad43-1e9e968cca5f/screenshot",
+    "html": null,
+    "duration": "2.1s"
+   },
+   {
+    "id": "4ed8ae44-1ecd-43b3-8a07-db698e808e14",
+    "timestamp": "2026-10-31T09:42:37Z",
+    "status": "RUNNING",
+    "action": "List all elements to find cart",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/4ed8ae44-1ecd-43b3-8a07-db698e808e14/screenshot",
+    "html": null,
+    "duration": "4.1s"
+   },
+   {
+    "id": "631d1d73-bdbb-43a9-8051-97df4306cfa5",
+    "timestamp": "2026-10-31T09:42:43Z",
+    "status": "RUNNING",
+    "action": "Click floating menu button to find cart",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/631d1d73-bdbb-43a9-8051-97df4306cfa5/screenshot",
+    "html": null,
+    "duration": "1.7s"
+   },
+   {
+    "id": "b7c085f8-31e3-4956-b799-4206a7a792db",
+    "timestamp": "2026-10-31T09:42:48Z",
+    "status": "RUNNING",
+    "action": "Find cart button on the page",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/b7c085f8-31e3-4956-b799-4206a7a792db/screenshot",
+    "html": null,
+    "duration": "2.3s"
+   },
+   {
+    "id": "67cc7b3c-1835-474a-b247-fcbd8dd0062f",
+    "timestamp": "2026-10-31T09:42:54Z",
+    "status": "RUNNING",
+    "action": "Find cart button visually",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/67cc7b3c-1835-474a-b247-fcbd8dd0062f/screenshot",
+    "html": null,
+    "duration": "2.0s"
+   },
+   {
+    "id": "fb1d8743-6011-4fdf-9d33-44ba9537c1bb",
+    "timestamp": "2026-10-31T09:43:02Z",
+    "status": "RUNNING",
+    "action": "Find cart button on current page",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/fb1d8743-6011-4fdf-9d33-44ba9537c1bb/screenshot",
+    "html": null,
+    "duration": "2.0s"
+   },
+   {
+    "id": "b6841849-b048-41f9-9e4b-54277bc24e27",
+    "timestamp": "2026-10-31T09:43:08Z",
+    "status": "RUNNING",
+    "action": "Report findings on Swiggy task - could not find cart total",
+    "screenshot": "https://agent.tinyfish.ai/runs/4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0/steps/b6841849-b048-41f9-9e4b-54277bc24e27/screenshot",
+    "html": null,
+    "duration": "0.0s"
+   },
+   {
+    "id": "6c719864-0ffc-4cb6-9288-ff8ca7ccb15d",
+    "timestamp": "2026-10-31T09:43:14Z",
+    "status": "COMPLETED",
+    "action": "Task completed",
+    "screenshot": null,
+    "html": null,
+    "duration": null
+   }
+  ]
+ }
+}

@@ -1,0 +1,239 @@
+{
+ "name": "shopper_lipstick",
+ "runId": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+ "sseEvents": [
+  {
+   "type": "STARTED",
+   "run_id": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+   "timestamp": "2026-10-31T13:38:27.004Z"
+  },
+  {
+   "type": "STREAMING_URL",
+   "run_id": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+   "streaming_url": "https://ip-13-57-19-29.tetra-data.production.tinyfish.io/tf-66e46697-0dd0-400c-b862-b3b507e4c0b4/stream/0",
+   "timestamp": "2026-10-31T13:38:28.837Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+   "purpose": "Search for matte lipstick under 500 online India",
+   "timestamp": "2026-10-31T13:38:33.878Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+   "purpose": "Browse matte lipsticks under 500 on Amazon India",
+   "timestamp": "2026-10-31T13:38:42.797Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T13:38:57.805Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T13:39:12.805Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T13:39:27.805Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T13:39:42.805Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T13:39:57.805Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+   "purpose": "Extract matte lipstick details from Amazon",
+   "timestamp": "2026-10-31T13:40:08.006Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T13:40:23.038Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+   "purpose": "Browse matte lipsticks on Nykaa India",
+   "timestamp": "2026-10-31T13:40:31.150Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T13:40:46.156Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+   "purpose": "Browse matte lipsticks on Flipkart India",
+   "timestamp": "2026-10-31T13:40:56.274Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T13:41:11.276Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+   "purpose": "Browse matte lipsticks under 500 on Flipkart India",
+   "timestamp": "2026-10-31T13:41:22.875Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+   "purpose": "Search for matte lipsticks on Flipkart",
+   "timestamp": "2026-10-31T13:41:32.707Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T13:41:47.710Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T13:42:02.710Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T13:42:17.711Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+   "purpose": "Present final selection of Maybelline SuperStay Matte Ink lipstick from Flipkart",
+   "timestamp": "2026-10-31T13:42:20.043Z"
+  },
+  {
+   "type": "COMPLETE",
+   "run_id": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+   "status": "COMPLETED",
+   "timestamp": "2026-10-31T13:42:22.983Z",
+   "result": {
+    "chosen_store": "Flipkart",
+    "product": "MAYBELLINE NEW YORK Superstay Matte Ink Liquid Lipstick, Warrior",
+    "price": "₹320",
+    "stores_considered": [
+     "Amazon.in",
+     "Flipkart"
+    ],
+    "why_chosen": "Maybelline SuperStay Matte Ink is a highly rated product (4.3/5 stars from 89,422+ ratings on Flipkart) with proven long-lasting wear. The price of ₹320 (57% off from ₹749) is well within the ₹500 budget and offers excellent value for a premium international brand with strong user reviews.",
+    "why_others_rejected": "On Amazon.in, many matte lipsticks under ₹500 were either sponsored ads from lesser-known brands, had significantly fewer reviews, or were priced near or above ₹500. Flipkart alternatives like Lakmé 9TO5 Primer + Matte Lipstick (₹217, 4.1 rating, 1.34L+ ratings) were also good, but the Maybelline SuperStay Matte Ink is a more globally trusted matte lipstick brand with a specific reputation for long-lasting matte finish that aligns best with the 'matte' requirement."
+   }
+  }
+ ],
+ "runRecord": {
+  "run_id": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+  "status": "COMPLETED",
+  "goal": "Navigate to https://duckduckgo.com/?q=buy+matte+lipstick+under+500+online+India to complete the goal: You are an AI shopping assistant for a customer in Bangalore. Find a good matte lipstick under 500 rupees from an Indian online store. Look at at least 2 different stores before choosing. Do not log in or pay. Return JSON: {\"chosen_store\": string, \"product\": string, \"price\": string, \"stores_considered\": [string], \"why_chosen\": string, \"why_others_rejected\": string}",
+  "created_at": "2026-10-31T13:38:26Z",
+  "started_at": "2026-10-31T13:38:29Z",
+  "finished_at": "2026-10-31T13:42:23Z",
+  "num_of_steps": 8,
+  "result": {
+   "price": "₹320",
+   "product": "MAYBELLINE NEW YORK Superstay Matte Ink Liquid Lipstick, Warrior",
+   "why_chosen": "Maybelline SuperStay Matte Ink is a highly rated product (4.3/5 stars from 89,422+ ratings on Flipkart) with proven long-lasting wear. The price of ₹320 (57% off from ₹749) is well within the ₹500 budget and offers excellent value for a premium international brand with strong user reviews.",
+   "chosen_store": "Flipkart",
+   "stores_considered": [
+    "Amazon.in",
+    "Flipkart"
+   ],
+   "why_others_rejected": "On Amazon.in, many matte lipsticks under ₹500 were either sponsored ads from lesser-known brands, had significantly fewer reviews, or were priced near or above ₹500. Flipkart alternatives like Lakmé 9TO5 Primer + Matte Lipstick (₹217, 4.1 rating, 1.34L+ ratings) were also good, but the Maybelline SuperStay Matte Ink is a more globally trusted matte lipstick brand with a specific reputation for long-lasting matte finish that aligns best with the 'matte' requirement."
+  },
+  "output_schema": null,
+  "profile_attached": false,
+  "profile_id": null,
+  "error": null,
+  "streaming_url": "https://ip-13-57-19-29.tetra-data.production.tinyfish.io/tf-66e46697-0dd0-400c-b862-b3b507e4c0b4/stream/0",
+  "browser_config": {
+   "proxy_enabled": false,
+   "proxy_country_code": null
+  },
+  "video_url": null,
+  "steps": [
+   {
+    "id": "b85f8045-183c-4143-8300-d55222060648",
+    "timestamp": "2026-10-31T13:38:33Z",
+    "status": "RUNNING",
+    "action": "Search for matte lipstick under 500 online India",
+    "screenshot": "https://agent.tinyfish.ai/runs/96f36897-a688-49a3-95f8-6e6ae3928ff7/steps/b85f8045-183c-4143-8300-d55222060648/screenshot",
+    "html": null,
+    "duration": "2.3s"
+   },
+   {
+    "id": "2318a065-9140-4fa7-82d4-e5f0065a017a",
+    "timestamp": "2026-10-31T13:38:42Z",
+    "status": "RUNNING",
+    "action": "Browse matte lipsticks under 500 on Amazon India",
+    "screenshot": "https://agent.tinyfish.ai/runs/96f36897-a688-49a3-95f8-6e6ae3928ff7/steps/2318a065-9140-4fa7-82d4-e5f0065a017a/screenshot",
+    "html": null,
+    "duration": "6.3s"
+   },
+   {
+    "id": "14924920-0738-4998-b66e-6f597af3470c",
+    "timestamp": "2026-10-31T13:40:07Z",
+    "status": "RUNNING",
+    "action": "Extract matte lipstick details from Amazon",
+    "screenshot": "https://agent.tinyfish.ai/runs/96f36897-a688-49a3-95f8-6e6ae3928ff7/steps/14924920-0738-4998-b66e-6f597af3470c/screenshot",
+    "html": null,
+    "duration": "8.5s"
+   },
+   {
+    "id": "3b9049a6-be73-426b-9587-8cf126c563a5",
+    "timestamp": "2026-10-31T13:40:31Z",
+    "status": "RUNNING",
+    "action": "Browse matte lipsticks on Nykaa India",
+    "screenshot": "https://agent.tinyfish.ai/runs/96f36897-a688-49a3-95f8-6e6ae3928ff7/steps/3b9049a6-be73-426b-9587-8cf126c563a5/screenshot",
+    "html": null,
+    "duration": "1.6s"
+   },
+   {
+    "id": "ff4807ee-9d54-4744-90fd-e73dbad8916f",
+    "timestamp": "2026-10-31T13:40:56Z",
+    "status": "RUNNING",
+    "action": "Browse matte lipsticks on Flipkart India",
+    "screenshot": "https://agent.tinyfish.ai/runs/96f36897-a688-49a3-95f8-6e6ae3928ff7/steps/ff4807ee-9d54-4744-90fd-e73dbad8916f/screenshot",
+    "html": null,
+    "duration": "5.4s"
+   },
+   {
+    "id": "910a1901-6d32-4c22-9bf3-946f88d5bce4",
+    "timestamp": "2026-10-31T13:41:22Z",
+    "status": "RUNNING",
+    "action": "Browse matte lipsticks under 500 on Flipkart India",
+    "screenshot": "https://agent.tinyfish.ai/runs/96f36897-a688-49a3-95f8-6e6ae3928ff7/steps/910a1901-6d32-4c22-9bf3-946f88d5bce4/screenshot",
+    "html": null,
+    "duration": "3.4s"
+   },
+   {
+    "id": "f036a1ec-a37f-4fb8-b319-320ac67c968e",
+    "timestamp": "2026-10-31T13:41:32Z",
+    "status": "RUNNING",
+    "action": "Search for matte lipsticks on Flipkart",
+    "screenshot": "https://agent.tinyfish.ai/runs/96f36897-a688-49a3-95f8-6e6ae3928ff7/steps/f036a1ec-a37f-4fb8-b319-320ac67c968e/screenshot",
+    "html": null,
+    "duration": "5.6s"
+   },
+   {
+    "id": "4fb25c4e-b04d-434f-bd6b-60698838ebd7",
+    "timestamp": "2026-10-31T13:42:20Z",
+    "status": "RUNNING",
+    "action": "Present final selection of Maybelline SuperStay Matte Ink lipstick from Flipkart",
+    "screenshot": "https://agent.tinyfish.ai/runs/96f36897-a688-49a3-95f8-6e6ae3928ff7/steps/4fb25c4e-b04d-434f-bd6b-60698838ebd7/screenshot",
+    "html": null,
+    "duration": "0.0s"
+   },
+   {
+    "id": "dc6ab90c-dcfe-4a9e-8c98-1caafbd47564",
+    "timestamp": "2026-10-31T13:42:22Z",
+    "status": "COMPLETED",
+    "action": "Task completed",
+    "screenshot": null,
+    "html": null,
+    "duration": null
+   }
+  ]
+ }
+}

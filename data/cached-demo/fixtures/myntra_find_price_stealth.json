@@ -1,0 +1,188 @@
+{
+ "name": "myntra_find_price_stealth",
+ "runId": "03d08ef2-a6c7-46d8-8df9-2fd484c5a27e",
+ "sseEvents": [
+  {
+   "type": "STARTED",
+   "run_id": "03d08ef2-a6c7-46d8-8df9-2fd484c5a27e",
+   "timestamp": "2026-10-31T09:43:30.095Z"
+  },
+  {
+   "type": "STREAMING_URL",
+   "run_id": "03d08ef2-a6c7-46d8-8df9-2fd484c5a27e",
+   "streaming_url": "https://ip-52-53-255-115.tetra-data.production.tinyfish.io/tf-86888c8f-aa89-435e-9c62-294e269d9f79/stream/0",
+   "timestamp": "2026-10-31T09:43:31.584Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "03d08ef2-a6c7-46d8-8df9-2fd484c5a27e",
+   "purpose": "Visit Myntra homepage to find men's t-shirt",
+   "timestamp": "2026-10-31T09:43:33.467Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:43:48.469Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "03d08ef2-a6c7-46d8-8df9-2fd484c5a27e",
+   "purpose": "Navigate to men's t-shirts page",
+   "timestamp": "2026-10-31T09:44:02.878Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:44:17.880Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:44:32.880Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "03d08ef2-a6c7-46d8-8df9-2fd484c5a27e",
+   "purpose": "Click search to search for men's t-shirts",
+   "timestamp": "2026-10-31T09:44:36.596Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "03d08ef2-a6c7-46d8-8df9-2fd484c5a27e",
+   "purpose": "Extract men's t-shirt name and price",
+   "timestamp": "2026-10-31T09:44:39.604Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "03d08ef2-a6c7-46d8-8df9-2fd484c5a27e",
+   "purpose": "Visit first t-shirt to get price",
+   "timestamp": "2026-10-31T09:44:44.398Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "03d08ef2-a6c7-46d8-8df9-2fd484c5a27e",
+   "purpose": "Navigate to Roadster t-shirt product page",
+   "timestamp": "2026-10-31T09:44:59.300Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:45:14.301Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:45:29.302Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "03d08ef2-a6c7-46d8-8df9-2fd484c5a27e",
+   "purpose": "Report findings before time runs out",
+   "timestamp": "2026-10-31T09:45:34.719Z"
+  },
+  {
+   "type": "COMPLETE",
+   "run_id": "03d08ef2-a6c7-46d8-8df9-2fd484c5a27e",
+   "status": "COMPLETED",
+   "timestamp": "2026-10-31T09:45:37.348Z",
+   "result": {
+    "success": true,
+    "answer": "Men's t-shirt found: Roadster Men White Pure Cotton T-shirt priced at ₹228 (discounted from ₹499, 54% OFF).",
+    "blocker": null
+   }
+  }
+ ],
+ "runRecord": {
+  "run_id": "03d08ef2-a6c7-46d8-8df9-2fd484c5a27e",
+  "status": "COMPLETED",
+  "goal": "Navigate to https://www.myntra.com to complete the goal: Find any men's t-shirt and report its name and price. Do not log in. If anything blocks you, stop and describe it. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null}",
+  "created_at": "2026-10-31T09:43:29Z",
+  "started_at": "2026-10-31T09:43:32Z",
+  "finished_at": "2026-10-31T09:45:37Z",
+  "num_of_steps": 7,
+  "result": {
+   "answer": "Men's t-shirt found: Roadster Men White Pure Cotton T-shirt priced at ₹228 (discounted from ₹499, 54% OFF).",
+   "blocker": null,
+   "success": true
+  },
+  "output_schema": null,
+  "profile_attached": false,
+  "profile_id": null,
+  "error": null,
+  "streaming_url": "https://ip-52-53-255-115.tetra-data.production.tinyfish.io/tf-86888c8f-aa89-435e-9c62-294e269d9f79/stream/0",
+  "browser_config": {
+   "proxy_enabled": true,
+   "proxy_country_code": "IN"
+  },
+  "video_url": null,
+  "steps": [
+   {
+    "id": "f3e7b91e-d761-4f55-bc26-c20a441894b6",
+    "timestamp": "2026-10-31T09:43:33Z",
+    "status": "RUNNING",
+    "action": "Visit Myntra homepage to find men's t-shirt",
+    "screenshot": "https://agent.tinyfish.ai/runs/03d08ef2-a6c7-46d8-8df9-2fd484c5a27e/steps/f3e7b91e-d761-4f55-bc26-c20a441894b6/screenshot",
+    "html": null,
+    "duration": "26.7s"
+   },
+   {
+    "id": "fcce133b-b5fb-4236-8293-1e18ccb89248",
+    "timestamp": "2026-10-31T09:44:02Z",
+    "status": "RUNNING",
+    "action": "Navigate to men's t-shirts page",
+    "screenshot": "https://agent.tinyfish.ai/runs/03d08ef2-a6c7-46d8-8df9-2fd484c5a27e/steps/fcce133b-b5fb-4236-8293-1e18ccb89248/screenshot",
+    "html": null,
+    "duration": "30.9s"
+   },
+   {
+    "id": "6d8f2a50-0a88-4db7-b5ad-dbd806d01d2d",
+    "timestamp": "2026-10-31T09:44:36Z",
+    "status": "RUNNING",
+    "action": "Click search to search for men's t-shirts",
+    "screenshot": "https://agent.tinyfish.ai/runs/03d08ef2-a6c7-46d8-8df9-2fd484c5a27e/steps/6d8f2a50-0a88-4db7-b5ad-dbd806d01d2d/screenshot",
+    "html": null,
+    "duration": "1.2s"
+   },
+   {
+    "id": "9f291c45-55c2-41ce-9b91-a7cbdc098452",
+    "timestamp": "2026-10-31T09:44:39Z",
+    "status": "RUNNING",
+    "action": "Extract men's t-shirt name and price",
+    "screenshot": "https://agent.tinyfish.ai/runs/03d08ef2-a6c7-46d8-8df9-2fd484c5a27e/steps/9f291c45-55c2-41ce-9b91-a7cbdc098452/screenshot",
+    "html": null,
+    "duration": "2.2s"
+   },
+   {
+    "id": "82e25ffb-b767-4ccc-a68e-f58a04d5a943",
+    "timestamp": "2026-10-31T09:44:44Z",
+    "status": "RUNNING",
+    "action": "Visit first t-shirt to get price",
+    "screenshot": "https://agent.tinyfish.ai/runs/03d08ef2-a6c7-46d8-8df9-2fd484c5a27e/steps/82e25ffb-b767-4ccc-a68e-f58a04d5a943/screenshot",
+    "html": null,
+    "duration": "10.3s"
+   },
+   {
+    "id": "600eb14f-a18e-451e-a0b2-c872171c17dc",
+    "timestamp": "2026-10-31T09:44:59Z",
+    "status": "RUNNING",
+    "action": "Navigate to Roadster t-shirt product page",
+    "screenshot": "https://agent.tinyfish.ai/runs/03d08ef2-a6c7-46d8-8df9-2fd484c5a27e/steps/600eb14f-a18e-451e-a0b2-c872171c17dc/screenshot",
+    "html": null,
+    "duration": "30.9s"
+   },
+   {
+    "id": "6f5153f8-2254-4579-8951-f15527cec38a",
+    "timestamp": "2026-10-31T09:45:34Z",
+    "status": "RUNNING",
+    "action": "Report findings before time runs out",
+    "screenshot": "https://agent.tinyfish.ai/runs/03d08ef2-a6c7-46d8-8df9-2fd484c5a27e/steps/6f5153f8-2254-4579-8951-f15527cec38a/screenshot",
+    "html": null,
+    "duration": "0.0s"
+   },
+   {
+    "id": "615c7e1a-d7ec-47bb-ad4b-e8b0b53510be",
+    "timestamp": "2026-10-31T09:45:37Z",
+    "status": "COMPLETED",
+    "action": "Task completed",
+    "screenshot": null,
+    "html": null,
+    "duration": null
+   }
+  ]
+ }
+}

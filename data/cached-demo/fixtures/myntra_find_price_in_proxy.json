@@ -1,0 +1,148 @@
+{
+ "name": "myntra_find_price_in_proxy",
+ "runId": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+ "sseEvents": [
+  {
+   "type": "STARTED",
+   "run_id": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+   "timestamp": "2026-10-31T10:48:38.559Z"
+  },
+  {
+   "type": "STREAMING_URL",
+   "run_id": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+   "streaming_url": "https://ip-54-215-86-197.tetra-data.production.tinyfish.io/tf-51866225-e735-4ced-97b4-446d2d151ac0/stream/0",
+   "timestamp": "2026-10-31T10:48:40.153Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+   "purpose": "Visit Myntra homepage to find men's t-shirt",
+   "timestamp": "2026-10-31T10:48:41.379Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+   "purpose": "Navigate to men's t-shirts page",
+   "timestamp": "2026-10-31T10:48:52.994Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+   "purpose": "Navigate to men's t-shirts page directly",
+   "timestamp": "2026-10-31T10:49:07.899Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T10:49:22.903Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+   "purpose": "Click on first men's t-shirt to view details",
+   "timestamp": "2026-10-31T10:49:28.922Z"
+  },
+  {
+   "type": "STREAMING_URL",
+   "run_id": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+   "streaming_url": "https://ip-54-215-86-197.tetra-data.production.tinyfish.io/tf-51866225-e735-4ced-97b4-446d2d151ac0/stream/1",
+   "timestamp": "2026-10-31T10:49:35.176Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+   "purpose": "Return men's t-shirt name and price",
+   "timestamp": "2026-10-31T10:49:39.317Z"
+  },
+  {
+   "type": "COMPLETE",
+   "run_id": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+   "status": "COMPLETED",
+   "timestamp": "2026-10-31T10:49:40.895Z",
+   "result": {
+    "success": true,
+    "answer": "Product: WROGN Men Printed Slim Fit T-shirt, Price: ₹659 (Maximum Retail Price: Rs. 1199, 45% OFF)",
+    "blocker": null
+   }
+  }
+ ],
+ "runRecord": {
+  "run_id": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+  "status": "COMPLETED",
+  "goal": "Navigate to https://www.myntra.com to complete the goal: Find any men's t-shirt and report its name and price. Do not log in. If anything blocks you, stop and describe it. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null}",
+  "created_at": "2026-10-31T10:48:38Z",
+  "started_at": "2026-10-31T10:48:40Z",
+  "finished_at": "2026-10-31T10:49:41Z",
+  "num_of_steps": 5,
+  "result": {
+   "answer": "Product: WROGN Men Printed Slim Fit T-shirt, Price: ₹659 (Maximum Retail Price: Rs. 1199, 45% OFF)",
+   "blocker": null,
+   "success": true
+  },
+  "output_schema": null,
+  "profile_attached": false,
+  "profile_id": null,
+  "error": null,
+  "streaming_url": "https://ip-54-215-86-197.tetra-data.production.tinyfish.io/tf-51866225-e735-4ced-97b4-446d2d151ac0/stream/1",
+  "browser_config": {
+   "proxy_enabled": true,
+   "proxy_country_code": "IN"
+  },
+  "video_url": null,
+  "steps": [
+   {
+    "id": "1cacd2cc-6357-43b3-b648-9615412158b2",
+    "timestamp": "2026-10-31T10:48:41Z",
+    "status": "RUNNING",
+    "action": "Visit Myntra homepage to find men's t-shirt",
+    "screenshot": "https://agent.tinyfish.ai/runs/3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334/steps/1cacd2cc-6357-43b3-b648-9615412158b2/screenshot",
+    "html": null,
+    "duration": "8.4s"
+   },
+   {
+    "id": "d12d8ffc-1d06-4279-9f0a-df5a9c7ed90c",
+    "timestamp": "2026-10-31T10:48:52Z",
+    "status": "RUNNING",
+    "action": "Navigate to men's t-shirts page",
+    "screenshot": "https://agent.tinyfish.ai/runs/3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334/steps/d12d8ffc-1d06-4279-9f0a-df5a9c7ed90c/screenshot",
+    "html": null,
+    "duration": "13.0s"
+   },
+   {
+    "id": "b39468b1-c5dc-4f74-806e-dde4ab419f78",
+    "timestamp": "2026-10-31T10:49:07Z",
+    "status": "RUNNING",
+    "action": "Navigate to men's t-shirts page directly",
+    "screenshot": "https://agent.tinyfish.ai/runs/3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334/steps/b39468b1-c5dc-4f74-806e-dde4ab419f78/screenshot",
+    "html": null,
+    "duration": "16.6s"
+   },
+   {
+    "id": "f959d7b0-1ea6-496c-9653-33646fb5791e",
+    "timestamp": "2026-10-31T10:49:28Z",
+    "status": "RUNNING",
+    "action": "Click on first men's t-shirt to view details",
+    "screenshot": "https://agent.tinyfish.ai/runs/3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334/steps/f959d7b0-1ea6-496c-9653-33646fb5791e/screenshot",
+    "html": null,
+    "duration": "6.3s"
+   },
+   {
+    "id": "e8b111d1-63ae-431f-8130-e5232f26b4e2",
+    "timestamp": "2026-10-31T10:49:39Z",
+    "status": "RUNNING",
+    "action": "Return men's t-shirt name and price",
+    "screenshot": "https://agent.tinyfish.ai/runs/3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334/steps/e8b111d1-63ae-431f-8130-e5232f26b4e2/screenshot",
+    "html": null,
+    "duration": "1.5s"
+   },
+   {
+    "id": "3dccd3c2-1350-4aa4-a77b-7304fcd02e4f",
+    "timestamp": "2026-10-31T10:49:40Z",
+    "status": "COMPLETED",
+    "action": "Task completed",
+    "screenshot": null,
+    "html": null,
+    "duration": null
+   }
+  ]
+ }
+}

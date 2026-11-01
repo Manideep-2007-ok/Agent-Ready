@@ -1,0 +1,151 @@
+[
+ {
+  "name": "nykaa_find_price",
+  "runId": "fb4c8188-881f-4633-ac4e-b5f0619feb3e",
+  "status": "COMPLETED",
+  "steps": 3,
+  "result": {
+   "price": "₹467",
+   "blocker": null,
+   "product": "Maybelline Serum Matte Lipstick - 8Hr hydration, One-Swipe Bold Color",
+   "success": true
+  }
+ },
+ {
+  "name": "nykaa_add_to_cart",
+  "runId": "d96fa38f-090c-4c18-bf25-ddd2fab788e2",
+  "status": "COMPLETED",
+  "steps": 8,
+  "result": {
+   "blocker": null,
+   "success": true,
+   "cart_total": "₹467",
+   "steps_taken": 7
+  }
+ },
+ {
+  "name": "nykaa_find_returns",
+  "runId": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+  "status": "COMPLETED",
+  "steps": 13,
+  "result": {
+   "blocker": null,
+   "success": true,
+   "policy_url": "https://www.nykaa.com/cancellation-policy/lp",
+   "return_days": "15 days",
+   "steps_taken": 12
+  }
+ },
+ {
+  "name": "swiggy_add_to_cart",
+  "runId": "4c2c1f21-7a9f-4d71-b4d2-a0cd1b40e9d0",
+  "status": "COMPLETED",
+  "steps": 20,
+  "result": {
+   "answer": null,
+   "blocker": "After setting the delivery location to Koramangala, Bangalore and adding '2 Pc McSpicy Chicken Wings' (₹100) from McDonald's to the cart, the cart total could not be retrieved. Swiggy's interface did not display a visible 'View Cart' button, floating cart icon, or cart total on the restaurant menu page. The page only showed menu categories in a browse menu modal, with no cart summary or order button visible anywhere on the page. Without being able to access the cart page or see a cart total, the final cart total (which would include item price, taxes, and delivery fees) could not be determined.",
+   "success": false
+  }
+ },
+ {
+  "name": "myntra_find_price_noproxy",
+  "runId": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+  "status": "COMPLETED",
+  "steps": 12,
+  "result": {
+   "answer": null,
+   "blocker": "The Myntra website is completely unavailable. Every URL attempted (homepage, men's tshirts category page, and specific product pages) either displays an \"Oops! Something went wrong / Please contact your administrator\" error message or loads with empty content (no elements, links, or images visible). This appears to be a server-side outage or website malfunction preventing any access to product information.",
+   "success": false
+  }
+ },
+ {
+  "name": "myntra_find_price_in_proxy",
+  "runId": "3c302c5a-e7ea-4df2-b2a1-d1a7e53f2334",
+  "status": "COMPLETED",
+  "steps": 5,
+  "result": {
+   "answer": "Product: WROGN Men Printed Slim Fit T-shirt, Price: ₹659 (Maximum Retail Price: Rs. 1199, 45% OFF)",
+   "blocker": null,
+   "success": true
+  }
+ },
+ {
+  "name": "myntra_find_price_stealth",
+  "runId": "03d08ef2-a6c7-46d8-8df9-2fd484c5a27e",
+  "status": "COMPLETED",
+  "steps": 7,
+  "result": {
+   "answer": "Men's t-shirt found: Roadster Men White Pure Cotton T-shirt priced at ₹228 (discounted from ₹499, 54% OFF).",
+   "blocker": null,
+   "success": true
+  }
+ },
+ {
+  "name": "nykaa_find_contact",
+  "runId": "c9687ab7-fdfb-4619-bf7f-eb6036f89e70",
+  "status": "COMPLETED",
+  "steps": 5,
+  "result": {
+   "answer": "Nykaa offers customer support through multiple channels:\n\n1. **Chat Support** - Available on the homepage at the bottom right corner via a button labeled 'How may we help you' which opens a live chat widget (Messaging window/iframe).\n\n2. **Help Center** - Accessible via the 'Help' link in the header navigation at: https://www.nykaa.com/gateway-api/omsApis/helpCenter?domain=NYKAA\n\nThese are the primary contact options I found on the website. Specific phone numbers and email addresses were not visible on the homepage but may be available within the Help Center page or through the chat support.",
+   "blocker": null,
+   "success": true
+  }
+ },
+ {
+  "name": "localhost_tunnel",
+  "runId": "6ce498db-a031-4d9c-9d10-a7c8d8489234",
+  "status": "COMPLETED",
+  "steps": 5,
+  "result": {
+   "price": "499.0",
+   "blocker": null,
+   "success": true,
+   "return_days": "10"
+  }
+ },
+ {
+  "name": "shopper_lipstick",
+  "runId": "96f36897-a688-49a3-95f8-6e6ae3928ff7",
+  "status": "COMPLETED",
+  "steps": 8,
+  "result": {
+   "price": "₹320",
+   "product": "MAYBELLINE NEW YORK Superstay Matte Ink Liquid Lipstick, Warrior",
+   "why_chosen": "Maybelline SuperStay Matte Ink is a highly rated product (4.3/5 stars from 89,422+ ratings on Flipkart) with proven long-lasting wear. The price of ₹320 (57% off from ₹749) is well within the ₹500 budget and offers excellent value for a premium international brand with strong user reviews.",
+   "chosen_store": "Flipkart",
+   "stores_considered": [
+    "Amazon.in",
+    "Flipkart"
+   ],
+   "why_others_rejected": "On Amazon.in, many matte lipsticks under ₹500 were either sponsored ads from lesser-known brands, had significantly fewer reviews, or were priced near or above ₹500. Flipkart alternatives like Lakmé 9TO5 Primer + Matte Lipstick (₹217, 4.1 rating, 1.34L+ ratings) were also good, but the Maybelline SuperStay Matte Ink is a more globally trusted matte lipstick brand with a specific reputation for long-lasting matte finish that aligns best with the 'matte' requirement."
+  }
+ },
+ {
+  "name": "shopper_shoes",
+  "runId": "442e9e73-50ea-439c-b56a-9362c7f0b6a7",
+  "status": "COMPLETED",
+  "steps": 6,
+  "result": {
+   "price": "₹2,376 (40% off, MRP ₹3,999)",
+   "stores": [
+    {
+     "store": "Amazon.in",
+     "reason": "Loaded successfully with 60+ running shoe results under 3000 including brands like Nike, Adidas, Puma, Asics, Campus, Boldfit. However, product names were listed without prices visible in search results; prices were not directly extractable. Also too many sponsored results making comparison difficult. Amazon has extensive selection but Flipkart showed clearer pricing.",
+     "outcome": "rejected"
+    },
+    {
+     "store": "Flipkart",
+     "reason": "Loaded successfully showing running shoes under 3000 including Asian Aerofoam-01 at ₹2,376 (MRP ₹3,999, 40% off), Asics GEL-Contend 9 at ₹2,699 (MRP ₹5,999, 55% off), Skechers Go Walk Flex at ₹2,390 (MRP ₹5,999, 60% off), Puma Electro SL at ₹2,469 (MRP ₹6,499, 62% off), Adidas Terrex Rockadia M at ₹2,159 (MRP ₹5,999, 64% off). Prices clearly displayed with discounts. Asian Aerofoam-01 selected as best value with 4.0+ rating, energy return sole, mesh upper, and competitive pricing.",
+     "outcome": "chosen"
+    },
+    {
+     "store": "Myntra",
+     "reason": "Could not load properly - only partial search results visible with generic filter options. Myntra is more fashion-focused and has fewer dedicated running shoe options compared to Flipkart and Amazon.",
+     "outcome": "rejected"
+    }
+   ],
+   "product": "Asian Aerofoam-01 Men's Running Shoes",
+   "chosen_store": "Flipkart"
+  }
+ }
+]
