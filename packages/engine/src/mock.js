@@ -89,8 +89,10 @@ export async function getStepScreenshot(runId, stepId) {
   const name = fixtureOfRunId(runId);
   const orig = loadFixture(name).runId;
   const file = path.join(DIR, 'shots', `${orig}_${stepId}.jpg`);
-  if (!/^[\w-]+$/.test(String(stepId)) || !fs.existsSync(file)) throw Object.assign(new Error('Screenshot not found'), { status: 404 });
-  return fs.readFileSync(file);
+  const notFound = () => Object.assign(new Error('Screenshot not found'), { status: 404 });
+  if (!/^[\w-]+$/.test(String(stepId))) throw notFound();
+  // Async read so a burst of screenshot requests never blocks the server.
+  try { return await fs.promises.readFile(file); } catch { throw notFound(); }
 }
 
 export async function fetchPages(urls) {
