@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import crypto from 'node:crypto';
 import { DEFAULT_TASK_ORDER } from '@agentready/engine';
+import { subscribe } from '../events.js';
 import { listWatches, getWatch, createWatch, updateWatch, getHistory, runCheck, isRunning } from '../watch.js';
 
 const router = Router();
@@ -46,6 +47,16 @@ router.post('/:id/run-now', async (req, res) => {
     res.json({ reportId });
   } catch {
     res.status(500).json({ error: 'Could not start the check' });
+  }
+});
+
+// Live alerts for one watch: SSE stream of 'watch-alert' / 'watch-recovered' events.
+router.get('/:id/events', async (req, res) => {
+  try {
+    if (!(await getWatch(req.params.id))) return res.status(404).json({ error: 'Watch not found' });
+    subscribe('watch:' + req.params.id, res);
+  } catch {
+    if (!res.headersSent) res.status(500).json({ error: 'Could not open the live stream' });
   }
 });
 

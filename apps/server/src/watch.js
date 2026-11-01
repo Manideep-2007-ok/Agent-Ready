@@ -237,7 +237,19 @@ export async function runCheck(watch, { reportId } = {}) {
   running.add(watch.id);
   try {
     const store = await getStore();
-    const report = await runSiteTest({ url: watch.url, tasks: watch.tasks, source: 'watch', ...(reportId ? { id: reportId } : {}) }, () => {});
+    // Save a "running" report first so the dashboard can open it (and its live lanes) during the check.
+    const id = reportId || `rep_${new Date().toISOString().replace(/\D/g, '').slice(0, 12)}_w${Math.random().toString(36).slice(2, 6)}`;
+    const live = { id, url: watch.url, source: 'watch', testedAt: new Date().toISOString(), pack: 'shopping', status: 'running',
+      score: 0, botWall: 'none', costRupees: 0, framework: 'unknown', instantScan: null, tasks: [], topFixes: [] };
+    await store.saveReport(live);
+    // Forward engine events to dashboard subscribers of this report (same LiveEvent shape as normal tests).
+    const onEvent = (e) => {
+      if (e.kind === 'task-update') publish({ type: 'task-update', reportId: id, task: e.task });
+      else if (e.kind === 'step') publish({ type: 'step', reportId: id, taskId: e.taskId, step: e.step });
+      else if (e.kind === 'streaming-url') publish({ type: 'streaming-url', reportId: id, taskId: e.taskId, url: e.url });
+    };
+    const report = await runSiteTest({ url: watch.url, tasks: watch.tasks, source: 'watch', id }, onEvent);
+    publish({ type: 'report-complete', reportId: id, report });
     await store.saveReport(report);
     await store.appendWatchHistory(watch.id, report.id);
 
