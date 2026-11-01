@@ -46,13 +46,29 @@ export default function Lane({ task, label, onShotClick, startedAt }) {
   const t0 = startedAt || runStart || now;
 
   const title = label || (task && TASK_LABELS[task.taskId]) || 'Task';
-  const steps = Array.isArray(task?.steps) ? task.steps.filter(Boolean) : [];
+  const attempts = Array.isArray(task?.attempts) ? task.attempts : [];
+  // During a bot-wall retry the live state can still hold the blocked attempt's steps (the dashboard keeps the
+  // longer step list while a task runs). Hide steps whose screenshot belongs to an earlier attempt's run.
+  const oldRuns = (chip === 'running' || chip === 'waiting') ? attempts.map((a) => a?.runId).filter(Boolean) : [];
+  const steps = (Array.isArray(task?.steps) ? task.steps.filter(Boolean) : [])
+    .filter((s) => !oldRuns.some((id) => String(s.screenshotUrl || '').includes(`/${id}/`)));
   const lastStep = steps[steps.length - 1];
   const elapsed = running ? Math.max(0, Math.round((now - t0) / 1000)) : Math.round(task?.seconds || 0);
-  const attempts = Array.isArray(task?.attempts) ? task.attempts : [];
   const lastAttempt = attempts[attempts.length - 1];
   const showIframe = running && task?.streamingUrl && !iframeFailed;
-  const shot = [...steps].reverse().find((s) => s.screenshotUrl)?.screenshotUrl;
+  // Screenshots newest first; if the newest 404s, fall back to the previous step's, and so on.
+  const shotUrls = [...steps].reverse().map((s) => s.screenshotUrl).filter(Boolean);
+  const shotKey = shotUrls.join('|');
+  const [badShots, setBadShots] = useState(() => new Set());
+  useEffect(() => { setBadShots(new Set()); }, [shotKey]);
+  const shot = shotUrls.find((u) => !badShots.has(u));
+  const shotLabel = (steps.find((s) => s.screenshotUrl === shot) || lastStep)?.label || title;
+  const markBad = (u) => setBadShots((prev) => new Set(prev).add(u));
+  // Bot-wall retry: while a later attempt is queued/running, say why.
+  const retrying = (chip === 'running' || chip === 'waiting') && attempts.length >= 1;
+  const attemptNo = attempts.length + 1;
+  const retryText = attemptNo === 2 ? 'Blocked without a proxy, retrying with India proxy'
+    : attemptNo >= 3 ? 'Still blocked, retrying in stealth mode' : '';
   const [label1, cls] = CHIPS[chip];
 
   return (
@@ -65,7 +81,13 @@ export default function Lane({ task, label, onShotClick, startedAt }) {
         <span>{chip === 'waiting' ? '' : `${elapsed}s`}</span>
         <span>{steps.length || task?.numSteps || 0} steps</span>
       </div>
-      {attempts.length > 1 && lastAttempt && (
+      {retrying && retryText && (
+        <div className="ar-lane-attempt ar-lane-attempt--retry" role="status">
+          <strong>Attempt {attemptNo} of 3: {task?.mode === 'stealth' ? 'stealth browser, ' : ''}{PROXY_NAMES[task?.proxy] || task?.proxy}</strong>
+          <span>{retryText}</span>
+        </div>
+      )}
+      {!retrying && attempts.length > 1 && lastAttempt && (
         <div className="ar-lane-attempt">
           Attempt {attempts.length}: {lastAttempt.mode === 'stealth' ? 'stealth browser, ' : ''}{PROXY_NAMES[lastAttempt.proxy] || lastAttempt.proxy}
         </div>
@@ -81,8 +103,10 @@ export default function Lane({ task, label, onShotClick, startedAt }) {
           />
         ) : shot ? (
           <button type="button" className="ar-lane-shot" aria-label={`Enlarge latest screenshot for ${title}`} onClick={() => onShotClick?.(shot)}>
-            <img src={shot} alt={`Latest screenshot: ${lastStep?.label || title}`} />
+            <img key={shot} src={shot} alt={`Latest screenshot: ${shotLabel}`} onError={() => markBad(shot)} />
           </button>
+        ) : shotUrls.length ? (
+          <div className="ar-lane-empty">No screenshot for this step</div>
         ) : (
           <div className="ar-lane-empty">{chip === 'waiting' ? 'Waiting for an agent' : 'No picture yet'}</div>
         )}
