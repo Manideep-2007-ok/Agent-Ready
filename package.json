@@ -1,0 +1,9 @@
+{
+  "name": "agentready",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "dev": "npm run dev --workspace=@agentready/server & npm run dev --workspace=@agentready/web",
+    "build": "npm run build --workspaces --if-present"
+  }
+}
