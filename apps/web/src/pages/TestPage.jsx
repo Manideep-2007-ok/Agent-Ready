@@ -1,18 +1,19 @@
 // Test page: URL box -> live lanes -> score -> findings. The report id lives in the URL (#/test/<id>), so a refresh,
 // a shared link or a saved demo report (e.g. #/test/rep_20261031_demo_nykaa) opens straight into the result.
 import { useEffect, useState } from 'react';
-import { getReport, listReports, startTest, useLiveEvents } from '../api.js';
+import { getHealth, getReport, listReports, setDemoFlaws, startTest, useLiveEvents } from '../api.js';
 import { navigate } from '../nav.js';
 import Lane from '../components/Lane.jsx';
 import InstantScanCard from '../components/InstantScanCard.jsx';
 import FindingCard from '../components/FindingCard.jsx';
 import ShotViewer from '../components/ShotViewer.jsx';
 import ScoreCard from '../components/ScoreCard.jsx';
+import DemoStoreCard from '../components/DemoStoreCard.jsx';
 
 const SEVERITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 const findingKey = (f) => `${f.type}|${f.taskId ?? ''}`;
 
-function TestForm({ busy, onStart }) {
+function TestForm({ busy, onStart, onDemo }) {
   const [url, setUrl] = useState('');
   const [customTask, setCustomTask] = useState('');
   const [showCustom, setShowCustom] = useState(false);
@@ -35,7 +36,7 @@ function TestForm({ busy, onStart }) {
         />
         <button type="submit" disabled={busy || !url.trim()}>{busy ? 'Testing…' : 'Test my site'}</button>
       </div>
-      {showCustom ? (
+      {showCustom && (
         <input
           type="text"
           value={customTask}
@@ -45,11 +46,19 @@ function TestForm({ busy, onStart }) {
           maxLength={300}
           disabled={busy}
         />
-      ) : (
-        <button type="button" className="link-button" onClick={() => setShowCustom(true)} disabled={busy}>
-          + Add your own task
-        </button>
       )}
+      <div className="form-links">
+        {!showCustom && (
+          <button type="button" className="link-button" onClick={() => setShowCustom(true)} disabled={busy}>
+            + Add your own task
+          </button>
+        )}
+        {onDemo && (
+          <button type="button" className="link-button" onClick={onDemo} disabled={busy}>
+            Try it on our demo store (with flaws)
+          </button>
+        )}
+      </div>
     </form>
   );
 }
@@ -128,12 +137,13 @@ function RecentReports() {
   );
 }
 
-export default function TestPage({ reportId }) {
+export default function TestPage({ reportId, beforeId }) {
   const live = useLiveEvents(reportId);
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const [starting, setStarting] = useState(false);
   const [shot, setShot] = useState(null);
+  const [demoStoreUrl, setDemoStoreUrl] = useState(null);
   const jumpToFix = (rank) => document.getElementById(`top-fix-${rank}`)?.scrollIntoView({ block: 'start' });
 
   // The address being tested, for the progress line (the live stream only carries it at the end).
@@ -143,28 +153,45 @@ export default function TestPage({ reportId }) {
     if (reportId) getReport(reportId).then((r) => setUrl(r.url)).catch((e) => setError(e.message));
   }, [reportId]);
 
-  const onStart = async (siteUrl, customTask) => {
+  useEffect(() => {
+    getHealth().then((h) => setDemoStoreUrl(h.demoStoreUrl ?? null)).catch(() => setDemoStoreUrl(null));
+  }, []);
+
+  /** Starts a test and opens it; `getUrl` may first ask the server for the address (demo store). */
+  const begin = async (getUrl, customTask, from) => {
     setError('');
     setStarting(true);
     try {
-      const { reportId: id } = await startTest(siteUrl, customTask);
-      navigate('test', id);
+      const { reportId: id } = await startTest(await getUrl(), customTask);
+      navigate('test', id, from);
     } catch (e) {
       setError(e.message);
     } finally {
       setStarting(false);
     }
   };
+  const onStart = (siteUrl, customTask) => begin(() => siteUrl, customTask);
+  const onDemo = () => begin(async () => (await setDemoFlaws(true)).url);
+  // Re-test the same store with its flaws off, remembering this report to show the before/after.
+  const onApplyFixes = () => begin(async () => (await setDemoFlaws(false)).url, '', reportId);
 
   const tasks = Object.values(live.tasks);
   const running = Boolean(reportId) && live.connection !== 'done' && !error;
 
   return (
     <>
-      <TestForm busy={starting || running} onStart={onStart} />
+      <TestForm busy={starting || running} onStart={onStart} onDemo={demoStoreUrl ? onDemo : null} />
       {error && <section className="card error">{error}</section>}
       {reportId && !error && (
         <>
+          <DemoStoreCard
+            report={live.report}
+            beforeId={beforeId}
+            demoStoreUrl={demoStoreUrl}
+            url={live.report?.url || url}
+            busy={starting}
+            onApplyFixes={onApplyFixes}
+          />
           {live.report ? <ScoreCard report={live.report} onJump={jumpToFix} /> : <Progress url={url} tasks={tasks} connection={live.connection} />}
           {(live.scan || !live.report) && <InstantScanCard scan={live.scan} loading={!live.scan} />}
           <section className="lanes">
