@@ -32,10 +32,18 @@ export function pickFixture({ url = '', taskId, mode = 'lite', proxy = 'off' }) 
 }
 
 const newRunId = (fx) => `mock-${fx}-${Math.random().toString(36).slice(2, 8).padEnd(6, '0')}`;
+let indexCache = null;
+function fixtureIndex() {
+  if (!indexCache) { try { indexCache = JSON.parse(fs.readFileSync(path.join(DIR, 'index.json'), 'utf8')); } catch { indexCache = []; } }
+  return indexCache;
+}
+
 function fixtureOfRunId(runId) {
   if (runs.has(runId)) return runs.get(runId);
   const m = /^mock-(.+)-[a-z0-9]{6}$/.exec(runId); // survives server restarts
   if (m && /^[a-z0-9_]+$/.test(m[1])) return m[1]; // fixture names only (runId comes from a URL)
+  const real = fixtureIndex().find((f) => f.runId === runId); // cached demo reports keep the real 31 Oct run ids
+  if (real) return real.name;
   throw Object.assign(new Error('Unknown mock run'), { status: 404 });
 }
 
