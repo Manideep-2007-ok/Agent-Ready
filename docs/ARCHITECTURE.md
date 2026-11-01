@@ -250,7 +250,7 @@ For each finding:
 
 | Method + path | Body / query | Returns |
 |---|---|---|
-| `GET /api/health` | | `{ok:true, mock:boolean}` |
+| `GET /api/health` | | `{ok:true, mock:boolean, demoStoreUrl}` (`demoStoreUrl` is null when not set) |
 | `POST /api/tests` | `{url, tasks?, customTask?}` | `{reportId}`; starts Instant Scan + test in background |
 | `GET /api/tests/:id` | | `SiteReport` (includes `scanFindings` once the Instant Scan is done) |
 | `GET /api/tests/:id/events` | | SSE `LiveEvent` stream; first message replays current report |

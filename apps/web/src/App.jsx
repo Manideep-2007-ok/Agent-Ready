@@ -1,4 +1,4 @@
-// Tab bar + hash routing (#/test/<reportId>, #/race, #/watch, #/leaderboard), so a refresh or a shared link
+// Tab bar + hash routing (#/test/<reportId>[/<beforeId>], #/race, #/watch, #/leaderboard), so a refresh or a shared link
 // opens the same view. No router library needed for four pages.
 import { useEffect, useState } from 'react';
 import TestPage from './pages/TestPage.jsx';
@@ -11,8 +11,9 @@ const TABS = [
 ];
 
 function readHash() {
-  const [page = 'test', param = null] = window.location.hash.replace(/^#\/?/, '').split('/');
-  return { page: TABS.some((t) => t.id === page) ? page : 'test', param: param ? decodeURIComponent(param) : null };
+  const [page = 'test', param = null, extra = null] = window.location.hash.replace(/^#\/?/, '').split('/');
+  const decode = (part) => (part ? decodeURIComponent(part) : null);
+  return { page: TABS.some((t) => t.id === page) ? page : 'test', param: decode(param), extra: decode(extra) };
 }
 
 function ComingSoon({ name }) {
@@ -43,7 +44,7 @@ export default function App() {
         </nav>
       </header>
       <main className="page">
-        {route.page === 'test' && <TestPage reportId={route.param} />}
+        {route.page === 'test' && <TestPage reportId={route.param} beforeId={route.extra} />}
         {route.page === 'watch' && <ComingSoon name="Watch" />}
         {route.page === 'race' && <ComingSoon name="Race Mode" />}
         {route.page === 'leaderboard' && <ComingSoon name="The leaderboard" />}

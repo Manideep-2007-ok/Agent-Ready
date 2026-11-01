@@ -101,4 +101,15 @@ button.secondary { background: var(--wait-bg); color: var(--text); }
 .finding { scroll-margin-top: 16px; }
 @media (max-width: 640px) { .top-fix-go { display: none; } .score-num { font-size: 40px; } }
 
-.recent {font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.form-links { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+.demo-card { display: grid; gap: 12px; justify-items: start; border-color: var(--accent); }
+.demo-card p { margin: 0; }
+.before-after { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.ba-box { display: grid; gap: 2px; padding: 10px 16px; border-radius: var(--radius); border: 1px solid var(--line); text-decoration: none; color: var(--text); }
+.ba-box b { font-size: 28px; }
+.ba-before { background: var(--fail-bg); }
+.ba-after { background: var(--pass-bg); }
+.ba-arrow { font-size: 28px; color: var(--muted); }
+.ba-effort { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+
+.recent { font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; }

@@ -36,7 +36,8 @@ const requireFeature = (name) => (_req, res, next) =>
 app.use('/api/race', requireFeature('RACE'));
 app.use('/api/leaderboard', requireFeature('LEADERBOARD'));
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, mock: config.mock }));
+// demoStoreUrl lets the dashboard offer "Test our demo store" and "Apply fixes" (null when not set).
+app.get('/api/health', (_req, res) => res.json({ ok: true, mock: config.mock, demoStoreUrl: config.demoStoreUrl || null }));
 app.use('/api', safe(testsRoutes(deps)));
 app.use('/api', safe(raceRoutes(deps)));
 app.use('/api', safe(extrasRoutes(deps)));
