@@ -56,7 +56,8 @@ export async function startRunSSE(params, h = {}) {
   for (const e of fx.sseEvents) {
     if (h.signal?.aborted) throw Object.assign(new Error('Aborted'), { code: 'STREAM_DROPPED', runId });
     if (e.type === 'STARTED') h.onStarted?.(runId);
-    else if (e.type === 'STREAMING_URL') h.onStreamingUrl?.(e.streaming_url);
+    // The recorded live-view links died when those runs ended, so mock mode sends none and lanes show screenshots.
+    else if (e.type === 'STREAMING_URL') { /* skipped in mock */ }
     else if (e.type === 'PROGRESS') {
       await sleep(1500 + Math.random() * 2500);
       h.onProgress?.({ purpose: e.purpose, usedWebSearch: e.tinyfish_api === 'search', at: e.timestamp });
