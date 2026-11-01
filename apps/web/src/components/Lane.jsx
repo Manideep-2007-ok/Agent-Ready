@@ -92,7 +92,7 @@ export default function Lane({ task, label, onShotClick, startedAt }) {
           Attempt {attempts.length}: {lastAttempt.mode === 'stealth' ? 'stealth browser, ' : ''}{PROXY_NAMES[lastAttempt.proxy] || lastAttempt.proxy}
         </div>
       )}
-      <div className="ar-lane-step" aria-live="polite">{lastStep?.label || (running ? 'Starting…' : '')}</div>
+      <div className="ar-lane-step" aria-live="polite">{lastStep?.label || (running ? (task?.streamingUrl ? 'Agent is on the site, looking around…' : 'Starting the agent…') : '')}</div>
       <div className="ar-lane-view">
         {showIframe ? (
           <iframe
