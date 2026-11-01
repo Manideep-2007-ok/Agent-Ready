@@ -53,11 +53,9 @@ export async function auditPage(page) {
   });
 }
 
-const status = (r) => {
-  if (r && !r.error && (r.text || '').trim()) return 'found';
-  const e = String(r?.error || '');
-  return /404|not found|no content/i.test(e) || (r && !r.error) ? 'missing' : 'error';
-};
+// Fetch answered for this URL but had no content (404, empty, blocked): call it "missing" in plain words.
+// "error" is kept for when the whole Fetch call failed (see fetchPart's catch).
+const status = (r) => (r && !r.error && (r.text || '').trim() ? 'found' : 'missing');
 
 async function fetchPart(url) {
   let origin = url;
@@ -68,6 +66,58 @@ async function fetchPart(url) {
   } catch {
     return { pageTextChars: 0, robotsTxt: 'error', sitemap: 'error' };
   }
+}
+
+const PRODUCT_PAGE_MS = 12_000;
+
+/** First same-origin link that looks like a product page (/product, /products/, /p/, product.html?id=). */
+async function findProductLink(page, url) {
+  return page.evaluate((base) => {
+    const origin = new URL(base).origin;
+    const here = location.href.split('#')[0];
+    for (const a of document.querySelectorAll('a[href]')) {
+      let u;
+      try { u = new URL(a.getAttribute('href'), location.href); } catch { continue; }
+      if (u.origin !== origin || u.href.split('#')[0] === here) continue;
+      if (/\/products?(\/|\.html|$)|\/p\/|\/dp\//i.test(u.pathname)) return u.href;
+    }
+    return null;
+  }, url);
+}
+
+async function auditProductPage(page, url) {
+  const link = await findProductLink(page, url);
+  if (!link) return null;
+  return withTimeout((async () => {
+    await page.goto(link, { waitUntil: 'domcontentloaded', timeout: PRODUCT_PAGE_MS });
+    await sleep(2000);
+    return auditPage(page);
+  })(), PRODUCT_PAGE_MS + 4000, 'Product page scan');
+}
+
+/** Home + product page: counts add up; a problem on either page counts; schema/price text found on either page counts. */
+function mergeAudits(home, product) {
+  if (!product) return home;
+  return {
+    unlabelledButtons: home.unlabelledButtons + product.unlabelledButtons,
+    totalButtonsAndLinks: home.totalButtonsAndLinks + product.totalButtonsAndLinks,
+    imagesWithoutAlt: home.imagesWithoutAlt + product.imagesWithoutAlt,
+    totalImages: home.totalImages + product.totalImages,
+    priceAsText: home.priceAsText || product.priceAsText,
+    overlayCoveringPage: home.overlayCoveringPage || product.overlayCoveringPage,
+    productSchema: home.productSchema || product.productSchema,
+  };
+}
+
+/**
+ * Audit the open home page, then one product page if a link to one exists. Exported for tests with any Playwright page.
+ * Many flaws (icon-only Add to cart, price images) live on a product page, not the home page.
+ */
+export async function auditSite(page, url) {
+  const home = await auditPage(page);
+  const framework = await detectFramework(page);
+  const product = await auditProductPage(page, url).catch(() => null);
+  return { ...mergeAudits(home, product), framework };
 }
 
 const BROWSER_DEFAULTS = { unlabelledButtons: 0, totalButtonsAndLinks: 0, imagesWithoutAlt: 0, totalImages: 0, priceAsText: false, overlayCoveringPage: false, productSchema: false, framework: 'unknown' };
@@ -91,8 +141,7 @@ async function browserPart(url) {
     if (!page.url() || page.url() === 'about:blank') await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25_000 });
     await page.waitForLoadState('domcontentloaded');
     await sleep(3000);
-    const audit = await auditPage(page);
-    return { ...audit, framework: await detectFramework(page) };
+    return auditSite(page, url);
   })();
   try {
     const r = await withTimeout(work, BROWSER_BUDGET_MS, 'Browser scan');
@@ -112,9 +161,10 @@ const MOCKS = {
   myntra: { pageTextChars: 3100, unlabelledButtons: 515, totalButtonsAndLinks: 619, imagesWithoutAlt: 12, totalImages: 12, priceAsText: true, overlayCoveringPage: false, productSchema: false, robotsTxt: 'found', sitemap: 'found', framework: 'unknown' },
   // example.com: one link, no images, no price, no robots.txt.
   example: { pageTextChars: 230, unlabelledButtons: 0, totalButtonsAndLinks: 1, imagesWithoutAlt: 0, totalImages: 0, priceAsText: false, overlayCoveringPage: false, productSchema: false, robotsTxt: 'missing', sitemap: 'missing', framework: 'unknown' },
-  // Demo store home page (apps/demo-store) with ?flaws=on: popup, prices as images without alt.
-  demoFlawed: { pageTextChars: 520, unlabelledButtons: 0, totalButtonsAndLinks: 17, imagesWithoutAlt: 6, totalImages: 6, priceAsText: false, overlayCoveringPage: true, productSchema: false, robotsTxt: 'missing', sitemap: 'missing', framework: 'unknown' },
-  clean: { pageTextChars: 1800, unlabelledButtons: 0, totalButtonsAndLinks: 24, imagesWithoutAlt: 0, totalImages: 6, priceAsText: true, overlayCoveringPage: false, productSchema: true, robotsTxt: 'found', sitemap: 'missing', framework: 'unknown' },
+  // Demo store (apps/demo-store) with ?flaws=on, home + one product page: popup, prices as images without alt,
+  // icon-only Add to cart button (product page; the icon cart link still shows a number).
+  demoFlawed: { pageTextChars: 520, unlabelledButtons: 1, totalButtonsAndLinks: 23, imagesWithoutAlt: 7, totalImages: 7, priceAsText: false, overlayCoveringPage: true, productSchema: false, robotsTxt: 'missing', sitemap: 'missing', framework: 'unknown' },
+  clean: { pageTextChars: 1800, unlabelledButtons: 0, totalButtonsAndLinks: 25, imagesWithoutAlt: 0, totalImages: 6, priceAsText: true, overlayCoveringPage: false, productSchema: true, robotsTxt: 'found', sitemap: 'missing', framework: 'unknown' },
 };
 
 /**
