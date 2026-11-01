@@ -1,0 +1,62 @@
+/* Plain CSS, one file. Status colours always come with a text label (UI rule: never colour alone). */
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --text: #1c2430;
+  --muted: #5f6b7a;
+  --line: #e2e6eb;
+  --accent: #2357d9;
+  --pass: #127a3d;
+  --pass-bg: #e3f5e9;
+  --warn: #9a5b00;
+  --warn-bg: #fff2d9;
+  --fail: #b42318;
+  --fail-bg: #fde7e5;
+  --wait: #5f6b7a;
+  --wait-bg: #eef0f3;
+  --radius: 10px;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+a { color: var(--accent); }
+
+.topbar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 24px; background: var(--card); border-bottom: 1px solid var(--line);
+}
+.brand { font-weight: 700; font-size: 20px; }
+.tagline { font-weight: 400; font-size: 14px; color: var(--muted); margin-left: 8px; }
+.tabs { display: flex; gap: 4px; }
+.tab { padding: 8px 14px; border-radius: 8px; text-decoration: none; color: var(--muted); font-weight: 600; }
+.tab.active { background: var(--text); color: #fff; }
+
+.page { max-width: 1200px; margin: 0 auto; padding: 24px 16px 64px; display: grid; gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.muted { color: var(--muted); }
+.error { background: var(--fail-bg); color: var(--fail); border-color: #f5c2bd; }
+h2 { margin: 0 0 12px; font-size: 18px; }
+
+.test-form { display: grid; gap: 10px; }
+.test-form .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.test-form input[type='text'] { flex: 1 1 320px; padding: 10px 12px; font-size: 16px; border: 1px solid var(--line); border-radius: 8px; }
+button { padding: 10px 16px; font-size: 15px; font-weight: 600; border: 0; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
+button:disabled { background: #9fb3e8; cursor: not-allowed; }
+button.secondary { background: var(--wait-bg); color: var(--text); }
+.link-button, .link-button:disabled { background: none; color: var(--accent); padding: 0; font-weight: 500; justify-self: start; }
+.link-button:disabled { color: var(--muted); }
+
+.progress { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+.progress .big { font-size: 28px; font-weight: 700; }
+
+.lanes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.chip { font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+
+.shot-viewer { position: fixed; inset: 0; z-index: 50; background: rgba(10, 14, 20, 0.85); display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
+.shot-viewer img { max-width: 100%; max-height: calc(100vh - 80px); border-radius: 8px; }
+.shot-viewer-hint { color: #fff; font-size: 13px; }
+
+.recent { font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
