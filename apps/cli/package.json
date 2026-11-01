@@ -3,5 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "bin": { "agentready": "bin/agentready.js" }
+  "bin": { "agentready": "bin/agentready.js" },
+  "dependencies": { "@agentready/engine": "*" }
 }
