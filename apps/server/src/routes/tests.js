@@ -6,7 +6,7 @@ import { TASK_IDS } from '@agentready/engine/types';
 import { config } from '../config.js';
 import * as store from '../store.js';
 import { startReport } from '../reportJob.js';
-import { assertReplayable } from '../replay.js';
+import { assertReplayable, recordedDemoReport } from '../replay.js';
 
 // Real TinyFish ids are UUIDs; mock ids look like mock-nykaa_find_price-l39yqq. Both are safe filename characters.
 const RUN_ID = /^[\w-]{1,80}$/;
@@ -79,6 +79,9 @@ export default function testsRoutes({ engine, events }) {
   router.post('/tests', async (req, res) => {
     const url = parseSiteUrl(req.body?.url);
     assertReplayable(url);
+    // Replay mode: our demo store opens its real recorded report (91 with flaws, 97 fixed) instead of a sample run.
+    const recorded = req.body?.customTask ? null : recordedDemoReport(url);
+    if (recorded) return res.status(202).json({ reportId: recorded });
     const tasks = parseTasks(req.body?.tasks);
     const customText = parseCustomTask(req.body?.customTask);
     const reportId = await startReport(

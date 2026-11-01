@@ -21,3 +21,17 @@ export const REPLAY_ONLY_MESSAGE =
 export function assertReplayable(url) {
   if (config.mock && !hasRecording(url)) throw Object.assign(new Error(REPLAY_ONLY_MESSAGE), { status: 400 });
 }
+
+/**
+ * Replay mode + our demo store: open the REAL recorded reports (flaws on 91, flaws off 97) instead of replaying an
+ * unrelated clean run, which showed the flawed store as 100/100. Returns a cached report id, or null.
+ */
+export function recordedDemoReport(url) {
+  if (!config.mock) return null;
+  let u;
+  try { u = new URL(url); } catch { return null; }
+  let demoHost = 'agent-ready-demo.vercel.app';
+  try { if (config.demoStoreUrl) demoHost = new URL(config.demoStoreUrl).hostname; } catch { /* keep default */ }
+  if (u.hostname !== demoHost && u.hostname !== 'agent-ready-demo.vercel.app') return null;
+  return u.searchParams.get('flaws') === 'off' ? 'rep_demo_flaws_off' : 'rep_demo_flaws_on';
+}
