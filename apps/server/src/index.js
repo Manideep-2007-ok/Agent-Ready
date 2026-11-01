@@ -68,6 +68,11 @@ app.use((err, _req, res, _next) => {
   res.status(status).json({ error: status >= 500 ? 'Something went wrong on our side. Please try again.' : err.message });
 });
 
+// Safety net: one failed background run (agent, scan, watch) must never take the whole server down mid-demo.
+// Node 15+ exits on an unhandled rejection by default; log it plainly and keep serving instead.
+process.on('unhandledRejection', (err) => console.error('[server] background error (server keeps running):', err?.stack || err));
+process.on('uncaughtException', (err) => console.error('[server] unexpected error (server keeps running):', err?.stack || err));
+
 // Listen on this machine only by default, so nobody else on the Wi-Fi can start runs with our key.
 // Set HOST=0.0.0.0 to share it on purpose (cloudflared tunnels to localhost and keeps working either way).
 const host = process.env.HOST || '127.0.0.1';
