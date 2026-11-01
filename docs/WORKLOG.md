@@ -151,3 +151,15 @@ Open items (dashboard):
 - A CLI run of only some tasks shows "50/100, Partly ready" next to "2 of 2 tasks passed" (score counts all four tasks).
 - Not built: step replay, Race page, Leaderboard page (dropped for time, in the D24 / cut-line order).
 - Before the demo: pull main, `npm install`, `npm run build -w @agentready/web`, restart the server.
+
+## 1 Nov 2026: Watch alert live (Manideep)
+
+- Slack webhook set (key session `.env`); test alert 14:15. Watch `w_ae7185a9` on the demo store (`add_to_cart`, 20 min): green 14:10, cart broken via `release.js`, **🔴 Slack alert 14:40** with the agent's words ("every Add to cart click showed Something went wrong"). Cart fixed after.
+- Scores scale to 100 when fewer than 4 tasks run (PR #16); mock mode no longer shows dead live views.
+
+| # | Failure | Found by | Fix |
+|---|---|---|---|
+| F22 | The broken cart's "Something went wrong" matched the bot-wall pattern: proxy + stealth retries (₹111 vs ₹10) and a wrong "blocked, allow-list agents" verdict | Key session, Watch demo | D26: stop after the India-proxy attempt if it took 5+ steps; verdict none, normal finding (cart-not-found) |
+| F23 | Watch alert links pointed to `localhost:5173` (Vite) | Slack alert text | Default to the server (`localhost:$PORT`, 4000), which now serves the dashboard |
+| F24 | A 2-task CLI run read "50/100, Partly ready" with both tasks passing | Sai, PR #15 | Total scaled to the tasks run |
+

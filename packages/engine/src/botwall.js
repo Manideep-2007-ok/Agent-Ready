@@ -11,16 +11,27 @@ const PLAN = [
   { mode: 'stealth', proxy: 'IN' },
 ];
 
+// D26: an agent that took this many steps on the site with an Indian home address got past any wall, so an error
+// that still looks like a block (e.g. the site's own "Something went wrong") is the site failing, not a bot wall.
+export const SITE_FAILURE_MIN_STEPS = 5;
+
+/** After the India-proxy attempt (index 1): failed, still looks blocked, but the agent clearly used the site. */
+export function isSiteFailure(result, attemptIndex) {
+  return attemptIndex === 1 && result.status !== 'passed' && looksBlocked(result) && (result.numSteps || 0) >= SITE_FAILURE_MIN_STEPS;
+}
+
 /**
  * Run a task; only if it fails AND looks blocked, retry with a proxy, then stealth.
  * Returns the last attempt's TaskResult plus `attempts[]` and `verdict`.
  * Verdict: passed on attempt 1 -> none, 2 -> blocks-cloud-agents, 3 -> blocks-automation,
  * blocked on every attempt tried -> site-broken. A normal failure on attempt 1 -> none (no re-run).
  * A normal failure after the wall was already passed (attempt 2 or 3) -> verdict of that wall.
+ * Still "blocked" on the India-proxy attempt after 5+ steps -> the site's own error: stop, verdict none (D26).
  */
 export async function runTaskWithBotWall({ url, taskId, customText }, onEvent) {
   const attempts = [];
   let result;
+  let siteFailure = false;
   for (let i = 0; i < PLAN.length; i++) {
     const { mode, proxy } = PLAN[i];
     if (i > 0) onEvent?.({ kind: 'attempt', taskId, attempt: i + 1, mode, proxy });
@@ -30,6 +41,7 @@ export async function runTaskWithBotWall({ url, taskId, customText }, onEvent) {
     attempts.push({ mode, proxy, runId: result.runId, passed: result.status === 'passed', numSteps: result.numSteps,
       blocker: result.blocker, screenshotUrl: lastStep?.screenshotUrl || null });
     if (result.status === 'passed' || !looksBlocked(result)) break;
+    if (isSiteFailure(result, i)) { siteFailure = true; break; } // D26: not a wall, the site itself is failing
     if (i < PLAN.length - 1) {
       // Lane shows 'blocked' for a moment, then the retry (queued/running updates carry attempts so far + the new mode/proxy).
       onEvent?.({ kind: 'task-update', task: { ...result, attempts: [...attempts] } });
@@ -42,7 +54,7 @@ export async function runTaskWithBotWall({ url, taskId, customText }, onEvent) {
   const passed = result.status === 'passed';
   const blocked = looksBlocked(result);
   let verdict;
-  if (last === 0) verdict = 'none'; // passed first time, or a normal failure (blocked ones always retry)
+  if (last === 0 || siteFailure) verdict = 'none'; // passed first time, a normal failure, or the site's own error (D26)
   else if (passed || !blocked) verdict = last === 1 ? 'blocks-cloud-agents' : 'blocks-automation';
   else verdict = 'site-broken';
   const final = { ...result, attempts, verdict };
