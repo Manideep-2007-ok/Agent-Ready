@@ -68,7 +68,7 @@ function Hero({ children }) {
   return (
     <section className="hero" aria-labelledby="hero-title">
       <div className="hero-main">
-        <span className="hero-burst" aria-hidden="true">REAL AGENTS!</span>
+        <span className="hero-burst">Real TinyFish web agents, live</span>
         <h1 id="hero-title">Can an AI agent actually use your website?</h1>
         <p className="hero-sub">
           Real TinyFish web agents try four everyday tasks on your site, live: find a price, add to cart, find the
@@ -78,7 +78,7 @@ function Hero({ children }) {
       </div>
       <aside className="hero-facts" aria-label="What our agents found">
         <a className="fact fact-orange" href="#/test/rep_20261031_demo_myntra">
-          <b>BLOCKED!</b>
+          <b>Blocked</b>
           <span>Myntra turns away AI agents from cloud servers. They only got in through an Indian home address.</span>
         </a>
         <a className="fact fact-yellow" href="#/test/rep_demo_flaws_off/rep_demo_flaws_on">

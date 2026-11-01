@@ -1,44 +1,35 @@
-/* Lane: one task. Comic card; chips are stickers. PASS = light blue, RUNNING/retry = yellow, FAIL/BLOCKED = orange. */
+/* Lane: one task. Calm card; the status pill carries a text label (Passed / Failed / Blocked / Running). */
 .ar-lane {
-  border: var(--bw, 3px) solid var(--line); border-radius: 12px; padding: 14px; background: var(--card);
-  display: flex; flex-direction: column; gap: 8px; min-width: 0; box-shadow: var(--shadow);
-  transition: transform 0.15s, box-shadow 0.15s;
+  border-radius: 18px; padding: 16px; background: var(--card); box-shadow: var(--shadow);
+  display: flex; flex-direction: column; gap: 10px; min-width: 0;
+  transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
 }
-.ar-lane:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow-lift); }
+.ar-lane:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); }
 .ar-lane-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.ar-lane-title { font-family: inherit; font-weight: 800; font-size: 15px; letter-spacing: 0; line-height: 1.25; margin: 0; }
-.ar-lane-chip {
-  font-family: var(--display); font-size: 17px; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1;
-  padding: 5px 10px 4px; border: 2px solid #111; border-radius: 8px; white-space: nowrap; color: #111;
-  box-shadow: 2px 2px 0 #111; transform: rotate(-3deg);
+.ar-lane-title { font-family: inherit; font-weight: 600; font-size: 0.9375rem; letter-spacing: -0.01em; line-height: 1.3; margin: 0; }
+.ar-lane-chip { font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.ar-lane-chip--waiting { background: var(--wait-bg); color: var(--wait); }
+.ar-lane-chip--running { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.ar-lane-chip--running::before {
+  content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; vertical-align: 1px;
+  background: currentColor; animation: ar-pulse 1.4s ease-in-out infinite;
 }
-.ar-lane-chip--waiting { background: var(--wait-bg); color: var(--text); border-color: var(--line); box-shadow: none; transform: none; font-size: 14px; }
-.ar-lane-chip--running { background: var(--yellow); }
-.ar-lane-chip--passed { background: var(--blue); }
-.ar-lane-chip--failed, .ar-lane-chip--blocked { background: var(--orange); }
-.ar-lane-chip--passed::after, .ar-lane-chip--failed::after, .ar-lane-chip--blocked::after { content: '!'; }
-.ar-lane-meta { display: flex; gap: 12px; font-size: 13px; font-weight: 700; color: var(--muted); }
-.ar-lane-step {
-  position: relative; font-size: 13px; min-height: 18px; color: var(--text);
-}
-.ar-lane-step:not(:empty) {
-  background: var(--paper); border: 2px solid var(--line); border-radius: 10px; padding: 6px 10px; margin-bottom: 6px;
-}
-.ar-lane-step:not(:empty)::after { /* speech-bubble tail */
-  content: ''; position: absolute; left: 16px; bottom: -8px; width: 12px; height: 12px; background: var(--paper);
-  border-right: 2px solid var(--line); border-bottom: 2px solid var(--line); transform: rotate(45deg);
-}
-.ar-lane-attempt { font-size: 12px; font-weight: 700; }
+.ar-lane-chip--passed { background: var(--pass-bg); color: var(--pass); }
+.ar-lane-chip--failed, .ar-lane-chip--blocked { background: var(--fail-bg); color: var(--fail); }
+@keyframes ar-pulse { 50% { opacity: 0.25; } }
+.ar-lane-meta { display: flex; gap: 12px; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ar-lane-step { font-size: 0.8125rem; color: var(--text); min-height: 18px; line-height: 1.4; }
+.ar-lane-attempt { font-size: 0.75rem; font-weight: 600; }
 .ar-lane-attempt--retry {
-  background: var(--yellow); color: #111; border: 2px solid #111; border-radius: 8px; padding: 6px 8px;
-  display: flex; flex-direction: column; gap: 2px; box-shadow: 2px 2px 0 #111;
+  background: var(--warn-bg); color: var(--warn); border-radius: 12px; padding: 8px 10px;
+  display: flex; flex-direction: column; gap: 2px;
 }
-.ar-lane-view { position: relative; aspect-ratio: 16 / 10; background: var(--soft); border: 2px solid var(--line); border-radius: 8px; overflow: hidden; }
+.ar-lane-view { position: relative; aspect-ratio: 16 / 10; background: var(--soft); border-radius: 12px; overflow: hidden; }
 .ar-lane-view iframe, .ar-lane-view img { width: 100%; height: 100%; border: 0; object-fit: cover; display: block; }
-.ar-lane-shot { padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; cursor: zoom-in; width: 100%; height: 100%; }
-.ar-lane-shot:hover:not(:disabled) { transform: none; box-shadow: none; }
-.ar-lane-empty { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 13px; font-weight: 600; color: var(--muted); }
-.ar-lane-result { font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
-.ar-lane-result strong { display: block; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
-.ar-lane-result--bad strong { color: var(--orange); }
-@media (prefers-reduced-motion: reduce) { .ar-lane:hover { transform: none; } }
+.ar-lane-shot { padding: 0; border-radius: 0; background: none; cursor: zoom-in; width: 100%; height: 100%; }
+.ar-lane-shot:hover:not(:disabled) { background: none; }
+.ar-lane-shot:active:not(:disabled) { transform: none; }
+.ar-lane-empty { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 0.8125rem; color: var(--muted); }
+.ar-lane-result { font-size: 0.8125rem; line-height: 1.5; overflow-wrap: anywhere; }
+.ar-lane-result strong { display: block; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 2px; }
+.ar-lane-result--bad strong { color: var(--fail); }
