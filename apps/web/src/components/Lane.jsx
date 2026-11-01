@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TASK_LABELS } from '@agentready/engine/goals';
+import { GOAL_SUFFIX, TASK_LABELS } from '@agentready/engine/goals';
 import './Lane.css';
 
 const CHIPS = {
@@ -45,7 +45,10 @@ export default function Lane({ task, label, onShotClick, startedAt }) {
   useEffect(() => { setIframeFailed(false); }, [task?.streamingUrl]);
   const t0 = startedAt || runStart || now;
 
-  const title = label || (task && TASK_LABELS[task.taskId]) || 'Task';
+  // A custom task shows the user's own words (its goal minus our fixed answer-format suffix).
+  const customText = task?.taskId === 'custom' && typeof task.goal === 'string' ? task.goal.replace(GOAL_SUFFIX, '').trim() : '';
+  const shortCustom = customText.length > 70 ? `${customText.slice(0, 67)}…` : customText;
+  const title = label || (shortCustom ? `Your task: ${shortCustom}` : (task && TASK_LABELS[task.taskId])) || 'Task';
   const attempts = Array.isArray(task?.attempts) ? task.attempts : [];
   // During a bot-wall retry the live state can still hold the blocked attempt's steps (the dashboard keeps the
   // longer step list while a task runs). Hide steps whose screenshot belongs to an earlier attempt's run.
@@ -74,7 +77,7 @@ export default function Lane({ task, label, onShotClick, startedAt }) {
   return (
     <section className="ar-lane" aria-label={`${title}: ${label1}`}>
       <div className="ar-lane-head">
-        <h3 className="ar-lane-title">{title}</h3>
+        <h3 className="ar-lane-title" title={customText || undefined}>{title}</h3>
         <span className={`ar-lane-chip ar-lane-chip--${cls}`}>{label1}</span>
       </div>
       <div className="ar-lane-meta">
