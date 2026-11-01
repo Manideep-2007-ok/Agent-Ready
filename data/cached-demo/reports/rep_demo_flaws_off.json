@@ -1,0 +1,326 @@
+{
+  "id": "rep_20261101_0811_agentreadydemo",
+  "url": "https://agent-ready-demo.vercel.app/?flaws=off",
+  "source": "web",
+  "testedAt": "2026-11-01T08:12:12.904Z",
+  "pack": "shopping",
+  "status": "complete",
+  "score": 97,
+  "botWall": "none",
+  "costRupees": 26.75,
+  "framework": "unknown",
+  "instantScan": {
+    "unlabelledButtons": 0,
+    "totalButtonsAndLinks": 18,
+    "imagesWithoutAlt": 0,
+    "totalImages": 0,
+    "priceAsText": true,
+    "overlayCoveringPage": false,
+    "productSchema": false,
+    "framework": "unknown",
+    "pageTextChars": 338,
+    "robotsTxt": "error",
+    "sitemap": "error",
+    "seconds": 8
+  },
+  "tasks": [
+    {
+      "taskId": "find_returns",
+      "goal": "Find this site's return or refund policy. Report how many days customers have to return a product and the URL of the policy page. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "off",
+      "runId": "d2bfd310-7e3f-4768-976a-75047b580a2d",
+      "status": "passed",
+      "answer": "Customers have 10 days to return a product from the date of delivery for a full refund. The return policy page URL is: https://agent-ready-demo.vercel.app/help/policies/shipping/more/returns.html",
+      "blocker": null,
+      "stuckUrl": null,
+      "streamingUrl": "https://ip-3-101-153-112.tetra-data.production.tinyfish.io/tf-8bc4f3e7-8674-4237-864a-61c878f82ec1/stream/0",
+      "steps": [
+        {
+          "id": "83711e3b-290c-405c-9289-3c8f9dad25d0",
+          "label": "Visit the site to find return/refund policy",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/d2bfd310-7e3f-4768-976a-75047b580a2d/83711e3b-290c-405c-9289-3c8f9dad25d0",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:27Z"
+        },
+        {
+          "id": "b199e974-f4ef-427f-83cb-1ff5cb86eb93",
+          "label": "Visit the returns policy page",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/d2bfd310-7e3f-4768-976a-75047b580a2d/b199e974-f4ef-427f-83cb-1ff5cb86eb93",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:29Z"
+        },
+        {
+          "id": "47a7cf87-fb05-4996-9d21-4ea454624390",
+          "label": "Visit returns policy page",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/d2bfd310-7e3f-4768-976a-75047b580a2d/47a7cf87-fb05-4996-9d21-4ea454624390",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:32Z"
+        },
+        {
+          "id": "e908cb14-9321-42ed-9d80-0e692097b978",
+          "label": "Extract return policy details from page",
+          "seconds": 1.1,
+          "screenshotUrl": "/api/shot/d2bfd310-7e3f-4768-976a-75047b580a2d/e908cb14-9321-42ed-9d80-0e692097b978",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:35Z"
+        },
+        {
+          "id": "809fe772-fef0-4e38-9ca9-42f5dbd451c3",
+          "label": "Finish task with return policy information",
+          "seconds": 0,
+          "screenshotUrl": "/api/shot/d2bfd310-7e3f-4768-976a-75047b580a2d/809fe772-fef0-4e38-9ca9-42f5dbd451c3",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:39Z"
+        }
+      ],
+      "numSteps": 5,
+      "seconds": 16,
+      "points": 25,
+      "findings": [],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "d2bfd310-7e3f-4768-976a-75047b580a2d",
+          "passed": true,
+          "numSteps": 5,
+          "blocker": null,
+          "screenshotUrl": "/api/shot/d2bfd310-7e3f-4768-976a-75047b580a2d/809fe772-fef0-4e38-9ca9-42f5dbd451c3"
+        }
+      ],
+      "verdict": "none"
+    },
+    {
+      "taskId": "add_to_cart",
+      "goal": "Find any product, open its product page and add it to the cart. Then open the cart and report the cart total. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "off",
+      "runId": "de59daff-259c-4607-bb3d-ebd8111f3f19",
+      "status": "passed",
+      "answer": "Successfully added Masala Chai Blend (250 g) priced at ₹499 to the cart. The cart total is ₹499.0.",
+      "blocker": null,
+      "stuckUrl": null,
+      "streamingUrl": "https://ip-54-153-23-232.tetra-data.production.tinyfish.io/tf-e01c36b8-2ef8-4f3b-a8d0-b3f9b1120dd2/stream/0",
+      "steps": [
+        {
+          "id": "c5a5ffcc-6d59-4953-900c-545d391569ca",
+          "label": "Visit the demo e-commerce site",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/de59daff-259c-4607-bb3d-ebd8111f3f19/c5a5ffcc-6d59-4953-900c-545d391569ca",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:29Z"
+        },
+        {
+          "id": "4fb4232d-9d5c-4e9e-917b-843f07ba8b82",
+          "label": "Understand page layout and products",
+          "seconds": 2.1,
+          "screenshotUrl": "/api/shot/de59daff-259c-4607-bb3d-ebd8111f3f19/4fb4232d-9d5c-4e9e-917b-843f07ba8b82",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:32Z"
+        },
+        {
+          "id": "5608fde8-d5e4-4cc3-979d-8d1950ad91a7",
+          "label": "Open product page for Masala Chai Blend",
+          "seconds": 0.9,
+          "screenshotUrl": "/api/shot/de59daff-259c-4607-bb3d-ebd8111f3f19/5608fde8-d5e4-4cc3-979d-8d1950ad91a7",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:37Z"
+        },
+        {
+          "id": "ca385d58-7c92-452e-b63f-57379dd3f15d",
+          "label": "Add Masala Chai Blend to cart",
+          "seconds": 1.1,
+          "screenshotUrl": "/api/shot/de59daff-259c-4607-bb3d-ebd8111f3f19/ca385d58-7c92-452e-b63f-57379dd3f15d",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:40Z"
+        },
+        {
+          "id": "d95874b3-31db-4d45-a732-a086cafae16d",
+          "label": "Open cart to check total",
+          "seconds": 0.9,
+          "screenshotUrl": "/api/shot/de59daff-259c-4607-bb3d-ebd8111f3f19/d95874b3-31db-4d45-a732-a086cafae16d",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:42Z"
+        },
+        {
+          "id": "cb994a77-cf02-42e8-9541-5d34282b23b0",
+          "label": "Find cart total amount",
+          "seconds": 1.3,
+          "screenshotUrl": "/api/shot/de59daff-259c-4607-bb3d-ebd8111f3f19/cb994a77-cf02-42e8-9541-5d34282b23b0",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:44Z"
+        },
+        {
+          "id": "ac9ae847-c39e-4156-bfb5-8b854456e1c8",
+          "label": "Submit final answer with cart total",
+          "seconds": 0,
+          "screenshotUrl": "/api/shot/de59daff-259c-4607-bb3d-ebd8111f3f19/ac9ae847-c39e-4156-bfb5-8b854456e1c8",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:48Z"
+        }
+      ],
+      "numSteps": 7,
+      "seconds": 22,
+      "points": 22,
+      "findings": [],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "de59daff-259c-4607-bb3d-ebd8111f3f19",
+          "passed": true,
+          "numSteps": 7,
+          "blocker": null,
+          "screenshotUrl": "/api/shot/de59daff-259c-4607-bb3d-ebd8111f3f19/ac9ae847-c39e-4156-bfb5-8b854456e1c8"
+        }
+      ],
+      "verdict": "none"
+    },
+    {
+      "taskId": "find_price",
+      "goal": "Find any product on this site and report its exact name and price. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "off",
+      "runId": "abc6ccf3-78d1-42fb-a020-2439249d9a35",
+      "status": "passed",
+      "answer": "Product: Masala Chai Blend (250 g), Price: 499.0",
+      "blocker": null,
+      "stuckUrl": null,
+      "streamingUrl": "https://ip-3-101-153-112.tetra-data.production.tinyfish.io/tf-46f57d27-3ba7-4cc8-b0fc-fa93d04a0221/stream/0",
+      "steps": [
+        {
+          "id": "0c7ebfdb-a975-48e9-b614-14540902235e",
+          "label": "Visit the demo site to find a product name and price",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/abc6ccf3-78d1-42fb-a020-2439249d9a35/0c7ebfdb-a975-48e9-b614-14540902235e",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:45Z"
+        },
+        {
+          "id": "51cdca0a-da6c-46f7-8669-2b103193f965",
+          "label": "View product details including name and price",
+          "seconds": 0.9,
+          "screenshotUrl": "/api/shot/abc6ccf3-78d1-42fb-a020-2439249d9a35/51cdca0a-da6c-46f7-8669-2b103193f965",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:48Z"
+        },
+        {
+          "id": "ec367bb9-e313-4c2c-b766-c122c336bcaf",
+          "label": "Extract product name and price from product page",
+          "seconds": 1.2,
+          "screenshotUrl": "/api/shot/abc6ccf3-78d1-42fb-a020-2439249d9a35/ec367bb9-e313-4c2c-b766-c122c336bcaf",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:50Z"
+        },
+        {
+          "id": "7f7c52e0-7dac-498f-a698-db60c8cd4b34",
+          "label": "Return product name and price found on the site",
+          "seconds": 10.9,
+          "screenshotUrl": "/api/shot/abc6ccf3-78d1-42fb-a020-2439249d9a35/7f7c52e0-7dac-498f-a698-db60c8cd4b34",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:53Z"
+        }
+      ],
+      "numSteps": 4,
+      "seconds": 22,
+      "points": 25,
+      "findings": [],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "abc6ccf3-78d1-42fb-a020-2439249d9a35",
+          "passed": true,
+          "numSteps": 4,
+          "blocker": null,
+          "screenshotUrl": "/api/shot/abc6ccf3-78d1-42fb-a020-2439249d9a35/7f7c52e0-7dac-498f-a698-db60c8cd4b34"
+        }
+      ],
+      "verdict": "none"
+    },
+    {
+      "taskId": "find_contact",
+      "goal": "Find a way to contact this company's customer support (phone, email, chat or contact form) and report it with the page URL where you found it. Do NOT log in, sign up or pay. If anything blocks you (login wall, popup, captcha, error page, access denied), stop and describe exactly what blocked you and at which step. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null, \"stuck_url\": string or null}",
+      "mode": "lite",
+      "proxy": "off",
+      "runId": "2feb3420-c2e3-4544-9d0f-ee9ef70f8689",
+      "status": "passed",
+      "answer": "Customer support contact information found on the Contact page (https://agent-ready-demo.vercel.app/contact.html):\n\n- Email: support@chaiandco.example\n- Phone: +91 80 4000 1234 (Mon-Sat, 9am-6pm IST)\n- Contact form: Available on the same page with fields for Name, Email, and Message",
+      "blocker": null,
+      "stuckUrl": "https://agent-ready-demo.vercel.app/contact.html",
+      "streamingUrl": "https://ip-184-169-213-135.tetra-data.production.tinyfish.io/tf-b50bf5ed-e9a8-4938-9c39-6edf66f414e2/stream/0",
+      "steps": [
+        {
+          "id": "a6870531-8c05-459a-84f3-736b2afa3902",
+          "label": "Visit the company website to find customer support contact info",
+          "seconds": 1.5,
+          "screenshotUrl": "/api/shot/2feb3420-c2e3-4544-9d0f-ee9ef70f8689/a6870531-8c05-459a-84f3-736b2afa3902",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:11:59Z"
+        },
+        {
+          "id": "ec83e9ac-3082-4436-80f4-4c63dab0d4cb",
+          "label": "Visit the contact page to find customer support information",
+          "seconds": 1,
+          "screenshotUrl": "/api/shot/2feb3420-c2e3-4544-9d0f-ee9ef70f8689/ec83e9ac-3082-4436-80f4-4c63dab0d4cb",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:12:02Z"
+        },
+        {
+          "id": "995fa062-a877-42c1-afbf-d112c92cea6c",
+          "label": "Report the customer support contact information found",
+          "seconds": 0,
+          "screenshotUrl": "/api/shot/2feb3420-c2e3-4544-9d0f-ee9ef70f8689/995fa062-a877-42c1-afbf-d112c92cea6c",
+          "usedWebSearch": false,
+          "at": "2026-11-01T08:12:11Z"
+        }
+      ],
+      "numSteps": 3,
+      "seconds": 21,
+      "points": 25,
+      "findings": [],
+      "attempts": [
+        {
+          "mode": "lite",
+          "proxy": "off",
+          "runId": "2feb3420-c2e3-4544-9d0f-ee9ef70f8689",
+          "passed": true,
+          "numSteps": 3,
+          "blocker": null,
+          "screenshotUrl": "/api/shot/2feb3420-c2e3-4544-9d0f-ee9ef70f8689/995fa062-a877-42c1-afbf-d112c92cea6c"
+        }
+      ],
+      "verdict": "none"
+    }
+  ],
+  "topFixes": [
+    {
+      "type": "no-product-schema",
+      "severity": "low",
+      "text": "The page has no schema.org Product data, so agents must guess product details from the page layout.",
+      "likelyCause": "The product page has no schema.org Product/Offer markup, so machines must guess the name and price from the layout.",
+      "fix": "Add JSON-LD Product markup with name, image, offers.price and offers.priceCurrency.",
+      "standard": "schema.org Product",
+      "passCheck": "Google Rich Results Test shows a valid Product on the page.",
+      "pointsIfFixed": 0,
+      "verified": true
+    }
+  ],
+  "scanFindings": [
+    {
+      "type": "no-product-schema",
+      "severity": "low",
+      "text": "The page has no schema.org Product data, so agents must guess product details from the page layout.",
+      "likelyCause": "The product page has no schema.org Product/Offer markup, so machines must guess the name and price from the layout.",
+      "fix": "Add JSON-LD Product markup with name, image, offers.price and offers.priceCurrency.",
+      "standard": "schema.org Product",
+      "passCheck": "Google Rich Results Test shows a valid Product on the page.",
+      "pointsIfFixed": 0,
+      "verified": true
+    }
+  ]
+}
