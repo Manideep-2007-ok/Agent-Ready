@@ -11,7 +11,8 @@ export const config = {
   port: Number(process.env.PORT) || 4000,
   mock: bool(process.env.TINYFISH_MOCK, false),
   repoRoot,
-  dataDir: path.join(repoRoot, 'data'),
+  // Smoke tests point this at a temp folder so their watches never land in the real data/ (and get scheduled).
+  dataDir: process.env.AGENTREADY_DATA_DIR || path.join(repoRoot, 'data'),
   cachedDemoDir: path.join(repoRoot, 'data', 'cached-demo'),
   demoStoreUrl: (process.env.DEMO_STORE_URL || '').replace(/\/+$/, ''),
   features: {
