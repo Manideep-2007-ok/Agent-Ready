@@ -46,7 +46,31 @@ export function parseCustomTask(text) {
   return trimmed;
 }
 
-const sse = (res, event) => res.write(`data: ${JSON.stringify(event)}\n\n`);
+/**
+ * A finished SiteReport posted by the CLI. The CLI prints <server>/#/test/<id> from its own id, so the id is kept
+ * (not renamed); the shape is checked so a bad upload cannot break the dashboard.
+ */
+export function parseUploadedReport(body) {
+  const bad = (why) => httpError(400, `This does not look like an AgentReady report: ${why}.`);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) throw bad('send the report JSON');
+  if (typeof body.id !== 'string' || !RUN_ID.test(body.id)) throw bad('id must be letters, digits, _ or - (up to 80)');
+  let url;
+  try { url = new URL(body.url); } catch { throw bad('url is missing'); }
+  if (!['http:', 'https:'].includes(url.protocol)) throw bad('url must start with http:// or https://');
+  if (!Number.isFinite(body.score) || body.score < 0 || body.score > 100) throw bad('score must be 0-100');
+  if (!Array.isArray(body.tasks) || body.tasks.some((t) => !t || !TASK_IDS.includes(t.taskId) || !Array.isArray(t.steps ?? []))) {
+    throw bad(`tasks must be a list of task results (${TASK_IDS.join(', ')})`);
+  }
+  return {
+    ...body,
+    source: 'cli',
+    status: 'complete',
+    topFixes: Array.isArray(body.topFixes) ? body.topFixes : [],
+    scanFindings: Array.isArray(body.scanFindings) ? body.scanFindings : [],
+  };
+}
+
+const sse =(res, event) => res.write(`data: ${JSON.stringify(event)}\n\n`);
 
 export default function testsRoutes({ engine, events }) {
   const router = Router();
@@ -110,6 +134,17 @@ export default function testsRoutes({ engine, events }) {
     const enriched = await engine.buildFixReport(report);
     await store.saveReport(enriched);
     res.json(enriched);
+  });
+
+  // CLI upload (AGENTREADY_SERVER): store the finished report so the printed dashboard link opens it.
+  // Re-uploading the same CLI report replaces it; an id already used by a web or watch report is refused.
+  router.post('/reports', async (req, res) => {
+    if (!config.features.CLI_UPLOAD) throw httpError(404, 'The cli_upload feature is turned off.');
+    const report = parseUploadedReport(req.body);
+    const existing = await store.getReport(report.id);
+    if (existing && existing.source !== 'cli') throw httpError(409, 'A different report already uses this id.');
+    await store.saveReport(report);
+    res.status(201).json({ reportId: report.id });
   });
 
   return router;

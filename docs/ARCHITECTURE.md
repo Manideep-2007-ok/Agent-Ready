@@ -258,6 +258,7 @@ For each finding:
 | `POST /api/instant-scan` | `{url}` | `InstantScan` |
 | `GET /api/shot/:runId/:stepId` | | JPEG (cached to `data/shots/`) |
 | `POST /api/reports/:id/fixes` | | enriched `SiteReport` |
+| `POST /api/reports` | `SiteReport` (from the CLI) | `201 {reportId}`; keeps the CLI's id, `409` if a web/watch report uses it; flag `CLI_UPLOAD` |
 | `POST /api/race` | `{taskId, urls}` (max 3) | `{raceId}` |
 | `GET /api/race/:id` / `.../events` | | race state / SSE |
 | `GET /api/watch` | | `Watch[]` |
@@ -269,6 +270,7 @@ For each finding:
 | `GET /api/leaderboard` | | reports from `data/cached-demo/leaderboard/` ranked |
 | `POST /api/demo-store/flaws` | `{on:boolean}` | used by "Apply fixes": returns the store URL with `?flaws=on|off` |
 
+The server also serves the built dashboard (`apps/web/dist`, from `npm run build -w @agentready/web`) at `/`, so links like `http://localhost:4000/#/test/<id>` from the CLI and Watch alerts open without Vite.
 SSE format: headers `Content-Type: text/event-stream`, `Cache-Control: no-cache`, `Connection: keep-alive`; each message `data: ${JSON.stringify(event)}\n\n`; send `: ping\n\n` every 15 s.
 Errors: JSON `{error: "plain message"}` with 4xx/5xx; never leak the API key in errors.
 Feature flags (`apps/server/src/config.js`): `RACE, WATCH, FIXES_AI, CUSTOM_TASK, LEADERBOARD, CLI_UPLOAD` booleans from env `FEATURE_*` (default true).
