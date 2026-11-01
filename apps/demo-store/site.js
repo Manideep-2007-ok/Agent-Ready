@@ -42,6 +42,11 @@
       document.head.appendChild(s);
     }
     main.querySelector('.add-btn').addEventListener('click', () => {
+      // Bad-release simulation (release.js): the cart service is down, nothing is added.
+      if (window.RELEASE && window.RELEASE.cartBroken) {
+        document.getElementById('added').textContent = 'Something went wrong. Please try again later.';
+        return;
+      }
       Cart.add(p.id, 1);
       document.getElementById('cart-count').textContent = Cart.count();
       document.getElementById('added').textContent = F.iconCart ? '' : 'Added to cart.';
