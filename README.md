@@ -12,7 +12,16 @@ Built by Team Mavericks (Manideep Thumu, Sai Shakti Nayak, Akhil Daitha) at Swim
 ## Quick start
 
 ```bash
+bash scripts/setup-demo.sh   # installs, asks for the key (hidden), builds, starts: open http://localhost:4000
+```
+
+Or by hand:
+
+```bash
 cp .env.example .env      # add your TINYFISH_API_KEY (TINYFISH_MOCK=1 replays real runs, no credits)
 npm install
-npm run dev               # server on :4000, dashboard on :5173
+npm run build -w @agentready/web && npm start -w @agentready/server   # dashboard + API on http://localhost:4000
+npm run dev               # development: server on :4000, live-reload dashboard on :5173
 ```
+
+The server listens on this machine only (`127.0.0.1`); set `HOST=0.0.0.0` to share it on a network on purpose.

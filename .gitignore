@@ -8,3 +8,6 @@ data/*
 .DS_Store
 *.log
 .vercel
+
+# CLI writes its report next to where it runs
+agentready-report-*.json
