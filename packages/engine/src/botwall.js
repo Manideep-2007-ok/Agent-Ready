@@ -22,12 +22,13 @@ export async function runTaskWithBotWall({ url, taskId, customText }, onEvent) {
   for (let i = 0; i < PLAN.length; i++) {
     const { mode, proxy } = PLAN[i];
     if (i > 0) onEvent?.({ kind: 'attempt', taskId, attempt: i + 1, mode, proxy });
-    result = await runTask({ url, taskId, customText, mode, proxy }, onEvent);
+    result = await runTask({ url, taskId, customText, mode, proxy, emitFinal: false }, onEvent);
     // numSteps feeds the cost meter; blocker + screenshotUrl keep the evidence of the wall after a later attempt passes.
     const lastStep = result.steps[result.steps.length - 1];
     attempts.push({ mode, proxy, runId: result.runId, passed: result.status === 'passed', numSteps: result.numSteps,
       blocker: result.blocker, screenshotUrl: lastStep?.screenshotUrl || null });
     if (result.status === 'passed' || !looksBlocked(result)) break;
+    if (i < PLAN.length - 1) onEvent?.({ kind: 'task-update', task: { ...result, attempts: [...attempts] } }); // lane shows 'blocked' once, then 'attempt' + running for the retry
   }
   const last = attempts.length - 1;
   const passed = result.status === 'passed';
