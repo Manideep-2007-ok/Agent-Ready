@@ -228,6 +228,7 @@ Run in parallel:
   - `productSchema`: any `script[type="application/ld+json"]` containing `Product` or `Offer`.
   - `framework`: `detectFramework(page)`.
 - Always `closeBrowserSession` in `finally`. Instant Scan findings: `popup-blocking`, `unlabelled-buttons`, `price-in-image` (no price text but price expected), `no-product-schema` (low severity).
+- The server stores them as `SiteReport.scanFindings` (`instantScanFindings(scan)`) as soon as the scan finishes. They are not part of the 100-point score (`pointsIfFixed: 0`), are shown in the findings list next to task findings, and can enter the Top 3 (D25).
 
 ---
 
@@ -238,7 +239,7 @@ For each finding:
 2. **Framework:** `__NEXT_DATA__` script or `self.__next_f` -> `nextjs`; `window.Shopify` -> `shopify`; else `unknown`.
 3. **AI write-up** (`LLM_PROVIDER` = gemini | anthropic | openai, key `LLM_API_KEY`): one call per finding, prompt includes evidence + framework, asks for JSON `{rootCause, standard, fixRule, frameworkExample, passCheck}`. Validate all keys exist; on error or timeout (10 s) use `FIX_TEMPLATES[type]`.
 4. **Wording rule:** inferred causes are shown as "Likely cause". Never blame the agent ("the agent got confused"); always name a site cause.
-5. **Top 3 fixes** = findings (task findings + `scanFindings` from Instant Scan) sorted by severity (critical > high > medium > low), then `pointsIfFixed` desc; one per finding type (D25).
+5. **Top 3 fixes** = task findings plus `scanFindings`, sorted by severity (critical first), then `pointsIfFixed` desc, one per finding type, so a scan finding ranks after point-scoring findings of the same severity (D25). The server recomputes this after scoring.
 6. **Standards** to cite: WCAG 4.1.2 Name, Role, Value (unlabelled controls); WCAG 1.1.1 Non-text Content (images/prices in images); schema.org Product (product data); bot protection allowlisting for verified AI agents (bot-wall findings).
 
 ---
@@ -249,7 +250,7 @@ For each finding:
 |---|---|---|
 | `GET /api/health` | | `{ok:true, mock:boolean}` |
 | `POST /api/tests` | `{url, tasks?, customTask?}` | `{reportId}`; starts Instant Scan + test in background |
-| `GET /api/tests/:id` | | `SiteReport` |
+| `GET /api/tests/:id` | | `SiteReport` (includes `scanFindings` once the Instant Scan is done) |
 | `GET /api/tests/:id/events` | | SSE `LiveEvent` stream; first message replays current report |
 | `GET /api/tests` | | recent reports (id, url, score, testedAt) |
 | `POST /api/instant-scan` | `{url}` | `InstantScan` |

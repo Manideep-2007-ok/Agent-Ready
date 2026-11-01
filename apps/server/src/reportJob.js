@@ -5,6 +5,16 @@ import * as store from './store.js';
 
 /** @typedef {import('@agentready/engine/types').SiteReport} SiteReport */
 
+/**
+ * Top 3 (D25): task findings plus Instant Scan findings, ranked by the engine (severity, then pointsIfFixed,
+ * one per finding type). Scan findings score 0 points, so they rank after point-scoring findings of the same severity.
+ * @param {SiteReport} report
+ * @param {{rankFixes:Function}} engine
+ */
+export function rankTopFixes(report, engine) {
+  return engine.rankFixes([...report.tasks.flatMap((t) => t.findings ?? []), ...(report.scanFindings ?? [])]);
+}
+
 const slug = (url) => new URL(url).hostname.replace(/^www\./, '').split('.')[0].replace(/[^\w]/g, '') || 'site';
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -55,21 +65,37 @@ async function runInBackground(report, { tasks, customText, instantScan }, { eng
   const reportId = report.id;
   const save = () => store.saveReport(report).catch((err) => console.error(`[${reportId}] save failed:`, err));
 
+  const findTask = (taskId) => report.tasks.find((t) => t.taskId === taskId);
+
+  // While running, keep the longer step list so a task-update never drops saved steps. Once finished, the
+  // task's own list wins: those are the real run steps with screenshots (live progress steps have none).
   const upsertTask = (task) => {
     const at = report.tasks.findIndex((t) => t.taskId === task.taskId);
-    if (at === -1) report.tasks.push(task);
-    else report.tasks[at] = task;
+    if (at === -1) return report.tasks.push(task);
+    const previous = report.tasks[at];
+    const finished = ['passed', 'failed', 'blocked'].includes(task.status);
+    const steps = finished || task.steps?.length >= previous.steps.length ? task.steps : previous.steps;
+    report.tasks[at] = { ...task, steps, streamingUrl: task.streamingUrl ?? previous.streamingUrl };
   };
 
   // Engine events -> LiveEvents (shapes in types.js). 'attempt' events are engine-internal.
+  // Steps are saved as they arrive, so a page refreshed mid-run replays them.
   const onEvent = (e) => {
     if (e.kind === 'task-update') {
       upsertTask(e.task);
       save();
       events.publish({ type: 'task-update', reportId, task: e.task });
     } else if (e.kind === 'step') {
+      const task = findTask(e.taskId);
+      if (task && !task.steps.some((s) => s.id === e.step.id)) {
+        task.steps = [...task.steps, e.step];
+        task.numSteps = task.steps.length;
+        save();
+      }
       events.publish({ type: 'step', reportId, taskId: e.taskId, step: e.step });
     } else if (e.kind === 'streaming-url') {
+      const task = findTask(e.taskId);
+      if (task) task.streamingUrl = e.url;
       events.publish({ type: 'streaming-url', reportId, taskId: e.taskId, url: e.url });
     }
   };
@@ -79,6 +105,8 @@ async function runInBackground(report, { tasks, customText, instantScan }, { eng
         .instantScan(report.url)
         .then((result) => {
           report.instantScan = result;
+          report.scanFindings = engine.instantScanFindings?.(result) ?? [];
+          report.topFixes = rankTopFixes(report, engine);
           save();
           events.publish({ type: 'instant-scan', reportId, scan: result });
         })
@@ -97,15 +125,19 @@ async function runInBackground(report, { tasks, customText, instantScan }, { eng
         task.blocker = 'The test could not finish. Please try again.';
       }
     }
+    await scan;
     report.status = 'complete';
+    report.topFixes = rankTopFixes(report, engine);
     await save();
     events.publish({ type: 'report-complete', reportId, report });
     return;
   }
 
   await scan;
-  // Our id and scan win; everything else (score, tasks, findings, botWall, cost) comes from the engine.
+  // Our id and scan win; score, tasks, findings, botWall and cost come from the engine.
   Object.assign(report, result, { id: reportId, instantScan: report.instantScan ?? result.instantScan, status: 'complete' });
+  report.scanFindings ??= [];
+  report.topFixes = rankTopFixes(report, engine);
   await save();
   events.publish({ type: 'report-complete', reportId, report });
 }
