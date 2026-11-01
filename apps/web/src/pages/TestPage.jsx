@@ -63,22 +63,65 @@ function TestForm({ busy, onStart, onDemo }) {
   );
 }
 
-/** Landing hero (no test open): the question, the URL box and how it works. */
+/** Landing hero (no test open): the question, the URL box, real results so far, and how it works. */
 function Hero({ children }) {
   return (
     <section className="hero" aria-labelledby="hero-title">
-      <span className="hero-burst" aria-hidden="true">REAL AGENTS!</span>
-      <h1 id="hero-title">Can an AI agent actually use your website?</h1>
-      <p className="hero-sub">
-        Real TinyFish web agents try four everyday tasks on your site, live: find a price, add to cart, find the
-        return policy, contact support. You get a score, the exact step where they got stuck, and the fixes.
-      </p>
-      {children}
+      <div className="hero-main">
+        <span className="hero-burst" aria-hidden="true">REAL AGENTS!</span>
+        <h1 id="hero-title">Can an AI agent actually use your website?</h1>
+        <p className="hero-sub">
+          Real TinyFish web agents try four everyday tasks on your site, live: find a price, add to cart, find the
+          return policy, contact support. You get a score, the exact step where they got stuck, and the fixes.
+        </p>
+        {children}
+      </div>
+      <aside className="hero-facts" aria-label="What our agents found">
+        <a className="fact fact-orange" href="#/test/rep_20261031_demo_myntra">
+          <b>BLOCKED!</b>
+          <span>Myntra turns away AI agents from cloud servers. They only got in through an Indian home address.</span>
+        </a>
+        <a className="fact fact-yellow" href="#/test/rep_demo_flaws_off/rep_demo_flaws_on">
+          <b>35 → 19 steps</b>
+          <span>Fixing four flaws on our demo store nearly halved the agent's work and cost.</span>
+        </a>
+        <a className="fact fact-paper" href="#/watch">
+          <b>Alert in 6 min</b>
+          <span>We broke our demo store's cart. Watch's agents caught it and posted to Slack 6 minutes later.</span>
+        </a>
+      </aside>
       <ol className="how">
         <li><b>1</b>Drop your URL</li>
         <li><b>2</b>Agents try your site, live</li>
         <li><b>3</b>Get a score and the top fixes</li>
       </ol>
+    </section>
+  );
+}
+
+const FEATURES = [
+  { tone: 'blue', title: 'Live agent lanes', text: 'Four real TinyFish agents work in parallel. Watch every step as it happens, the live browser view, and a screenshot of each step, so you see exactly where an agent got stuck.' },
+  { tone: 'yellow', title: 'Score out of 100', text: 'Plain rules, same result every time: passed, steps taken, time, and any workaround needed.' },
+  { tone: 'orange', title: 'Bot-wall check', text: 'Blocked? We retry with an Indian home address, then stealth, to show who your security lets in.' },
+  { tone: 'paper', title: 'Top 3 fixes', text: 'Each problem names the page, the likely cause, the web standard and how to check it is fixed.' },
+  { tone: 'paper', title: 'Instant Scan', text: 'In seconds: pop-ups, unlabelled buttons, prices drawn as images, missing product data.' },
+  { tone: 'blue', title: 'Watch + alerts', text: 'Agents re-test your live site on a schedule and post to Slack the moment a task breaks.' },
+  { tone: 'yellow', title: 'CLI for localhost', text: <><code>npx agentready localhost:3000</code> tests a site before it ships, through a secure tunnel.</> },
+];
+
+/** Feature grid under the hero (home only). */
+function Features() {
+  return (
+    <section className="features" aria-labelledby="features-title">
+      <h2 id="features-title">What you get</h2>
+      <div className="feature-grid">
+        {FEATURES.map((f) => (
+          <article key={f.title} className={`feature feature-${f.tone}`}>
+            <h3>{f.title}</h3>
+            <p>{f.text}</p>
+          </article>
+        ))}
+      </div>
     </section>
   );
 }
@@ -222,6 +265,7 @@ export default function TestPage({ reportId, beforeId }) {
           {live.report && <Findings report={live.report} onShotClick={setShot} />}
         </>
       )}
+      {!reportId && <Features />}
       {!reportId && <RecentReports />}
       <ShotViewer url={shot} onClose={() => setShot(null)} />
     </>
