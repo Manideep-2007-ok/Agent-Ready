@@ -18,6 +18,8 @@ const flawsOn = (url) => {
 // Steps an agent spent on a task, counting every attempt (the cost meter counts them too).
 const stepsOf = (t) => (t.attempts?.length ? t.attempts.reduce((n, a) => n + (a.numSteps || 0), 0) : t.numSteps ?? t.steps?.length ?? 0);
 const totalSteps = (r) => r.tasks.reduce((n, t) => n + stepsOf(t), 0);
+// Mock mode replays recordings (run ids "mock-..."); real TinyFish run ids are UUIDs.
+const isMock = (r) => r.tasks.some((t) => t.attempts?.some((a) => String(a.runId ?? '').startsWith('mock-')));
 
 /** The effort the fixes saved: total steps, cost, and each task that needed noticeably more steps before. */
 function Effort({ before, after }) {
@@ -74,6 +76,12 @@ export default function DemoStoreCard({ report, beforeId, demoStoreUrl, url, bus
           )}
         </div>
         {report && <Effort before={before} after={report} />}
+        {(isMock(before) || (report && isMock(report))) && (
+          <p className="mock-note">
+            <b>Mock mode:</b> these runs replay a recording instead of sending real agents, so the numbers cannot
+            change between flaws on and off. Turn mock mode off for a real comparison.
+          </p>
+        )}
       </section>
     );
   }
