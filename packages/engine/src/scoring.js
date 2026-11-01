@@ -161,6 +161,10 @@ export function scoreReport(report) {
     totalSteps += t.attempts?.length ? t.attempts.reduce((n, a) => n + (a.numSteps || 0), 0) : t.numSteps || 0;
   }
   const topFixes = rankFixes(all);
+  // Out of 100 for the tasks actually run: 4 tasks x 25 as before; a 2-task CLI or 1-task Watch run scales up,
+  // so "both tasks passed" never reads as 50/100.
+  const scored = report.tasks.filter((t) => t.taskId !== 'custom').length;
+  if (scored) score = Math.round((score * 4) / scored);
   return {
     score: Math.max(0, Math.min(100, score)),
     botWall: siteVerdict(report.tasks),

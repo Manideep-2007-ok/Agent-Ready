@@ -186,7 +186,7 @@ detectFramework(page)                       // Playwright page -> 'nextjs'|'shop
 
 ## 7. Scoring (`scoring.js`)
 
-Each task max 25, total 100 (custom task scored separately, not in the 100).
+Each task max 25, total 100 (custom task scored separately, not in the 100). When fewer than 4 tasks run (CLI `--tasks`, a 1-task Watch), the total is scaled to 100: `round(sum * 4 / tasksRun)`.
 
 | Rule | Points |
 |---|---|
