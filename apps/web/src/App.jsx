@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import TestPage from './pages/TestPage.jsx';
 import WatchPage from './pages/WatchPage.jsx';
+import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
+import { SmoothCursor } from '@/components/ui/smooth-cursor';
 
 const TABS = [
   { id: 'test', label: 'Test' },
@@ -17,34 +19,35 @@ function readHash() {
 
 const readTheme = () => (document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
 
-/** Light/dark switch, fixed bottom-right. The choice is saved (storage may be blocked, so it is wrapped). */
+/** Light/dark switch (Magic UI animated toggler: circular reveal). Fixed bottom-right; the choice is saved. */
 function ThemeToggle() {
   const [theme, setTheme] = useState(readTheme);
-  const flip = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
+  const onThemeChange = (next) => {
+    document.documentElement.setAttribute('data-theme', next); // our CSS tokens; Tailwind also reads .dark
     try { localStorage.setItem('agentready_theme', next); } catch { /* ignore */ }
     setTheme(next);
   };
   const label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
-  return (
-    <button type="button" className="theme-toggle" onClick={flip} aria-label={label} title={label}>
-      {theme === 'dark' ? (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="4.5" fill="currentColor" />
-          <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" />
-        </svg>
-      ) : (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" fill="currentColor" />
-        </svg>
-      )}
-    </button>
-  );
+  return <AnimatedThemeToggler className="theme-toggle" theme={theme} onThemeChange={onThemeChange} aria-label={label} title={label} />;
+}
+
+/** Smooth cursor only with a real mouse and when motion is welcome. */
+function useFancyCursor() {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const fine = window.matchMedia('(any-hover: hover) and (any-pointer: fine)');
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setOn(fine.matches && !calm.matches);
+    update();
+    fine.addEventListener('change', update); calm.addEventListener('change', update);
+    return () => { fine.removeEventListener('change', update); calm.removeEventListener('change', update); };
+  }, []);
+  return on;
 }
 
 export default function App() {
   const [route, setRoute] = useState(readHash);
+  const fancyCursor = useFancyCursor();
 
   useEffect(() => {
     const onChange = () => setRoute(readHash());
@@ -73,6 +76,7 @@ export default function App() {
         {route.page === 'watch' && <WatchPage />}
       </main>
       <ThemeToggle />
+      {fancyCursor && <SmoothCursor />}
     </>
   );
 }

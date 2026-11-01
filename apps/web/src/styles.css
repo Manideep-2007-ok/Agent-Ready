@@ -321,3 +321,26 @@ button.secondary:hover:not(:disabled) { background: var(--line-strong); }
   :root[data-theme='dark'] { --line: rgba(255, 255, 255, 0.5); --muted: #d1d1d6; }
   .card, .feature, .fact, .top-fix, .ar-lane, .ar-scan { box-shadow: none; outline: 1px solid var(--line); }
 }
+
+/* ---------- Magic UI pieces ---------- */
+.hero { grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); }
+.hero-globe { position: relative; width: 100%; aspect-ratio: 1; max-width: 520px; justify-self: center; }
+.hero-shadow { font-style: italic; color: var(--text); }
+@media (max-width: 900px) { .hero-globe { max-width: 340px; } }
+.hero-facts { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.hero-facts .fact { background: var(--card); box-shadow: var(--shadow); }
+.hero-facts .fact:hover { box-shadow: var(--shadow-lift); }
+.features .bento-bg { position: absolute; inset: 0; pointer-events: none; opacity: 0.9; }
+.bento-bg-blue { background: radial-gradient(90% 70% at 100% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%); }
+.bento-bg-green { background: radial-gradient(90% 70% at 100% 0%, color-mix(in srgb, var(--pass) 18%, transparent), transparent 70%); }
+.bento-bg-red { background: radial-gradient(90% 70% at 100% 0%, color-mix(in srgb, var(--fail) 16%, transparent), transparent 70%); }
+.bento-bg-amber { background: radial-gradient(90% 70% at 100% 0%, color-mix(in srgb, #ff9f0a 20%, transparent), transparent 70%); }
+.features h3 { letter-spacing: -0.01em; }
+.agent-cloud { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 380px); align-items: center; gap: 24px; overflow: hidden; }
+.agent-cloud-text h2 { font-size: clamp(1.5rem, 2.6vw, 2rem); letter-spacing: -0.025em; }
+.agent-cloud-text p { margin: 0; max-width: 52ch; font-size: 1.0625rem; }
+.agent-cloud-orb { display: grid; place-items: center; }
+.agent-cloud-orb canvas { max-width: 100%; height: auto; }
+@media (max-width: 760px) { .agent-cloud { grid-template-columns: 1fr; } }
+.celebrate-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 60; }
+.celebrate-burst { position: fixed; inset: 0; z-index: 61; display: grid; place-items: center; pointer-events: none; animation: fade-in 0.2s ease-out; }

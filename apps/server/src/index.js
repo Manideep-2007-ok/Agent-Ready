@@ -17,7 +17,10 @@ const { events, stubbed: stubbedEvents } = await loadEvents();
 const deps = { engine, events };
 
 const app = express();
-app.use(cors());
+// The dashboard is served from this server (same origin), so cross-site calls are not needed. Only local pages may
+// call the API: any other website open in the browser must not be able to start paid agent runs.
+const LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
+app.use(cors({ origin: (origin, cb) => cb(null, !origin || LOCAL_ORIGIN.test(origin)) }));
 app.use(express.json({ limit: '1mb' }));
 
 // Express 4 does not catch errors thrown in async handlers, so wrap every route handler once.
@@ -65,8 +68,11 @@ app.use((err, _req, res, _next) => {
   res.status(status).json({ error: status >= 500 ? 'Something went wrong on our side. Please try again.' : err.message });
 });
 
-app.listen(config.port, () => {
-  console.log(`AgentReady server on http://localhost:${config.port}  (mock: ${config.mock})`);
+// Listen on this machine only by default, so nobody else on the Wi-Fi can start runs with our key.
+// Set HOST=0.0.0.0 to share it on purpose (cloudflared tunnels to localhost and keeps working either way).
+const host = process.env.HOST || '127.0.0.1';
+app.listen(config.port, host, () => {
+  console.log(`AgentReady server on http://localhost:${config.port}  (mock: ${config.mock}${host === '127.0.0.1' ? '' : `, listening on ${host}`})`);
   if (stubbedEngine.length) console.log(`  dev stand-in engine in use for: ${stubbedEngine.join(', ')}`);
   if (stubbedEvents) console.log('  dev stand-in SSE hub in use (events.js not found)');
   if (config.features.WATCH) startWatches().catch((err) => console.error('[watch] could not start:', err.message));

@@ -1,6 +1,12 @@
 // Test page: URL box -> live lanes -> score -> findings. The report id lives in the URL (#/test/<id>), so a refresh,
 // a shared link or a saved demo report (e.g. #/test/rep_20261031_demo_nykaa) opens straight into the result.
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { BellRing, Gauge, MonitorPlay, ScanSearch, ShieldAlert, Terminal, Wrench } from 'lucide-react';
+import { LineShadowText } from '@/components/ui/line-shadow-text';
+import { BentoCard, BentoGrid } from '@/components/ui/bento-grid';
+import { IconCloud } from '@/components/ui/icon-cloud';
+import { Confetti } from '@/components/ui/confetti';
+import { ComicText } from '@/components/ui/comic-text';
 import { getHealth, getReport, listReports, setDemoFlaws, startTest, useLiveEvents } from '../api.js';
 import { navigate } from '../nav.js';
 import Lane from '../components/Lane.jsx';
@@ -9,6 +15,9 @@ import FindingCard from '../components/FindingCard.jsx';
 import ShotViewer from '../components/ShotViewer.jsx';
 import ScoreCard from '../components/ScoreCard.jsx';
 import DemoStoreCard from '../components/DemoStoreCard.jsx';
+
+// The globe (WebGL) loads lazily so the dashboard opens fast.
+const Globe = lazy(() => import('@/components/ui/globe').then((m) => ({ default: m.Globe })));
 
 const SEVERITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 const findingKey = (f) => `${f.type}|${f.taskId ?? ''}`;
@@ -63,33 +72,45 @@ function TestForm({ busy, onStart, onDemo }) {
   );
 }
 
-/** Landing hero (no test open): the question, the URL box, real results so far, and how it works. */
+const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+const prefersCalm = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+/** Spinning dotted globe; orange markers = cities of sites we tested (Bengaluru, Mumbai, Delhi) plus a few hubs. */
+function HeroGlobe() {
+  const dark = isDark();
+  const config = {
+    width: 800, height: 800, onRender: () => {}, devicePixelRatio: 2, phi: 0, theta: 0.25,
+    dark: dark ? 1 : 0, diffuse: dark ? 1.2 : 0.4, mapSamples: 16000, mapBrightness: dark ? 3 : 1.2,
+    baseColor: dark ? [0.3, 0.3, 0.32] : [1, 1, 1], markerColor: [1, 0.48, 0.1], glowColor: dark ? [0.15, 0.15, 0.18] : [1, 1, 1],
+    markers: [
+      { location: [12.9716, 77.5946], size: 0.1 }, { location: [19.076, 72.8777], size: 0.08 },
+      { location: [28.6139, 77.209], size: 0.07 }, { location: [37.7749, -122.4194], size: 0.05 },
+      { location: [51.5072, -0.1276], size: 0.04 }, { location: [1.3521, 103.8198], size: 0.04 },
+    ],
+  };
+  return (
+    <div className="hero-globe" aria-hidden="true">
+      <Suspense fallback={null}><Globe key={dark ? 'd' : 'l'} config={config} className="absolute inset-0 mx-auto aspect-square w-full max-w-[520px]" /></Suspense>
+    </div>
+  );
+}
+
+/** Landing hero (no test open): the question, the URL box, a live globe, and how it works. */
 function Hero({ children }) {
   return (
     <section className="hero" aria-labelledby="hero-title">
       <div className="hero-main">
         <span className="hero-burst">Real TinyFish web agents, live</span>
-        <h1 id="hero-title">Can an AI agent actually use your website?</h1>
+        <h1 id="hero-title">
+          Can an AI agent <LineShadowText className="hero-shadow" shadowColor="var(--accent)">actually</LineShadowText> use your website?
+        </h1>
         <p className="hero-sub">
           Real TinyFish web agents try four everyday tasks on your site, live: find a price, add to cart, find the
           return policy, contact support. You get a score, the exact step where they got stuck, and the fixes.
         </p>
         {children}
       </div>
-      <aside className="hero-facts" aria-label="What our agents found">
-        <a className="fact fact-orange" href="#/test/rep_20261031_demo_myntra">
-          <b>Blocked</b>
-          <span>Myntra turns away AI agents from cloud servers. They only got in through an Indian home address.</span>
-        </a>
-        <a className="fact fact-yellow" href="#/test/rep_demo_flaws_off/rep_demo_flaws_on">
-          <b>35 → 19 steps</b>
-          <span>Fixing four flaws on our demo store nearly halved the agent's work and cost.</span>
-        </a>
-        <a className="fact fact-paper" href="#/watch">
-          <b>Alert in 6 min</b>
-          <span>We broke our demo store's cart. Watch's agents caught it and posted to Slack 6 minutes later.</span>
-        </a>
-      </aside>
+      <HeroGlobe />
       <ol className="how">
         <li><b>1</b>Drop your URL</li>
         <li><b>2</b>Agents try your site, live</li>
@@ -99,30 +120,110 @@ function Hero({ children }) {
   );
 }
 
+/** Real findings from today's runs; each opens its report. */
+function Facts() {
+  return (
+    <section className="hero-facts" aria-label="What our agents found">
+      <a className="fact fact-orange" href="#/test/rep_20261031_demo_myntra">
+        <b>Blocked</b>
+        <span>Myntra turns away AI agents from cloud servers. They only got in through an Indian home address.</span>
+      </a>
+      <a className="fact fact-yellow" href="#/test/rep_demo_flaws_off/rep_demo_flaws_on">
+        <b>35 → 19 steps</b>
+        <span>Fixing four flaws on our demo store nearly halved the agent's work and cost.</span>
+      </a>
+      <a className="fact fact-paper" href="#/watch">
+        <b>Alert in 6 min</b>
+        <span>We broke our demo store's cart. Watch's agents caught it and posted to Slack 6 minutes later.</span>
+      </a>
+    </section>
+  );
+}
+
+const Tint = ({ tone }) => <div className={`bento-bg bento-bg-${tone}`} aria-hidden="true" />;
+
 const FEATURES = [
-  { tone: 'blue', title: 'Live agent lanes', text: 'Four real TinyFish agents work in parallel. Watch every step as it happens, the live browser view, and a screenshot of each step, so you see exactly where an agent got stuck.' },
-  { tone: 'yellow', title: 'Score out of 100', text: 'Plain rules, same result every time: passed, steps taken, time, and any workaround needed.' },
-  { tone: 'orange', title: 'Bot-wall check', text: 'Blocked? We retry with an Indian home address, then stealth, to show who your security lets in.' },
-  { tone: 'paper', title: 'Top 3 fixes', text: 'Each problem names the page, the likely cause, the web standard and how to check it is fixed.' },
-  { tone: 'paper', title: 'Instant Scan', text: 'In seconds: pop-ups, unlabelled buttons, prices drawn as images, missing product data.' },
-  { tone: 'blue', title: 'Watch + alerts', text: 'Agents re-test your live site on a schedule and post to Slack the moment a task breaks.' },
-  { tone: 'yellow', title: 'CLI for localhost', text: <><code>npx agentready localhost:3000</code> tests a site before it ships, through a secure tunnel.</> },
+  { Icon: MonitorPlay, name: 'Live agent lanes', tone: 'blue', className: 'col-span-3 lg:col-span-2 bg-card dark:bg-card', href: '#/test',
+    description: 'Four real TinyFish agents work in parallel. Watch every step, the live browser and a screenshot of each step.' },
+  { Icon: Gauge, name: 'Score out of 100', tone: 'green', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/test/rep_20261031_demo_nykaa',
+    description: 'Plain rules, same result every time: passed, steps, time, and any workaround needed.' },
+  { Icon: ShieldAlert, name: 'Bot-wall check', tone: 'red', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/test/rep_20261031_demo_myntra',
+    description: 'Blocked? We retry with an Indian home address, then stealth, to show who your security lets in.' },
+  { Icon: Wrench, name: 'Top 3 fixes', tone: 'amber', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/test/rep_demo_flaws_on',
+    description: 'Each problem names the page, the likely cause, the web standard and how to check it is fixed.' },
+  { Icon: ScanSearch, name: 'Instant Scan', tone: 'blue', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/test/rep_demo_flaws_on',
+    description: 'In seconds: pop-ups, unlabelled buttons, prices drawn as images, missing product data.' },
+  { Icon: BellRing, name: 'Watch + Slack alerts', tone: 'green', className: 'col-span-3 lg:col-span-2 bg-card dark:bg-card', href: '#/watch',
+    description: 'Agents re-test your live site on a schedule and post to Slack the moment a task breaks, and when it recovers.' },
+  { Icon: Terminal, name: 'CLI for localhost', tone: 'amber', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/test',
+    description: 'npx agentready localhost:3000 tests a site before it ships, through a secure tunnel.' },
 ];
 
-/** Feature grid under the hero (home only). */
+/** Feature grid under the hero (Magic UI bento grid). */
 function Features() {
   return (
     <section className="features" aria-labelledby="features-title">
       <h2 id="features-title">What you get</h2>
-      <div className="feature-grid">
-        {FEATURES.map((f) => (
-          <article key={f.title} className={`feature feature-${f.tone}`}>
-            <h3>{f.title}</h3>
-            <p>{f.text}</p>
-          </article>
+      <BentoGrid className="auto-rows-[15rem] gap-4">
+        {FEATURES.map(({ tone, ...f }) => (
+          <BentoCard key={f.name} {...f} cta="See it" background={<Tint tone={tone} />} />
         ))}
-      </div>
+      </BentoGrid>
     </section>
+  );
+}
+
+const AGENT_LOGOS = ['claude', 'anthropic', 'perplexity', 'googlegemini', 'google', 'githubcopilot', 'meta', 'apple', 'mistralai', 'huggingface', 'shopify', 'cloudflare', 'googlechrome', 'safari', 'firefoxbrowser', 'brave', 'arc', 'duckduckgo', 'opera', 'vercel']
+  .map((slug) => `https://cdn.simpleicons.org/${slug}`);
+
+/** The agents and platforms already visiting sites (Magic UI icon cloud). */
+function AgentCloud() {
+  return (
+    <section className="card agent-cloud" aria-labelledby="cloud-title">
+      <div className="agent-cloud-text">
+        <h2 id="cloud-title">These agents are coming to your site</h2>
+        <p className="muted">
+          ChatGPT, Claude, Perplexity, Gemini and browser agents are starting to shop and book for people. If they get
+          stuck or blocked, the sale is lost and you never see it. AgentReady shows you what they see.
+        </p>
+      </div>
+      <div className="agent-cloud-orb"><IconCloud images={AGENT_LOGOS} showControl={false} /></div>
+    </section>
+  );
+}
+
+/**
+ * Celebration for an agent-ready site (score 90+): Magic UI confetti + a comic "AGENT-READY!" burst, once per report.
+ * Skipped with reduced motion.
+ */
+function Celebrate({ report }) {
+  const confettiRef = useRef(null);
+  const [show, setShow] = useState(false);
+  const done = useRef(null);
+  useEffect(() => {
+    if (!report || report.score < 90 || done.current === report.id || prefersCalm()) return undefined;
+    done.current = report.id;
+    setShow(true);
+    const colors = ['#0071e3', '#34c759', '#ff9f0a', '#ffffff'];
+    confettiRef.current?.fire({ particleCount: 140, spread: 80, origin: { y: 0.35 }, colors });
+    return undefined;
+  }, [report]);
+  // Hide the burst after 2.6 s, and right away when another report opens.
+  useEffect(() => {
+    if (!show) return undefined;
+    const t = setTimeout(() => setShow(false), 2600);
+    return () => clearTimeout(t);
+  }, [show]);
+  useEffect(() => { if (report?.id !== done.current) setShow(false); }, [report]);
+  return (
+    <>
+      <Confetti ref={confettiRef} manualstart className="celebrate-canvas" />
+      {show && (
+        <div className="celebrate-burst" role="status" aria-live="polite">
+          <ComicText fontSize={4.5}>AGENT-READY!</ComicText>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -246,6 +347,7 @@ export default function TestPage({ reportId, beforeId }) {
   return (
     <>
       {reportId ? form : <Hero>{form}</Hero>}
+      {!reportId && <Facts />}
       {error && <section className="card error">{error}</section>}
       {reportId && !error && (
         <>
@@ -268,7 +370,9 @@ export default function TestPage({ reportId, beforeId }) {
         </>
       )}
       {!reportId && <Features />}
+      {!reportId && <AgentCloud />}
       {!reportId && <RecentReports />}
+      {reportId && <Celebrate report={live.report} />}
       <ShotViewer url={shot} onClose={() => setShot(null)} />
     </>
   );
