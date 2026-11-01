@@ -1,4 +1,4 @@
-# AgentReady: Work log (Manideep's engine work)
+# AgentReady: Work log (team)
 
 What was built, how it was built, and what went wrong. Code lives on branch `manideep/engine`, PR: https://github.com/Manideep-2007-ok/Agent-Ready/pull/1 (not merged; the team merges at checkpoints). Newest entries at the bottom.
 
@@ -71,3 +71,33 @@ Notes from the run:
 - **`store.js` / `events.js`.** Not on main yet. `watch.js` uses a TODO fallback until they land.
 - **Team decision: extra fields.** `verdict` on TaskResult, and `numSteps`, `blocker` and `screenshotUrl` on Attempt, go beyond `types.js`.
 - **Dashboard: dead live view in mock.** Mock streaming URLs are expired links, so `Lane.jsx` should fall back to screenshots.
+
+## 1 Nov 2026: server (Sai Shakti)
+
+Code on branch `shakti/core` (4 commits on top of `main` 8cb62e1). Built with Claude Code, reviewed and tested together by Sai Shakti before commit. All tests in mock mode (`TINYFISH_MOCK=1`); no credits spent.
+
+| Piece | Files | Proof it works (mock) |
+|---|---|---|
+| Config + storage | `server/src/config.js`, `store.js` | Reports, races and screenshots saved to `data/`; survive a server restart; atomic writes queued per file |
+| Test API + live events | `routes/tests.js`, `reportJob.js` | `POST /api/tests` returns an id at once; SSE streams queued -> steps (about 1 s apart) -> passed -> `report-complete`; a late or refreshed page gets a replay |
+| Screenshots | `routes/tests.js` (`/api/shot`) | Real and mock run ids return JPEG (~130 KB), cached in `data/shots/`; `../` attempts rejected (400) |
+| Race, leaderboard, demo-store switch | `routes/race.js`, `routes/extras.js` | Race of 2 sites ranked passed-then-fastest; bad input gives plain errors |
+| App wiring | `server/src/index.js` | Real engine + Watch routes mounted, scheduler starts; Nykaa 2-task test = **46/100, ₹11.26**, `slow` finding, Fix Report text from templates |
+| Dev stand-ins | `devEngine.js`, `devEvents.js`, `loaders.js` | Fill in only what is missing (today: `instantScan`, SSE hub); real files take over automatically |
+
+## Server: failures and fixes
+
+| # | What went wrong | Found by | Fix |
+|---|---|---|---|
+| S1 | Rupee sign showed as `â‚¹` in the live stream | Manual test in browser | SSE header now `text/event-stream; charset=utf-8` (Akhil: use the same in `events.js`) |
+| S2 | Stand-in engine dropped the return-policy answer (`return_days`, `policy_url`) | Report check | Answer built from those fields |
+| S3 | Mock screenshots returned 400: engine mock run ids are not UUIDs | Test with real engine | Id check relaxed to letters, digits, `_`, `-` |
+| S4 | Watch routes would not mount: `routes/watch.js` exports the router, our loader called it as a function | Reading PR #2 | Mounted directly: `/api/watch`, `/api/webhooks`, `startWatches()`, `setPublisher(events.publish)` |
+| S5 | `apps/server/package.json` and `package-lock.json` edited on two branches | Re-sync after history rewrite | Kept main's files, added only `cors` |
+| S6 | `curl.exe -d "{...}"` in Windows PowerShell 5.1 sends broken JSON | Manual test | Use `Invoke-RestMethod` on Windows; the server answered with a plain 400, no crash |
+
+Open items (server):
+- `GET /api/race/:id/events` not built; the dashboard follows each lane through `/api/tests/:id/events`.
+- Each task sends two identical final `task-update` events (engine; harmless).
+- Watch not tested end to end through our server yet (no watch created, to avoid scheduled runs).
+- Next: dashboard (`apps/web`), then `engine/src/report.js`.
