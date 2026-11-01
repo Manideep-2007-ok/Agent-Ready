@@ -7,13 +7,7 @@ import Lane from '../components/Lane.jsx';
 import InstantScanCard from '../components/InstantScanCard.jsx';
 import FindingCard from '../components/FindingCard.jsx';
 import ShotViewer from '../components/ShotViewer.jsx';
-
-const BOT_WALL_TEXT = {
-  none: null,
-  'blocks-cloud-agents': 'This site blocks AI agents coming from cloud servers. They only got in through an Indian home-network address.',
-  'blocks-automation': 'This site blocks automated browsers. Agents only got in with stealth mode.',
-  'site-broken': 'Agents could not use this site at all, even with every workaround.',
-};
+import ScoreCard from '../components/ScoreCard.jsx';
 
 const SEVERITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 const findingKey = (f) => `${f.type}|${f.taskId ?? ''}`;
@@ -60,22 +54,9 @@ function TestForm({ busy, onStart }) {
   );
 }
 
-/** Shown while running; once done it shows the score. ScoreCard.jsx will replace the done state next. */
-function Progress({ url, tasks, report, connection }) {
+/** Shown while the test runs; ScoreCard takes over once the report is complete. */
+function Progress({ url, tasks, connection }) {
   const finished = tasks.filter((t) => ['passed', 'failed', 'blocked'].includes(t.status)).length;
-  if (report) {
-    const wall = BOT_WALL_TEXT[report.botWall];
-    return (
-      <section className={`card ${wall ? 'error' : ''}`}>
-        <div className="progress">
-          <span className="big">{report.score}/100</span>
-          <span>{report.url}</span>
-          <span className="muted">Agent cost ≈ ₹{report.costRupees}</span>
-        </div>
-        {wall && <p><b>Blocked:</b> {wall}</p>}
-      </section>
-    );
-  }
   return (
     <section className="card">
       <div className="progress">
@@ -153,6 +134,7 @@ export default function TestPage({ reportId }) {
   const [error, setError] = useState('');
   const [starting, setStarting] = useState(false);
   const [shot, setShot] = useState(null);
+  const jumpToFix = (rank) => document.getElementById(`top-fix-${rank}`)?.scrollIntoView({ block: 'start' });
 
   // The address being tested, for the progress line (the live stream only carries it at the end).
   useEffect(() => {
@@ -183,7 +165,7 @@ export default function TestPage({ reportId }) {
       {error && <section className="card error">{error}</section>}
       {reportId && !error && (
         <>
-          <Progress url={url} tasks={tasks} report={live.report} connection={live.connection} />
+          {live.report ? <ScoreCard report={live.report} onJump={jumpToFix} /> : <Progress url={url} tasks={tasks} connection={live.connection} />}
           {(live.scan || !live.report) && <InstantScanCard scan={live.scan} loading={!live.scan} />}
           <section className="lanes">
             {tasks.map((task) => <Lane key={task.taskId} task={task} onShotClick={setShot} />)}
