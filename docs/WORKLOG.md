@@ -101,3 +101,17 @@ Open items (server):
 - Each task sends two identical final `task-update` events (engine; harmless).
 - Watch not tested end to end through our server yet (no watch created, to avoid scheduled runs).
 - Next: dashboard (`apps/web`), then `engine/src/report.js`.
+
+## 1 Nov 2026: demo store live + real runs 2 and 3 (Manideep)
+
+- Demo store deployed on Vercel: https://agent-ready-demo.vercel.app (root `apps/demo-store`, static). Checked in a browser: flaws on/off both behave, returns page says 10 days.
+- Real runs 2 and 3 (key session, ~₹76 total): flaws on **91/100**, flaws off **97/100**. Agents got past every flaw, but needed 35 vs 19 steps (₹49 vs ₹27), added 2 units instead of 1, and gave the price as "$499" (read from the image).
+- Lanes now show the bot-wall retry live (Blocked, 1.5 s, amber "Attempt 2 of 3: India proxy"); Watch/CLI links open `#/test/<id>` (PR #7).
+
+| # | Failure | Found by | Fix |
+|---|---|---|---|
+| F17 | Demo before/after too small (91 vs 97): flaws were easy for vision agents; hidden returns took exactly 10 steps, one short of `too-many-steps` | Real runs 2-3 | Harsher, realistic flaws: returns one page deeper behind vague labels ("Other information" -> "Read the full document"); header cart link icon-only. Scoring rules unchanged on purpose |
+| F18 | Instant Scan only audited the home page, so it never saw the icon-only Add to cart button | Real run 2 | Also audits one product page (12 s cap) and merges the counts |
+| F19 | robots.txt / sitemap shown as "error" when the site just doesn't have them | Real run 2 | Shown as "missing"; "error" only if the Fetch call itself failed |
+| F20 | Lane showed attempt 1's steps during attempt 2; retry pause could go negative | Opus review | Lane hides earlier attempts' steps; pause is a constant, sped up only in mock mode |
+| F21 | Vercel connector got 403 for team `manideep-2007-oks-projects` | Deploy attempt | Deployed by hand at vercel.com/new |
