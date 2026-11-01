@@ -16,13 +16,13 @@ for (const [url, taskId] of cases) {
   const seq = [];
   const onEvent = (e) => {
     if (e.kind === 'task-update' && e.task.taskId === taskId) {
-      seq.push(`${e.task.status}${e.task.verdict ? `[verdict=${e.task.verdict},attempts=${e.task.attempts?.length}]` : e.task.attempts ? `[attempts=${e.task.attempts.length}]` : ''}`);
+      seq.push(`${e.task.status}${e.task.verdict ? `[verdict=${e.task.verdict},attempts=${e.task.attempts?.length}]` : e.task.attempts ? `[attempts=${e.task.attempts.length}]` : ''}${e.task.status === 'queued' || e.task.status === 'running' ? `(${e.task.mode}/${e.task.proxy})` : ''}`);
     }
     if (e.kind === 'attempt' && e.taskId === taskId) seq.push(`<attempt ${e.attempt} ${e.mode}/${e.proxy}>`);
   };
   if (viaSite) await runSiteTest({ url, tasks: [taskId] }, onEvent);
   else await runTaskWithBotWall({ url, taskId }, onEvent);
   const counts = {};
-  for (const s of seq) { const k = s.replace(/[[<].*/, ''); if (k) counts[k] = (counts[k] || 0) + 1; }
+  for (const s of seq) { const k = s.replace(/[[<(].*/, ''); if (k) counts[k] = (counts[k] || 0) + 1; }
   console.log(`${url} ${taskId}${viaSite ? ' (runSiteTest)' : ''}\n  ${seq.join(' -> ')}\n  counts: ${JSON.stringify(counts)}`);
 }
