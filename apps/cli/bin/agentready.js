@@ -141,7 +141,7 @@ try {
     try {
       const r = await fetch(`${base}/api/reports`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(report) });
       if (!r.ok) throw new Error(`server answered ${r.status}`);
-      dashboard = `${base}/?report=${report.id}`;
+      dashboard = `${base}/#/test/${report.id}`;
     } catch (e) { say(`Could not upload the report to ${base}: ${e.message}`); }
   }
 

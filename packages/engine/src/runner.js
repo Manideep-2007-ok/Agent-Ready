@@ -78,12 +78,14 @@ function buildSteps(runId, run, progress) {
  * One agent attempt for one task. Goes through the queue. `emitFinal:false` suppresses the closing task-update (the caller emits it). Never throws: problems become a failed TaskResult.
  * @returns {Promise<TaskResult>}
  */
-export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 'off', emitFinal = true }, onEvent) {
+export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 'off', emitFinal = true, attempts = null }, onEvent) {
   const emit = (e) => { try { onEvent?.(e); } catch { /* a bad listener must not break the run */ } };
   const goal = buildGoal(taskId, customText);
   /** @type {TaskResult} */
   const task = { taskId, goal, mode, proxy, runId: null, status: 'queued', answer: null, blocker: null, stuckUrl: null,
     streamingUrl: null, steps: [], numSteps: 0, seconds: 0, points: 0, findings: [] };
+  // Retry attempts (bot-wall cascade) carry the earlier attempts so the lane can say why a retry is running.
+  if (attempts?.length) task.attempts = [...attempts];
   const update = (status) => { task.status = status; emit({ kind: 'task-update', task: { ...task, steps: [...task.steps] } }); };
 
   return enqueue(async () => {
@@ -172,7 +174,7 @@ export async function runSiteTest({ url, tasks = DEFAULT_TASK_ORDER, customText,
   const emit = (e) => {
     if (e.kind === 'task-update') {
       const t = e.task;
-      const key = [t.status, t.runId, t.streamingUrl, t.numSteps, t.steps?.length, t.attempts?.length, t.verdict, t.blocker].join('|');
+      const key = [t.status, t.runId, t.streamingUrl, t.numSteps, t.steps?.length, t.attempts?.length, t.mode, t.proxy, t.verdict, t.blocker].join('|');
       if (lastKey.get(t.taskId) === key) return;
       lastKey.set(t.taskId, key);
     }
