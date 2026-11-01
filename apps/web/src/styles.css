@@ -358,3 +358,10 @@ button.secondary:hover:not(:disabled) { background: var(--line-strong); }
 .pointer-cursor--hover .pointer-cursor-dot { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--accent) 16%, transparent); box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent); }
 :root[data-theme='dark'] .pointer-cursor-dot { background: rgba(235, 235, 245, 0.45); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4); }
 :root[data-theme='dark'] .pointer-cursor--hover .pointer-cursor-dot { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+/* Replay-mode notice (public demo copy) */
+.replay-banner {
+  max-width: 1160px; margin: 16px auto 0; padding: 10px 16px; border-radius: 12px; font-size: 0.875rem; line-height: 1.45;
+  background: var(--warn-bg); color: var(--warn);
+}
+@media (max-width: 1200px) { .replay-banner { margin: 16px 20px 0; } }
