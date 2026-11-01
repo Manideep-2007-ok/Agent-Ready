@@ -5,6 +5,7 @@ import TestPage from './pages/TestPage.jsx';
 import WatchPage from './pages/WatchPage.jsx';
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
 import PointerCursor from './components/PointerCursor.jsx';
+import { getHealth } from './api.js';
 
 const TABS = [
   { id: 'test', label: 'Test' },
@@ -48,6 +49,9 @@ function useFancyCursor() {
 export default function App() {
   const [route, setRoute] = useState(readHash);
   const fancyCursor = useFancyCursor();
+  // Replay mode (TINYFISH_MOCK=1, e.g. the public copy): say so plainly, so nobody mistakes a replay for a live test.
+  const [replay, setReplay] = useState(false);
+  useEffect(() => { getHealth().then((h) => setReplay(Boolean(h.mock))).catch(() => {}); }, []);
 
   useEffect(() => {
     const onChange = () => setRoute(readHash());
@@ -71,6 +75,12 @@ export default function App() {
           ))}
         </nav>
       </header>
+      {replay && (
+        <div className="replay-banner" role="note">
+          <b>Demo mode:</b> this copy replays real agent runs we recorded, so it costs nothing to try. Results for other
+          sites are sample replays, not live tests. Live agents run from our laptop on stage.
+        </div>
+      )}
       <main className="page">
         {route.page === 'test' && <TestPage reportId={route.param} beforeId={route.extra} />}
         {route.page === 'watch' && <WatchPage />}

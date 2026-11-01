@@ -14,9 +14,16 @@ const when = (iso) => new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium
 const failedTasks = (r) => r.tasks.filter((t) => t.status !== 'passed');
 const stepsOf = (r) => r.tasks.reduce((n, t) => n + (t.numSteps ?? t.steps?.length ?? 0), 0);
 
+// What a watch re-tests. Add to cart is the money task (and the cheapest useful check, ~₹10); all four is ~₹40.
+const WATCH_SCOPES = {
+  cart: { label: 'Add to cart (≈₹10/check)', tasks: ['add_to_cart'] },
+  all: { label: 'All 4 tasks (≈₹40/check)', tasks: ['find_returns', 'add_to_cart', 'find_price', 'find_contact'] },
+};
+
 function NewWatchForm({ defaultUrl, onCreated }) {
   const [url, setUrl] = useState('');
   const [minutes, setMinutes] = useState(20);
+  const [scope, setScope] = useState('cart'); // each real check costs ~₹10 per task, so default to the one that matters most
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,7 +35,7 @@ function NewWatchForm({ defaultUrl, onCreated }) {
     setBusy(true);
     try {
       const text = url.trim();
-      await createWatch(/^https?:\/\//i.test(text) ? text : `https://${text}`, Number(minutes));
+      await createWatch(/^https?:\/\//i.test(text) ? text : `https://${text}`, Number(minutes), WATCH_SCOPES[scope].tasks);
       setUrl('');
       onCreated();
     } catch (err) {
@@ -53,6 +60,12 @@ function NewWatchForm({ defaultUrl, onCreated }) {
             {[10, 20, 30, 60, 180, 1440].map((m) => (
               <option key={m} value={m}>{every(m)}</option>
             ))}
+          </select>
+        </label>
+        <label className="every">
+          watch
+          <select value={scope} onChange={(e) => setScope(e.target.value)} disabled={busy} aria-label="What to watch">
+            {Object.entries(WATCH_SCOPES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
         </label>
         <button type="submit" disabled={busy || !url.trim()}>{busy ? 'Adding…' : 'Start watching'}</button>
