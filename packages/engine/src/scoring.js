@@ -129,6 +129,20 @@ export function scoreTask(task) {
 }
 
 /**
+ * Top 3 fixes: severity first (critical > high > medium > low), then pointsIfFixed (most points first).
+ * Does not mutate the input.
+ * @param {Finding[]} findings
+ * @returns {Finding[]}
+ */
+export function rankFixes(findings) {
+  const sorted = [...(findings || [])]
+    .sort((a, b) => (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9) || (b.pointsIfFixed || 0) - (a.pointsIfFixed || 0));
+  // One fix per finding type: "allow verified AI agents" is one fix even if it blocked all four tasks.
+  const seen = new Set();
+  return sorted.filter((f) => !seen.has(f.type) && seen.add(f.type)).slice(0, 3);
+}
+
+/**
  * Score a whole report. NOTE: this also WRITES task.points and task.findings into every task of `report`
  * (mutates it), because the dashboard reads them from there. Custom tasks are scored but excluded from the 100.
  * @param {SiteReport} report
@@ -146,9 +160,7 @@ export function scoreReport(report) {
     all.push(...findings);
     totalSteps += t.attempts?.length ? t.attempts.reduce((n, a) => n + (a.numSteps || 0), 0) : t.numSteps || 0;
   }
-  const topFixes = [...all]
-    .sort((a, b) => b.pointsIfFixed - a.pointsIfFixed || SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity])
-    .slice(0, 3);
+  const topFixes = rankFixes(all);
   return {
     score: Math.max(0, Math.min(100, score)),
     botWall: siteVerdict(report.tasks),
