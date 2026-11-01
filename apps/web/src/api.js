@@ -26,6 +26,13 @@ export const buildFixes = (id) => api(`/reports/${encodeURIComponent(id)}/fixes`
 export const getLeaderboard = () => api('/leaderboard');
 export const setDemoFlaws = (on) => api('/demo-store/flaws', { method: 'POST', body: { on } });
 
+// Agent-Ready Watch (routes by Manideep, apps/server/src/routes/watch.js).
+export const listWatches = () => api('/watch');
+export const createWatch = (url, everyMinutes) => api('/watch', { method: 'POST', body: { url, everyMinutes } });
+export const updateWatch = (id, changes) => api(`/watch/${encodeURIComponent(id)}`, { method: 'PATCH', body: changes });
+export const runWatchNow = (id) => api(`/watch/${encodeURIComponent(id)}/run-now`, { method: 'POST' });
+export const getWatchHistory = (id) => api(`/watch/${encodeURIComponent(id)}/history`);
+
 /**
  * @typedef {Object} LiveState
  * @property {Record<string, TaskResult>} tasks   by taskId, in arrival order

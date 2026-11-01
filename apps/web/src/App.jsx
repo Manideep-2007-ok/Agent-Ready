@@ -2,6 +2,7 @@
 // opens the same view. No router library needed for four pages.
 import { useEffect, useState } from 'react';
 import TestPage from './pages/TestPage.jsx';
+import WatchPage from './pages/WatchPage.jsx';
 
 const TABS = [
   { id: 'test', label: 'Test' },
@@ -45,7 +46,7 @@ export default function App() {
       </header>
       <main className="page">
         {route.page === 'test' && <TestPage reportId={route.param} beforeId={route.extra} />}
-        {route.page === 'watch' && <ComingSoon name="Watch" />}
+        {route.page === 'watch' && <WatchPage />}
         {route.page === 'race' && <ComingSoon name="Race Mode" />}
         {route.page === 'leaderboard' && <ComingSoon name="The leaderboard" />}
       </main>
