@@ -1,0 +1,328 @@
+{
+ "name": "nykaa_find_returns",
+ "runId": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+ "sseEvents": [
+  {
+   "type": "STARTED",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "timestamp": "2026-10-31T09:26:18.764Z"
+  },
+  {
+   "type": "STREAMING_URL",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "streaming_url": "https://ip-52-53-255-115.tetra-data.production.tinyfish.io/tf-45877f47-aff6-4f21-9c42-f5a238885db0/stream/0",
+   "timestamp": "2026-10-31T09:26:20.377Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "purpose": "Visit Nykaa homepage to find return/refund policy",
+   "timestamp": "2026-10-31T09:26:21.683Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:26:36.684Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:26:51.691Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "purpose": "Visit help center to find return policy",
+   "timestamp": "2026-10-31T09:26:53.435Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:27:08.439Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "purpose": "Click Shopping to find return policy",
+   "timestamp": "2026-10-31T09:27:21.915Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:27:36.960Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "purpose": "Wait for page to load",
+   "timestamp": "2026-10-31T09:27:48.426Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "purpose": "Click Shipping and Delivery Policies topic",
+   "timestamp": "2026-10-31T09:27:54.798Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:28:09.800Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "purpose": "Try to see more sub-topics in Shopping section",
+   "timestamp": "2026-10-31T09:28:22.826Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:28:37.829Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "purpose": "Search for Nykaa return policy page",
+   "tinyfish_api": "search",
+   "timestamp": "2026-10-31T09:28:49.946Z"
+  },
+  {
+   "type": "TF_API_RESULT",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "tinyfish_api": "search",
+   "result": [
+    {
+     "position": 1,
+     "site_name": "www.nykaa.com",
+     "snippet": "We will initiate the refund or replacement process only if the products are received by us in their original packaging. In case of a return/replacement/refund, ...",
+     "title": "Cancellation Policy",
+     "url": "https://www.nykaa.com/cancellation-policy"
+    },
+    {
+     "position": 2,
+     "site_name": "www.nykaa.com",
+     "snippet": "How will I get refunded for the returned orders and how long will this process take? Nykaa Return Policy When will I get my return refund?",
+     "title": "Returns and Refunds",
+     "url": "http://www.nykaa.com/help-center/topic/13"
+    },
+    {
+     "position": 3,
+     "site_name": "www.nykaa.com",
+     "snippet": "If a return is accepted, Nykaa will replace or refund the invoiced rupee value for, the damaged / defective / expired / wrong product.",
+     "title": "Policy",
+     "url": "https://www.nykaa.com/policy-app"
+    }
+   ],
+   "timestamp": "2026-10-31T09:28:51.293Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "purpose": "Visit Nykaa returns and refunds policy page",
+   "timestamp": "2026-10-31T09:28:58.378Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:29:13.382Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "purpose": "Click Nykaa Return Policy article",
+   "timestamp": "2026-10-31T09:29:27.308Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:29:42.310Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "purpose": "Extract return days from policy",
+   "timestamp": "2026-10-31T09:29:54.041Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "purpose": "Extract full return policy details including days",
+   "timestamp": "2026-10-31T09:29:58.242Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "purpose": "Verify policy page URL and details",
+   "timestamp": "2026-10-31T09:30:03.897Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:30:18.901Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "purpose": "Submit final answer with return policy details",
+   "timestamp": "2026-10-31T09:30:32.609Z"
+  },
+  {
+   "type": "COMPLETE",
+   "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+   "status": "COMPLETED",
+   "timestamp": "2026-10-31T09:30:36.789Z",
+   "result": {
+    "success": true,
+    "return_days": "15 days",
+    "policy_url": "https://www.nykaa.com/cancellation-policy/lp",
+    "steps_taken": 12,
+    "blocker": null
+   }
+  }
+ ],
+ "runRecord": {
+  "run_id": "c4b33086-bf2c-49d3-9899-c4b6039efc19",
+  "status": "COMPLETED",
+  "goal": "Navigate to https://www.nykaa.com to complete the goal: Find this site's return or refund policy. Report how many days customers have to return a product and the URL of the policy page. If you cannot find it, describe where you looked and what blocked you. Return JSON: {\"success\": true/false, \"return_days\": string or null, \"policy_url\": string or null, \"steps_taken\": number, \"blocker\": string or null}",
+  "created_at": "2026-10-31T09:26:18Z",
+  "started_at": "2026-10-31T09:26:20Z",
+  "finished_at": "2026-10-31T09:30:37Z",
+  "num_of_steps": 13,
+  "result": {
+   "blocker": null,
+   "success": true,
+   "policy_url": "https://www.nykaa.com/cancellation-policy/lp",
+   "return_days": "15 days",
+   "steps_taken": 12
+  },
+  "output_schema": null,
+  "profile_attached": false,
+  "profile_id": null,
+  "error": null,
+  "streaming_url": "https://ip-52-53-255-115.tetra-data.production.tinyfish.io/tf-45877f47-aff6-4f21-9c42-f5a238885db0/stream/0",
+  "browser_config": {
+   "proxy_enabled": false,
+   "proxy_country_code": null
+  },
+  "video_url": null,
+  "steps": [
+   {
+    "id": "df8fcd61-548a-4148-a638-43609ec614ae",
+    "timestamp": "2026-10-31T09:26:21Z",
+    "status": "RUNNING",
+    "action": "Visit Nykaa homepage to find return/refund policy",
+    "screenshot": "https://agent.tinyfish.ai/runs/c4b33086-bf2c-49d3-9899-c4b6039efc19/steps/df8fcd61-548a-4148-a638-43609ec614ae/screenshot",
+    "html": null,
+    "duration": "4.4s"
+   },
+   {
+    "id": "a2628384-f3b3-4185-9cec-8b481425cc32",
+    "timestamp": "2026-10-31T09:26:53Z",
+    "status": "RUNNING",
+    "action": "Visit help center to find return policy",
+    "screenshot": "https://agent.tinyfish.ai/runs/c4b33086-bf2c-49d3-9899-c4b6039efc19/steps/a2628384-f3b3-4185-9cec-8b481425cc32/screenshot",
+    "html": null,
+    "duration": "2.3s"
+   },
+   {
+    "id": "919a04dc-77a4-4eb2-a540-722daf6b3b5a",
+    "timestamp": "2026-10-31T09:27:21Z",
+    "status": "RUNNING",
+    "action": "Click Shopping to find return policy",
+    "screenshot": "https://agent.tinyfish.ai/runs/c4b33086-bf2c-49d3-9899-c4b6039efc19/steps/919a04dc-77a4-4eb2-a540-722daf6b3b5a/screenshot",
+    "html": null,
+    "duration": "1.2s"
+   },
+   {
+    "id": "7e882553-9c0d-4d78-ba97-d779e75419b0",
+    "timestamp": "2026-10-31T09:27:48Z",
+    "status": "RUNNING",
+    "action": "Wait for page to load",
+    "screenshot": "https://agent.tinyfish.ai/runs/c4b33086-bf2c-49d3-9899-c4b6039efc19/steps/7e882553-9c0d-4d78-ba97-d779e75419b0/screenshot",
+    "html": null,
+    "duration": "2.2s"
+   },
+   {
+    "id": "0a42d3c4-6bd5-4505-bcd8-3f58d0be5f76",
+    "timestamp": "2026-10-31T09:27:54Z",
+    "status": "RUNNING",
+    "action": "Click Shipping and Delivery Policies topic",
+    "screenshot": "https://agent.tinyfish.ai/runs/c4b33086-bf2c-49d3-9899-c4b6039efc19/steps/0a42d3c4-6bd5-4505-bcd8-3f58d0be5f76/screenshot",
+    "html": null,
+    "duration": "1.1s"
+   },
+   {
+    "id": "66083e9f-9928-4230-be83-c3f6742f65f1",
+    "timestamp": "2026-10-31T09:28:22Z",
+    "status": "RUNNING",
+    "action": "Try to see more sub-topics in Shopping section",
+    "screenshot": "https://agent.tinyfish.ai/runs/c4b33086-bf2c-49d3-9899-c4b6039efc19/steps/66083e9f-9928-4230-be83-c3f6742f65f1/screenshot",
+    "html": null,
+    "duration": "1.1s"
+   },
+   {
+    "id": "d6e2b477-9fea-4411-b0b7-65aee0dbaf62",
+    "timestamp": "2026-10-31T09:28:49Z",
+    "status": "RUNNING",
+    "action": "Search for Nykaa return policy page",
+    "screenshot": null,
+    "html": null,
+    "duration": "1.3s"
+   },
+   {
+    "id": "49938501-0fee-45cc-a55a-2d1b62bbd76a",
+    "timestamp": "2026-10-31T09:28:58Z",
+    "status": "RUNNING",
+    "action": "Visit Nykaa returns and refunds policy page",
+    "screenshot": "https://agent.tinyfish.ai/runs/c4b33086-bf2c-49d3-9899-c4b6039efc19/steps/49938501-0fee-45cc-a55a-2d1b62bbd76a/screenshot",
+    "html": null,
+    "duration": "1.9s"
+   },
+   {
+    "id": "5d46d69d-0cd9-4e65-baf0-bf5d7372a8e2",
+    "timestamp": "2026-10-31T09:29:27Z",
+    "status": "RUNNING",
+    "action": "Click Nykaa Return Policy article",
+    "screenshot": "https://agent.tinyfish.ai/runs/c4b33086-bf2c-49d3-9899-c4b6039efc19/steps/5d46d69d-0cd9-4e65-baf0-bf5d7372a8e2/screenshot",
+    "html": null,
+    "duration": "1.4s"
+   },
+   {
+    "id": "631d22c8-8ccb-4f5a-9d02-6b90a7f23079",
+    "timestamp": "2026-10-31T09:29:54Z",
+    "status": "RUNNING",
+    "action": "Extract return days from policy",
+    "screenshot": "https://agent.tinyfish.ai/runs/c4b33086-bf2c-49d3-9899-c4b6039efc19/steps/631d22c8-8ccb-4f5a-9d02-6b90a7f23079/screenshot",
+    "html": null,
+    "duration": "1.3s"
+   },
+   {
+    "id": "43d19f2a-9087-4802-bf5f-d70d2b311eb0",
+    "timestamp": "2026-10-31T09:29:58Z",
+    "status": "RUNNING",
+    "action": "Extract full return policy details including days",
+    "screenshot": "https://agent.tinyfish.ai/runs/c4b33086-bf2c-49d3-9899-c4b6039efc19/steps/43d19f2a-9087-4802-bf5f-d70d2b311eb0/screenshot",
+    "html": null,
+    "duration": "1.5s"
+   },
+   {
+    "id": "3077710c-33c0-40a0-9f16-209a3ecd2cb9",
+    "timestamp": "2026-10-31T09:30:03Z",
+    "status": "RUNNING",
+    "action": "Verify policy page URL and details",
+    "screenshot": "https://agent.tinyfish.ai/runs/c4b33086-bf2c-49d3-9899-c4b6039efc19/steps/3077710c-33c0-40a0-9f16-209a3ecd2cb9/screenshot",
+    "html": null,
+    "duration": "2.5s"
+   },
+   {
+    "id": "4304864e-1d2f-4c41-87c3-143d0c1a214b",
+    "timestamp": "2026-10-31T09:30:32Z",
+    "status": "RUNNING",
+    "action": "Submit final answer with return policy details",
+    "screenshot": "https://agent.tinyfish.ai/runs/c4b33086-bf2c-49d3-9899-c4b6039efc19/steps/4304864e-1d2f-4c41-87c3-143d0c1a214b/screenshot",
+    "html": null,
+    "duration": "0.6s"
+   },
+   {
+    "id": "8f536587-0dc4-4a6c-84f9-134326695a8f",
+    "timestamp": "2026-10-31T09:30:36Z",
+    "status": "COMPLETED",
+    "action": "Task completed",
+    "screenshot": null,
+    "html": null,
+    "duration": null
+   }
+  ]
+ }
+}

@@ -1,0 +1,126 @@
+{
+ "name": "nykaa_find_price",
+ "runId": "fb4c8188-881f-4633-ac4e-b5f0619feb3e",
+ "sseEvents": [
+  {
+   "type": "STARTED",
+   "run_id": "fb4c8188-881f-4633-ac4e-b5f0619feb3e",
+   "timestamp": "2026-10-31T09:24:55.611Z"
+  },
+  {
+   "type": "STREAMING_URL",
+   "run_id": "fb4c8188-881f-4633-ac4e-b5f0619feb3e",
+   "streaming_url": "https://ip-52-53-255-115.tetra-data.production.tinyfish.io/tf-0740aac2-4321-44d9-bf8e-0a8c0fecce18/stream/0",
+   "timestamp": "2026-10-31T09:24:57.361Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "fb4c8188-881f-4633-ac4e-b5f0619feb3e",
+   "purpose": "Visit Nykaa homepage to find lipstick product",
+   "timestamp": "2026-10-31T09:24:58.680Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:25:13.685Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:25:28.689Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "fb4c8188-881f-4633-ac4e-b5f0619feb3e",
+   "purpose": "Navigate to lipstick category page",
+   "timestamp": "2026-10-31T09:25:31.663Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:25:46.663Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T09:26:01.664Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "fb4c8188-881f-4633-ac4e-b5f0619feb3e",
+   "purpose": "Submit lipstick product name and price",
+   "timestamp": "2026-10-31T09:26:03.917Z"
+  },
+  {
+   "type": "COMPLETE",
+   "run_id": "fb4c8188-881f-4633-ac4e-b5f0619feb3e",
+   "status": "COMPLETED",
+   "timestamp": "2026-10-31T09:26:05.341Z",
+   "result": {
+    "success": true,
+    "product": "Maybelline Serum Matte Lipstick - 8Hr hydration, One-Swipe Bold Color",
+    "price": "₹467",
+    "blocker": null
+   }
+  }
+ ],
+ "runRecord": {
+  "run_id": "fb4c8188-881f-4633-ac4e-b5f0619feb3e",
+  "status": "COMPLETED",
+  "goal": "Navigate to https://www.nykaa.com to complete the goal: Find any lipstick product on this site and report its exact name and price in rupees. If something blocks you (popup, login wall, captcha, missing info), stop and describe exactly what blocked you. Return JSON: {\"success\": true/false, \"product\": string, \"price\": string, \"blocker\": string or null}",
+  "created_at": "2026-10-31T09:24:55Z",
+  "started_at": "2026-10-31T09:24:57Z",
+  "finished_at": "2026-10-31T09:26:05Z",
+  "num_of_steps": 3,
+  "result": {
+   "price": "₹467",
+   "blocker": null,
+   "product": "Maybelline Serum Matte Lipstick - 8Hr hydration, One-Swipe Bold Color",
+   "success": true
+  },
+  "output_schema": null,
+  "profile_attached": false,
+  "profile_id": null,
+  "error": null,
+  "streaming_url": "https://ip-52-53-255-115.tetra-data.production.tinyfish.io/tf-0740aac2-4321-44d9-bf8e-0a8c0fecce18/stream/0",
+  "browser_config": {
+   "proxy_enabled": false,
+   "proxy_country_code": null
+  },
+  "video_url": null,
+  "steps": [
+   {
+    "id": "e9a486d5-60d3-4451-9d67-8174018e1f6c",
+    "timestamp": "2026-10-31T09:24:58Z",
+    "status": "RUNNING",
+    "action": "Visit Nykaa homepage to find lipstick product",
+    "screenshot": "https://agent.tinyfish.ai/runs/fb4c8188-881f-4633-ac4e-b5f0619feb3e/steps/e9a486d5-60d3-4451-9d67-8174018e1f6c/screenshot",
+    "html": null,
+    "duration": "4.6s"
+   },
+   {
+    "id": "444c039e-233c-475e-9482-8870d996eca7",
+    "timestamp": "2026-10-31T09:25:31Z",
+    "status": "RUNNING",
+    "action": "Navigate to lipstick category page",
+    "screenshot": "https://agent.tinyfish.ai/runs/fb4c8188-881f-4633-ac4e-b5f0619feb3e/steps/444c039e-233c-475e-9482-8870d996eca7/screenshot",
+    "html": null,
+    "duration": "3.4s"
+   },
+   {
+    "id": "2e29ef42-4fa5-40d2-8738-a0f6e88de511",
+    "timestamp": "2026-10-31T09:26:03Z",
+    "status": "RUNNING",
+    "action": "Submit lipstick product name and price",
+    "screenshot": "https://agent.tinyfish.ai/runs/fb4c8188-881f-4633-ac4e-b5f0619feb3e/steps/2e29ef42-4fa5-40d2-8738-a0f6e88de511/screenshot",
+    "html": null,
+    "duration": "0.0s"
+   },
+   {
+    "id": "88923eb0-d9a8-4413-a8d2-2b8095ec9777",
+    "timestamp": "2026-10-31T09:26:05Z",
+    "status": "COMPLETED",
+    "action": "Task completed",
+    "screenshot": null,
+    "html": null,
+    "duration": null
+   }
+  ]
+ }
+}

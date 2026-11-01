@@ -4,13 +4,15 @@
 
 Built by Team Mavericks (Manideep Thumu, Sai Shakti Nayak, Akhil Daitha) at Swim with TinyFish, Scaler School of Technology, 1 Nov 2026.
 
-- Architecture and decisions: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- Decisions: [`docs/DECISIONS.md`](docs/DECISIONS.md)
+- Research and test evidence: [`docs/RESEARCH.md`](docs/RESEARCH.md)
 - Rules for coding agents: [`AGENTS.md`](AGENTS.md)
 
 ## Quick start
 
 ```bash
-cp .env.example .env      # add your TINYFISH_API_KEY
+cp .env.example .env      # add your TINYFISH_API_KEY (TINYFISH_MOCK=1 replays real runs, no credits)
 npm install
 npm run dev               # server on :4000, dashboard on :5173
 ```

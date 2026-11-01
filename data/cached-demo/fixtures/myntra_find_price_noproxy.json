@@ -1,0 +1,273 @@
+{
+ "name": "myntra_find_price_noproxy",
+ "runId": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+ "sseEvents": [
+  {
+   "type": "STARTED",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "timestamp": "2026-10-31T09:41:02.228Z"
+  },
+  {
+   "type": "STREAMING_URL",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "streaming_url": "https://ip-52-53-255-115.tetra-data.production.tinyfish.io/tf-a11497c2-6f7c-4dc2-b7f8-40281ec06a16/stream/0",
+   "timestamp": "2026-10-31T09:41:03.861Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "purpose": "Navigate to Myntra to find a men's t-shirt",
+   "timestamp": "2026-10-31T09:41:05.275Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "purpose": "Check what is displayed on the Myntra homepage",
+   "timestamp": "2026-10-31T09:41:12.919Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "purpose": "Try to access men's t-shirts category directly",
+   "timestamp": "2026-10-31T09:41:18.046Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "purpose": "Wait for page to fully load",
+   "timestamp": "2026-10-31T09:41:20.531Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "purpose": "Check if men's t-shirts are displayed on the page",
+   "timestamp": "2026-10-31T09:41:25.496Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "purpose": "Find a Myntra men's t-shirt product page URL",
+   "tinyfish_api": "search",
+   "timestamp": "2026-10-31T09:41:30.625Z"
+  },
+  {
+   "type": "TF_API_RESULT",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "tinyfish_api": "search",
+   "result": [
+    {
+     "position": 1,
+     "site_name": "www.myntra.com",
+     "snippet": "Men's T-shirts - Buy T-shirts for men online in India. Choose from a wide range of polo, round, V neck & more Men's T-shirts in various designs at Myntra.",
+     "title": "Buy Latest Men's T-shirts Online at Best Price",
+     "url": "https://www.myntra.com/men-tshirts"
+    },
+    {
+     "position": 2,
+     "site_name": "www.myntra.com",
+     "snippet": "Tshirts for Men from ALINSKY at Rs. Colour Green Fit Regular Fit. Regular Sleeves Woven Cotton fabric. Fabric: Cotton, Hand wash Style",
+     "title": "Buy ALINSKY Men T-shirt - Tshirts for Men 44942297",
+     "url": "https://www.myntra.com/Tshirts/ALINSKY/ALINSKY-Men-T-shirt/44942297/buy"
+    },
+    {
+     "position": 3,
+     "site_name": "www.myntra.com",
+     "snippet": "NOBERO. Printed Graphic Cotton Short T-shirt · ₹489 ; StyleCast x Revolte. Men Printed Oversized T-shirt · ₹611 ; LAUREN ADAMS. Men Striped T-shirt · ₹328 ; BAESD ...",
+     "title": "Men Three Quarter Sleeves Tshirts",
+     "url": "https://www.myntra.com/men-three-quarter-sleeves-tshirts"
+    }
+   ],
+   "timestamp": "2026-10-31T09:41:33.319Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "purpose": "Access specific ALINSKY men's t-shirt product page",
+   "timestamp": "2026-10-31T09:41:35.873Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "purpose": "Check if the product page loaded correctly",
+   "timestamp": "2026-10-31T09:41:40.962Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "purpose": "Try again to access men's t-shirts category",
+   "timestamp": "2026-10-31T09:41:45.261Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "purpose": "Final attempt to load Myntra homepage",
+   "timestamp": "2026-10-31T09:41:49.302Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "purpose": "Visit Myntra homepage to find men's t-shirts",
+   "timestamp": "2026-10-31T09:41:51.341Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "purpose": "Report that Myntra website is blocked/unavailable",
+   "timestamp": "2026-10-31T09:41:56.711Z"
+  },
+  {
+   "type": "COMPLETE",
+   "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+   "status": "COMPLETED",
+   "timestamp": "2026-10-31T09:42:03.814Z",
+   "result": {
+    "success": false,
+    "answer": null,
+    "blocker": "The Myntra website is completely unavailable. Every URL attempted (homepage, men's tshirts category page, and specific product pages) either displays an \"Oops! Something went wrong / Please contact your administrator\" error message or loads with empty content (no elements, links, or images visible). This appears to be a server-side outage or website malfunction preventing any access to product information."
+   }
+  }
+ ],
+ "runRecord": {
+  "run_id": "4741fa7e-7116-4084-bf82-a87943ff26a1",
+  "status": "COMPLETED",
+  "goal": "Navigate to https://www.myntra.com to complete the goal: Find any men's t-shirt and report its name and price. Do not log in. If anything blocks you (captcha, access denied, popup, login wall), stop and describe it. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null}",
+  "created_at": "2026-10-31T09:41:02Z",
+  "started_at": "2026-10-31T09:41:04Z",
+  "finished_at": "2026-10-31T09:42:04Z",
+  "num_of_steps": 12,
+  "result": {
+   "answer": null,
+   "blocker": "The Myntra website is completely unavailable. Every URL attempted (homepage, men's tshirts category page, and specific product pages) either displays an \"Oops! Something went wrong / Please contact your administrator\" error message or loads with empty content (no elements, links, or images visible). This appears to be a server-side outage or website malfunction preventing any access to product information.",
+   "success": false
+  },
+  "output_schema": null,
+  "profile_attached": false,
+  "profile_id": null,
+  "error": null,
+  "streaming_url": "https://ip-52-53-255-115.tetra-data.production.tinyfish.io/tf-a11497c2-6f7c-4dc2-b7f8-40281ec06a16/stream/0",
+  "browser_config": {
+   "proxy_enabled": false,
+   "proxy_country_code": null
+  },
+  "video_url": null,
+  "steps": [
+   {
+    "id": "5a807eec-2182-4bb3-ad93-c64e6ff4f572",
+    "timestamp": "2026-10-31T09:41:05Z",
+    "status": "RUNNING",
+    "action": "Navigate to Myntra to find a men's t-shirt",
+    "screenshot": "https://agent.tinyfish.ai/runs/4741fa7e-7116-4084-bf82-a87943ff26a1/steps/5a807eec-2182-4bb3-ad93-c64e6ff4f572/screenshot",
+    "html": null,
+    "duration": "0.9s"
+   },
+   {
+    "id": "74190a8d-e5db-48ce-8895-a93828c922b8",
+    "timestamp": "2026-10-31T09:41:12Z",
+    "status": "RUNNING",
+    "action": "Check what is displayed on the Myntra homepage",
+    "screenshot": "https://agent.tinyfish.ai/runs/4741fa7e-7116-4084-bf82-a87943ff26a1/steps/74190a8d-e5db-48ce-8895-a93828c922b8/screenshot",
+    "html": null,
+    "duration": "1.6s"
+   },
+   {
+    "id": "063db0ed-fb1b-46e7-907e-087f5b127ba1",
+    "timestamp": "2026-10-31T09:41:18Z",
+    "status": "RUNNING",
+    "action": "Try to access men's t-shirts category directly",
+    "screenshot": "https://agent.tinyfish.ai/runs/4741fa7e-7116-4084-bf82-a87943ff26a1/steps/063db0ed-fb1b-46e7-907e-087f5b127ba1/screenshot",
+    "html": null,
+    "duration": "0.8s"
+   },
+   {
+    "id": "580d1b0f-1c11-43c2-8433-8402e68694e6",
+    "timestamp": "2026-10-31T09:41:20Z",
+    "status": "RUNNING",
+    "action": "Wait for page to fully load",
+    "screenshot": "https://agent.tinyfish.ai/runs/4741fa7e-7116-4084-bf82-a87943ff26a1/steps/580d1b0f-1c11-43c2-8433-8402e68694e6/screenshot",
+    "html": null,
+    "duration": "3.2s"
+   },
+   {
+    "id": "63170583-63de-4e2c-bd3e-24bb1536d007",
+    "timestamp": "2026-10-31T09:41:25Z",
+    "status": "RUNNING",
+    "action": "Check if men's t-shirts are displayed on the page",
+    "screenshot": "https://agent.tinyfish.ai/runs/4741fa7e-7116-4084-bf82-a87943ff26a1/steps/63170583-63de-4e2c-bd3e-24bb1536d007/screenshot",
+    "html": null,
+    "duration": "1.4s"
+   },
+   {
+    "id": "17d07e58-2e82-4236-9cef-454181a03c2f",
+    "timestamp": "2026-10-31T09:41:30Z",
+    "status": "RUNNING",
+    "action": "Find a Myntra men's t-shirt product page URL",
+    "screenshot": null,
+    "html": null,
+    "duration": "2.7s"
+   },
+   {
+    "id": "96dfbb20-2177-44af-a750-e4d496210e42",
+    "timestamp": "2026-10-31T09:41:35Z",
+    "status": "RUNNING",
+    "action": "Access specific ALINSKY men's t-shirt product page",
+    "screenshot": "https://agent.tinyfish.ai/runs/4741fa7e-7116-4084-bf82-a87943ff26a1/steps/96dfbb20-2177-44af-a750-e4d496210e42/screenshot",
+    "html": null,
+    "duration": "0.8s"
+   },
+   {
+    "id": "e67e7054-a097-4ba4-b093-e0acb1be9afd",
+    "timestamp": "2026-10-31T09:41:40Z",
+    "status": "RUNNING",
+    "action": "Check if the product page loaded correctly",
+    "screenshot": "https://agent.tinyfish.ai/runs/4741fa7e-7116-4084-bf82-a87943ff26a1/steps/e67e7054-a097-4ba4-b093-e0acb1be9afd/screenshot",
+    "html": null,
+    "duration": "1.3s"
+   },
+   {
+    "id": "5a68284b-113e-4181-9c42-c02b23c8f86c",
+    "timestamp": "2026-10-31T09:41:45Z",
+    "status": "RUNNING",
+    "action": "Try again to access men's t-shirts category",
+    "screenshot": "https://agent.tinyfish.ai/runs/4741fa7e-7116-4084-bf82-a87943ff26a1/steps/5a68284b-113e-4181-9c42-c02b23c8f86c/screenshot",
+    "html": null,
+    "duration": "0.8s"
+   },
+   {
+    "id": "3a0dea50-fa8a-4f2b-8a8d-49eeb59ee915",
+    "timestamp": "2026-10-31T09:41:49Z",
+    "status": "RUNNING",
+    "action": "Final attempt to load Myntra homepage",
+    "screenshot": "https://agent.tinyfish.ai/runs/4741fa7e-7116-4084-bf82-a87943ff26a1/steps/3a0dea50-fa8a-4f2b-8a8d-49eeb59ee915/screenshot",
+    "html": null,
+    "duration": "0.8s"
+   },
+   {
+    "id": "5e950182-0a1e-4b10-919c-62ed7260ce4e",
+    "timestamp": "2026-10-31T09:41:51Z",
+    "status": "RUNNING",
+    "action": "Visit Myntra homepage to find men's t-shirts",
+    "screenshot": "https://agent.tinyfish.ai/runs/4741fa7e-7116-4084-bf82-a87943ff26a1/steps/5e950182-0a1e-4b10-919c-62ed7260ce4e/screenshot",
+    "html": null,
+    "duration": "0.8s"
+   },
+   {
+    "id": "682172dd-c8ba-46ff-86a3-7cde8cbd72ab",
+    "timestamp": "2026-10-31T09:41:56Z",
+    "status": "RUNNING",
+    "action": "Report that Myntra website is blocked/unavailable",
+    "screenshot": "https://agent.tinyfish.ai/runs/4741fa7e-7116-4084-bf82-a87943ff26a1/steps/682172dd-c8ba-46ff-86a3-7cde8cbd72ab/screenshot",
+    "html": null,
+    "duration": "7.1s"
+   },
+   {
+    "id": "5cdfd75e-d3f2-4bdf-8ca3-0f83c1153c5b",
+    "timestamp": "2026-10-31T09:42:03Z",
+    "status": "COMPLETED",
+    "action": "Task completed",
+    "screenshot": null,
+    "html": null,
+    "duration": null
+   }
+  ]
+ }
+}

@@ -1,0 +1,4 @@
+{
+  "compilerOptions": { "checkJs": true, "module": "ESNext", "moduleResolution": "Bundler", "target": "ES2022", "jsx": "react-jsx", "allowJs": true },
+  "exclude": ["node_modules", "data"]
+}

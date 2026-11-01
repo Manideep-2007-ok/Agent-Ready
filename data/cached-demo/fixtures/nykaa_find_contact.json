@@ -1,0 +1,173 @@
+{
+ "name": "nykaa_find_contact",
+ "runId": "c9687ab7-fdfb-4619-bf7f-eb6036f89e70",
+ "sseEvents": [
+  {
+   "type": "STARTED",
+   "run_id": "c9687ab7-fdfb-4619-bf7f-eb6036f89e70",
+   "timestamp": "2026-10-31T14:02:47.392Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T14:03:02.394Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T14:03:17.394Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T14:03:32.393Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T14:03:47.394Z"
+  },
+  {
+   "type": "STREAMING_URL",
+   "run_id": "c9687ab7-fdfb-4619-bf7f-eb6036f89e70",
+   "streaming_url": "https://ip-3-101-153-112.tetra-data.production.tinyfish.io/tf-fb3867d8-e0c8-4ee7-87a4-2013a2cb28ca/stream/0",
+   "timestamp": "2026-10-31T14:03:57.855Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c9687ab7-fdfb-4619-bf7f-eb6036f89e70",
+   "purpose": "Visit Nykaa homepage to find customer support contact information",
+   "timestamp": "2026-10-31T14:03:58.956Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T14:04:13.958Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T14:04:28.961Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T14:04:43.961Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T14:04:58.962Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T14:05:13.983Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c9687ab7-fdfb-4619-bf7f-eb6036f89e70",
+   "purpose": "Navigate to help center to find customer support contact info",
+   "timestamp": "2026-10-31T14:05:14.420Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T14:05:29.422Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T14:05:44.421Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c9687ab7-fdfb-4619-bf7f-eb6036f89e70",
+   "purpose": "Find Nykaa customer support contact info",
+   "timestamp": "2026-10-31T14:05:57.618Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T14:06:12.623Z"
+  },
+  {
+   "type": "HEARTBEAT",
+   "timestamp": "2026-10-31T14:06:27.643Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "c9687ab7-fdfb-4619-bf7f-eb6036f89e70",
+   "purpose": "Open chat support to find customer service contact info",
+   "timestamp": "2026-10-31T14:06:42.403Z"
+  }
+ ],
+ "runRecord": {
+  "run_id": "c9687ab7-fdfb-4619-bf7f-eb6036f89e70",
+  "status": "COMPLETED",
+  "goal": "Navigate to https://www.nykaa.com to complete the goal: Find a way to contact this company's customer support (phone number, email, chat or contact form) and report it with the page URL where you found it. Do not log in. If anything blocks you, describe it. Return JSON: {\"success\": true/false, \"answer\": string or null, \"blocker\": string or null}",
+  "created_at": "2026-10-31T14:02:47Z",
+  "started_at": "2026-10-31T14:03:58Z",
+  "finished_at": "2026-10-31T14:07:50Z",
+  "num_of_steps": 5,
+  "result": {
+   "answer": "Nykaa offers customer support through multiple channels:\n\n1. **Chat Support** - Available on the homepage at the bottom right corner via a button labeled 'How may we help you' which opens a live chat widget (Messaging window/iframe).\n\n2. **Help Center** - Accessible via the 'Help' link in the header navigation at: https://www.nykaa.com/gateway-api/omsApis/helpCenter?domain=NYKAA\n\nThese are the primary contact options I found on the website. Specific phone numbers and email addresses were not visible on the homepage but may be available within the Help Center page or through the chat support.",
+   "blocker": null,
+   "success": true
+  },
+  "output_schema": null,
+  "profile_attached": false,
+  "profile_id": null,
+  "error": null,
+  "streaming_url": "https://ip-3-101-153-112.tetra-data.production.tinyfish.io/tf-fb3867d8-e0c8-4ee7-87a4-2013a2cb28ca/stream/0",
+  "browser_config": {
+   "proxy_enabled": false,
+   "proxy_country_code": null
+  },
+  "video_url": null,
+  "steps": [
+   {
+    "id": "89ab9138-e9b9-4432-b930-ba05d837ae8e",
+    "timestamp": "2026-10-31T14:03:58Z",
+    "status": "RUNNING",
+    "action": "Visit Nykaa homepage to find customer support contact information",
+    "screenshot": "https://agent.tinyfish.ai/runs/c9687ab7-fdfb-4619-bf7f-eb6036f89e70/steps/89ab9138-e9b9-4432-b930-ba05d837ae8e/screenshot",
+    "html": null,
+    "duration": "4.2s"
+   },
+   {
+    "id": "e39fcdfd-c6bb-46c2-83dd-14b9ef62ca04",
+    "timestamp": "2026-10-31T14:05:14Z",
+    "status": "RUNNING",
+    "action": "Navigate to help center to find customer support contact info",
+    "screenshot": "https://agent.tinyfish.ai/runs/c9687ab7-fdfb-4619-bf7f-eb6036f89e70/steps/e39fcdfd-c6bb-46c2-83dd-14b9ef62ca04/screenshot",
+    "html": null,
+    "duration": "4.8s"
+   },
+   {
+    "id": "b26f7709-83e5-4277-89b9-756eb1251cfc",
+    "timestamp": "2026-10-31T14:05:57Z",
+    "status": "RUNNING",
+    "action": "Find Nykaa customer support contact info",
+    "screenshot": "https://agent.tinyfish.ai/runs/c9687ab7-fdfb-4619-bf7f-eb6036f89e70/steps/b26f7709-83e5-4277-89b9-756eb1251cfc/screenshot",
+    "html": null,
+    "duration": "3.1s"
+   },
+   {
+    "id": "1d73c803-3aad-4740-97e6-1e44c78966c5",
+    "timestamp": "2026-10-31T14:06:42Z",
+    "status": "RUNNING",
+    "action": "Open chat support to find customer service contact info",
+    "screenshot": "https://agent.tinyfish.ai/runs/c9687ab7-fdfb-4619-bf7f-eb6036f89e70/steps/1d73c803-3aad-4740-97e6-1e44c78966c5/screenshot",
+    "html": null,
+    "duration": "1.9s"
+   },
+   {
+    "id": "29588183-bd7b-47ec-9f4c-3edadf1f0e22",
+    "timestamp": "2026-10-31T14:07:48Z",
+    "status": "RUNNING",
+    "action": "Report Nykaa customer support contact info found on homepage",
+    "screenshot": "https://agent.tinyfish.ai/runs/c9687ab7-fdfb-4619-bf7f-eb6036f89e70/steps/29588183-bd7b-47ec-9f4c-3edadf1f0e22/screenshot",
+    "html": null,
+    "duration": "0.2s"
+   },
+   {
+    "id": "9837294d-b7ce-430e-8119-483e77dea710",
+    "timestamp": "2026-10-31T14:07:49Z",
+    "status": "COMPLETED",
+    "action": "Task completed",
+    "screenshot": null,
+    "html": null,
+    "duration": null
+   }
+  ]
+ }
+}

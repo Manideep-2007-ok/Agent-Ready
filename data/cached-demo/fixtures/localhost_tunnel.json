@@ -1,0 +1,140 @@
+{
+ "name": "localhost_tunnel",
+ "runId": "6ce498db-a031-4d9c-9d10-a7c8d8489234",
+ "sseEvents": [
+  {
+   "type": "STARTED",
+   "run_id": "6ce498db-a031-4d9c-9d10-a7c8d8489234",
+   "timestamp": "2026-10-31T13:32:34.471Z"
+  },
+  {
+   "type": "STREAMING_URL",
+   "run_id": "6ce498db-a031-4d9c-9d10-a7c8d8489234",
+   "streaming_url": "https://ip-13-56-82-219.tetra-data.production.tinyfish.io/tf-711650f9-d451-4f14-9bc7-ddd6ffb1079a/stream/0",
+   "timestamp": "2026-10-31T13:32:36.204Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "6ce498db-a031-4d9c-9d10-a7c8d8489234",
+   "purpose": "Navigate to the target website",
+   "timestamp": "2026-10-31T13:32:42.603Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "6ce498db-a031-4d9c-9d10-a7c8d8489234",
+   "purpose": "Get product prices and return policy info from main page",
+   "timestamp": "2026-10-31T13:32:47.552Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "6ce498db-a031-4d9c-9d10-a7c8d8489234",
+   "purpose": "Check return policy page",
+   "timestamp": "2026-10-31T13:32:51.802Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "6ce498db-a031-4d9c-9d10-a7c8d8489234",
+   "purpose": "Get return policy details from returns page",
+   "timestamp": "2026-10-31T13:32:55.910Z"
+  },
+  {
+   "type": "PROGRESS",
+   "run_id": "6ce498db-a031-4d9c-9d10-a7c8d8489234",
+   "purpose": "Return product price and return policy info",
+   "timestamp": "2026-10-31T13:32:58.386Z"
+  },
+  {
+   "type": "COMPLETE",
+   "run_id": "6ce498db-a031-4d9c-9d10-a7c8d8489234",
+   "status": "COMPLETED",
+   "timestamp": "2026-10-31T13:32:59.929Z",
+   "result": {
+    "success": true,
+    "price": "499.0",
+    "return_days": "10",
+    "blocker": null
+   }
+  }
+ ],
+ "runRecord": {
+  "run_id": "6ce498db-a031-4d9c-9d10-a7c8d8489234",
+  "status": "COMPLETED",
+  "goal": "Navigate to https://fans-flag-evaluate-tested.trycloudflare.com to complete the goal: Find the product price and the return policy (how many days). If anything blocks you (warning page, error, login), stop and describe it. Return JSON: {\"success\": true/false, \"price\": string or null, \"return_days\": string or null, \"blocker\": string or null}",
+  "created_at": "2026-10-31T13:32:34Z",
+  "started_at": "2026-10-31T13:32:36Z",
+  "finished_at": "2026-10-31T13:33:00Z",
+  "num_of_steps": 5,
+  "result": {
+   "price": "499.0",
+   "blocker": null,
+   "success": true,
+   "return_days": "10"
+  },
+  "output_schema": null,
+  "profile_attached": false,
+  "profile_id": null,
+  "error": null,
+  "streaming_url": "https://ip-13-56-82-219.tetra-data.production.tinyfish.io/tf-711650f9-d451-4f14-9bc7-ddd6ffb1079a/stream/0",
+  "browser_config": {
+   "proxy_enabled": false,
+   "proxy_country_code": null
+  },
+  "video_url": null,
+  "steps": [
+   {
+    "id": "8070dda3-4a34-4bfb-a2d2-2a948b0ac0d0",
+    "timestamp": "2026-10-31T13:32:42Z",
+    "status": "RUNNING",
+    "action": "Navigate to the target website",
+    "screenshot": "https://agent.tinyfish.ai/runs/6ce498db-a031-4d9c-9d10-a7c8d8489234/steps/8070dda3-4a34-4bfb-a2d2-2a948b0ac0d0/screenshot",
+    "html": null,
+    "duration": "1.1s"
+   },
+   {
+    "id": "c4c52f12-b731-4c41-824e-849717aef242",
+    "timestamp": "2026-10-31T13:32:47Z",
+    "status": "RUNNING",
+    "action": "Get product prices and return policy info from main page",
+    "screenshot": "https://agent.tinyfish.ai/runs/6ce498db-a031-4d9c-9d10-a7c8d8489234/steps/c4c52f12-b731-4c41-824e-849717aef242/screenshot",
+    "html": null,
+    "duration": "1.3s"
+   },
+   {
+    "id": "2c9c0cc1-6804-474e-b7bd-8614f631b94a",
+    "timestamp": "2026-10-31T13:32:51Z",
+    "status": "RUNNING",
+    "action": "Check return policy page",
+    "screenshot": "https://agent.tinyfish.ai/runs/6ce498db-a031-4d9c-9d10-a7c8d8489234/steps/2c9c0cc1-6804-474e-b7bd-8614f631b94a/screenshot",
+    "html": null,
+    "duration": "1.7s"
+   },
+   {
+    "id": "569c8b75-77c6-4d6a-b66e-7ea10f7ecdb1",
+    "timestamp": "2026-10-31T13:32:55Z",
+    "status": "RUNNING",
+    "action": "Get return policy details from returns page",
+    "screenshot": "https://agent.tinyfish.ai/runs/6ce498db-a031-4d9c-9d10-a7c8d8489234/steps/569c8b75-77c6-4d6a-b66e-7ea10f7ecdb1/screenshot",
+    "html": null,
+    "duration": "1.1s"
+   },
+   {
+    "id": "563ee14a-42bd-47ad-a281-64e484278c84",
+    "timestamp": "2026-10-31T13:32:58Z",
+    "status": "RUNNING",
+    "action": "Return product price and return policy info",
+    "screenshot": "https://agent.tinyfish.ai/runs/6ce498db-a031-4d9c-9d10-a7c8d8489234/steps/563ee14a-42bd-47ad-a281-64e484278c84/screenshot",
+    "html": null,
+    "duration": "0.0s"
+   },
+   {
+    "id": "0b76e3cf-45b9-4c23-9a97-716862f2fb7c",
+    "timestamp": "2026-10-31T13:32:59Z",
+    "status": "COMPLETED",
+    "action": "Task completed",
+    "screenshot": null,
+    "html": null,
+    "duration": null
+   }
+  ]
+ }
+}
