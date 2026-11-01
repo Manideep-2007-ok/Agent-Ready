@@ -75,4 +75,30 @@ button.secondary { background: var(--wait-bg); color: var(--text); }
 .shot-viewer img { max-width: 100%; max-height: calc(100vh - 80px); border-radius: 8px; }
 .shot-viewer-hint { color: #fff; font-size: 13px; }
 
-.recent { font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.score-card { display: grid; gap: 16px; }
+.bot-wall { background: var(--fail-bg); color: var(--fail); border: 1px solid #f5c2bd; border-radius: 8px; padding: 12px 14px; font-size: 15px; }
+.score-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.score-big { display: flex; align-items: baseline; padding: 10px 18px; border-radius: var(--radius); }
+.score-num { font-size: 52px; font-weight: 800; line-height: 1; }
+.score-of { font-size: 20px; font-weight: 600; margin-left: 4px; }
+.score-pass, .band-pass { background: var(--pass-bg); color: var(--pass); }
+.score-warn, .band-warn { background: var(--warn-bg); color: var(--warn); }
+.score-fail, .band-fail { background: var(--fail-bg); color: var(--fail); }
+.score-meta { display: grid; gap: 6px; justify-items: start; font-size: 14px; }
+.score-site { font-size: 20px; font-weight: 700; }
+.top-fixes h2 { margin-bottom: 8px; }
+.top-fixes ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: fix; }
+.top-fixes li { counter-increment: fix; }
+.top-fix {
+  width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; font-weight: 400; font-size: 14px;
+  background: var(--bg); color: var(--text); border: 1px solid var(--line); padding: 10px 12px;
+}
+.top-fix::before { content: counter(fix); font-weight: 800; font-size: 18px; min-width: 18px; }
+.top-fix:hover { border-color: var(--accent); }
+.top-fix-text { display: grid; gap: 2px; flex: 1; }
+.top-fix-go { color: var(--accent); font-weight: 600; white-space: nowrap; }
+.top-fixes-none { margin: 0; color: var(--pass); font-weight: 600; }
+.finding { scroll-margin-top: 16px; }
+@media (max-width: 640px) { .top-fix-go { display: none; } .score-num { font-size: 40px; } }
+
+.recent {font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; }

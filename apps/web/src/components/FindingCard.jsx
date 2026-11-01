@@ -38,7 +38,7 @@ export default function FindingCard({ finding, taskIds = finding.taskId ? [findi
     : 'Not part of the 100-point score, but it gets in AI shoppers’ way.';
 
   return (
-    <article className={`card finding sev-${finding.severity}`}>
+    <article id={rank ? `top-fix-${rank}` : undefined} className={`card finding sev-${finding.severity}`}>
       <header className="finding-head">
         <span className={`chip sev-chip sev-${finding.severity}`}>{SEVERITY[finding.severity] ?? finding.severity}</span>
         {rank && <span className="chip top-chip">Top fix #{rank}</span>}
