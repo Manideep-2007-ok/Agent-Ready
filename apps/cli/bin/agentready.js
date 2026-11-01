@@ -106,9 +106,10 @@ try {
       process.exit(2);
     }
     say('Opening a temporary public tunnel to your site...');
-    const tunnelUrl = await startTunnel(parsed.href);
+    // Tunnel the site's origin, then keep the page path and query (e.g. /?flaws=on) on the public address.
+    const tunnelUrl = await startTunnel(parsed.origin);
     await waitReachable(tunnelUrl);
-    testUrl = tunnelUrl;
+    testUrl = tunnelUrl + (parsed.pathname === '/' ? '/' : parsed.pathname) + parsed.search;
     say(`Tunnel ready: ${tunnelUrl}`);
   }
 
