@@ -75,10 +75,10 @@ function buildSteps(runId, run, progress) {
 }
 
 /**
- * One agent attempt for one task. Goes through the queue. Never throws: problems become a failed TaskResult.
+ * One agent attempt for one task. Goes through the queue. `emitFinal:false` suppresses the closing task-update (the caller emits it). Never throws: problems become a failed TaskResult.
  * @returns {Promise<TaskResult>}
  */
-export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 'off' }, onEvent) {
+export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 'off', emitFinal = true }, onEvent) {
   const emit = (e) => { try { onEvent?.(e); } catch { /* a bad listener must not break the run */ } };
   const goal = buildGoal(taskId, customText);
   /** @type {TaskResult} */
@@ -94,7 +94,7 @@ export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 
       try {
         finalEvent = await tf.startRunSSE({ url, goal, mode, proxy, taskId }, {
           onStarted: (id) => { runId = task.runId = id; },
-          onStreamingUrl: (u) => { task.streamingUrl = u; emit({ kind: 'streaming-url', taskId, url: u }); },
+          onStreamingUrl: (u) => { task.streamingUrl = u; emit({ kind: 'streaming-url', taskId, runId: task.runId, url: u }); },
           onProgress: (p) => {
             progress.push(p);
             const step = { id: `p${progress.length - 1}`, label: p.purpose, seconds: null, screenshotUrl: '', usedWebSearch: p.usedWebSearch, ...(p.at ? { at: p.at } : {}) };
@@ -140,7 +140,7 @@ export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 
       task.seconds = task.seconds || Math.round((Date.now() - t0) / 1000);
     }
     if (task.status !== 'passed') task.status = looksBlocked(task) ? 'blocked' : 'failed';
-    update(task.status);
+    if (emitFinal) update(task.status); // runTaskWithBotWall passes emitFinal:false and emits the one complete update itself
     return task;
   }, {
     onQueued: () => update('queued'),
@@ -166,7 +166,18 @@ function makeReportId(url) {
  * @returns {Promise<SiteReport>}
  */
 export async function runSiteTest({ url, tasks = DEFAULT_TASK_ORDER, customText, source = 'web', id } = {}, onEvent) {
-  const emit = (e) => { try { onEvent?.(e); } catch { /* ignore */ } };
+  // Drop a task-update that exactly repeats the previous one of the same lane (e.g. the initial 'queued' and the queue's own
+  // 'queued'). The key covers more than status, so an update whose content changed (new run, steps, attempts, verdict) still goes out.
+  const lastKey = new Map();
+  const emit = (e) => {
+    if (e.kind === 'task-update') {
+      const t = e.task;
+      const key = [t.status, t.runId, t.streamingUrl, t.numSteps, t.steps?.length, t.attempts?.length, t.verdict, t.blocker].join('|');
+      if (lastKey.get(t.taskId) === key) return;
+      lastKey.set(t.taskId, key);
+    }
+    try { onEvent?.(e); } catch { /* ignore */ }
+  };
   const ids = [...tasks];
   if (customText && customText.trim() && !ids.includes('custom')) ids.push('custom');
 
@@ -178,7 +189,7 @@ export async function runSiteTest({ url, tasks = DEFAULT_TASK_ORDER, customText,
 
   const results = await Promise.all(ids.map(async (taskId) => {
     try {
-      return await runTaskWithBotWall({ url, taskId, customText }, onEvent);
+      return await runTaskWithBotWall({ url, taskId, customText }, emit);
     } catch (err) { // one task must never kill the report
       return { taskId, goal: buildGoal(taskId, customText), mode: 'lite', proxy: 'off', runId: null, status: 'failed', answer: null,
         blocker: `Could not run the agent: ${err.message}`, stuckUrl: null, streamingUrl: null, steps: [], numSteps: 0, seconds: 0,

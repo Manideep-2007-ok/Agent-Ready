@@ -336,7 +336,10 @@ async function enrichFinding(finding, ctx) {
   const taskCtx = finding.taskId ? ctx.byTask.get(finding.taskId) : null;
   const evidence = taskCtx?.element || null;
   const framework = ctx.framework;
-  const ai = ctx.useAI ? await writeUpWithAI(finding, evidence, framework) : null;
+  // One AI call per (task, type): the same finding also appears in topFixes, and scan findings of one type share a call.
+  const aiKey = `${finding.taskId || ''}|${finding.type}`;
+  if (ctx.useAI && !ctx.aiCache.has(aiKey)) ctx.aiCache.set(aiKey, writeUpWithAI(finding, evidence, framework));
+  const ai = ctx.useAI ? await ctx.aiCache.get(aiKey) : null;
   const example = tpl.frameworkExamples?.[framework] || tpl.frameworkExamples?.unknown;
   /** @type {Finding} */
   const out = {
@@ -378,22 +381,17 @@ export async function buildFixReport(siteReport, { useAI = true } = {}) {
     }
   }
   report.framework = framework;
-  const ctx = { byTask, framework, useAI };
+  const ctx = { byTask, framework, useAI, aiCache: new Map() };
 
-  // Enrich in small batches so AI calls stay bounded. topFixes repeat task findings,
-  // so remember each result and reuse it (one AI call per finding, not two).
-  const done = new Map();
-  const enrichOnce = (f) => {
-    const k = `${f.taskId || ''}|${f.type}`;
-    if (!done.has(k)) done.set(k, enrichFinding(f, ctx));
-    return done.get(k);
-  };
+  // Enrich in small batches so AI calls stay bounded (duplicates share one AI call through ctx.aiCache).
   const enrichAll = async (list) => {
     const out = [];
-    for (let i = 0; i < list.length; i += 4) out.push(...(await Promise.all(list.slice(i, i + 4).map(enrichOnce))));
+    for (let i = 0; i < list.length; i += 4) out.push(...(await Promise.all(list.slice(i, i + 4).map((f) => enrichFinding(f, ctx)))));
     return out;
   };
   for (const t of report.tasks) t.findings = await enrichAll(t.findings || []);
   report.topFixes = await enrichAll(report.topFixes || []);
+  // Instant Scan findings (optional): no stuckUrl, so no evidence capture; same template/AI path.
+  if (Array.isArray(report.scanFindings)) report.scanFindings = await enrichAll(report.scanFindings);
   return report;
 }
