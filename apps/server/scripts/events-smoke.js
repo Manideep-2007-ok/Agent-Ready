@@ -13,7 +13,7 @@ const port = server.address().port;
 
 const ac = new AbortController();
 const resp = await fetch(`http://127.0.0.1:${port}/events/rep1`, { signal: ac.signal });
-assert.equal(resp.headers.get('content-type'), 'text/event-stream');
+assert.equal(resp.headers.get('content-type'), 'text/event-stream; charset=utf-8');
 await new Promise((r) => setTimeout(r, 100));
 assert.equal(subscriberCount('rep1'), 1);
 
