@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import TestPage from './pages/TestPage.jsx';
 import WatchPage from './pages/WatchPage.jsx';
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
-import { SmoothCursor } from '@/components/ui/smooth-cursor';
+import PointerCursor from './components/PointerCursor.jsx';
 
 const TABS = [
   { id: 'test', label: 'Test' },
@@ -31,7 +31,7 @@ function ThemeToggle() {
   return <AnimatedThemeToggler className="theme-toggle" theme={theme} onThemeChange={onThemeChange} aria-label={label} title={label} />;
 }
 
-/** Smooth cursor only with a real mouse and when motion is welcome. */
+/** Custom pointer only with a real mouse and when motion is welcome. */
 function useFancyCursor() {
   const [on, setOn] = useState(false);
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function App() {
         {route.page === 'watch' && <WatchPage />}
       </main>
       <ThemeToggle />
-      {fancyCursor && <SmoothCursor />}
+      {fancyCursor && <PointerCursor />}
     </>
   );
 }

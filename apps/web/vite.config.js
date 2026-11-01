@@ -10,6 +10,7 @@ export default defineConfig({
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: {
     port: 5173,
-    proxy: { '/api': 'http://localhost:4000' },
+    // 127.0.0.1, not localhost: the server listens on IPv4 loopback only, and 'localhost' can resolve to ::1.
+    proxy: { '/api': 'http://127.0.0.1:4000' },
   },
 });
