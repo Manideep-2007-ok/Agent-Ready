@@ -131,7 +131,7 @@ export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 
             runId = err.runId || runId;
             ctx?.trackRun(runId);
             console.warn(`[engine] live stream dropped for run ${runId}, polling instead`);
-            run = await tf.waitForRun(runId, { intervalMs: 3000, signal: ctx?.signal });
+            run = await tf.waitForRun(runId, { intervalMs: config.pollIntervalMs, signal: ctx?.signal });
           } else if (err.code === 'STREAM_DROPPED') {
             throw new Error('Could not start the agent run');
           } else throw err;

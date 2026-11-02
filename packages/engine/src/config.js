@@ -6,6 +6,7 @@ export const config = Object.freeze({
   apiKey: process.env.TINYFISH_API_KEY || '',
   maxParallel: Math.floor(num(process.env.TINYFISH_MAX_PARALLEL, 2)),
   maxDurationSeconds: num(process.env.TINYFISH_MAX_DURATION_SECONDS, 150),
+  pollIntervalMs: num(process.env.TINYFISH_POLL_INTERVAL_MS, 3000), // how often a dropped live stream is polled (tests shorten it)
   mock: ['1', 'true'].includes(String(process.env.TINYFISH_MOCK || '').toLowerCase()),
   publicBaseUrl: process.env.PUBLIC_BASE_URL || '',
   llmProvider: process.env.LLM_PROVIDER || '',
