@@ -40,9 +40,12 @@ export function detectQuantity(text) {
   if (!text) return null;
   const patterns = [
     /\b(?:quantity|qty)\s*(?:of|is|to|:|=)?\s*(\d{1,3})\b/gi,
-    /\b(\d{1,3})\s*(?:units?|pieces?|pcs)\b/gi,
-    /\b(\d{1,3})\s*(?:items?|products?)\s+(?:in|of|added)\b/gi,
-    /\b(?:x|×)\s?(\d{1,2})\b(?!\s*\d)/gi,
+    // "2 units", but not a pack size ("Pack of 2 units"); "pieces"/"pcs" are left out: they are nearly always pack sizes ("Set of 3 pieces").
+    /(?<!\b(?:pack|set|combo|box|tray|bundle|kit|case)\s+of\s+)\b(\d{1,3})\s*units?\b/gi,
+    // "2 items in the cart" / "2 items added", not "2 items in stock" or "48 products in Lipstick" (a listing page).
+    /\b(\d{1,3})\s*(?:items?|products?)\s+(?:added|in\s+(?:the\s+|your\s+|my\s+)?(?:cart|bag|basket))\b/gi,
+    // "Lipstick x2", not a size ("50 x 30 cm") or a model name ("X 64GB").
+    /(?<![\d.]\s*)(?:\bx|×)\s?(\d{1,2})\b(?!\s*(?:\d|cm|mm|m\b|in\b|inch|ml|l\b|g\b|kg|gb|tb))/gi,
   ];
   let max = null;
   for (const re of patterns) {

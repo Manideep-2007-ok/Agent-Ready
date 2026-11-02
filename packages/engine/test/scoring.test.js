@@ -59,6 +59,14 @@ test('detectQuantity is conservative', () => {
   assert.equal(detectQuantity('1 item in cart, total ₹499'), null);
   assert.equal(detectQuantity(''), null);
   assert.equal(detectQuantity(null), null);
+  // Pack sizes, stock counts, listing pages and sizes are not a cart quantity (review 2 Nov).
+  for (const text of ['2 items in stock', 'Showing 48 products in Lipstick', 'Browse 24 products of the brand', 'Set of 3 pieces, total ₹499',
+    'Combo of 6 pcs ₹299', 'Pack of 2 units ₹598', 'Size 50 x 30 cm', 'Tray of 12 pcs eggs', 'Maybelline Lipstick (Pack of 2) added, total ₹998']) {
+    assert.equal(detectQuantity(text), null, text);
+  }
+  assert.equal(detectQuantity('2 items in your cart, total ₹998'), 2);
+  assert.equal(detectQuantity('2 items added'), 2);
+  assert.equal(detectQuantity('Lipstick x2, total ₹998'), 2);
 });
 
 test('wrong-quantity: finding only, the task still passes with full points', () => {
