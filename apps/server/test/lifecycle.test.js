@@ -11,8 +11,8 @@ import { startServer, call, waitFor, sleep } from './helpers.js';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
 test('npm start style launch works with no .env file (and still prints the mock banner)', async () => {
-  assert.equal(fs.existsSync(path.join(root, '.env')), false, 'this test assumes the repo has no .env');
-  const srv = await startServer({ port: 4213 });
+  // AGENTREADY_ENV_FILE points the server at a file that does not exist, so a developer's own repo .env cannot change what this proves.
+  const srv = await startServer({ port: 4213, env: { AGENTREADY_ENV_FILE: path.join(os.tmpdir(), 'ar-no-such-env-file') } });
   try {
     assert.equal((await call(srv.base, '/api/health')).status, 200);
     assert.match(srv.logs(), /AgentReady server on/);

@@ -235,3 +235,14 @@ Independent review of `git diff origin/main...manideep/engine` (engine, server, 
 **Remaining risks:** a Stop while the start request is in flight (before TinyFish sends `STARTED`) cannot cancel that run (no run id yet); it ends at its time cap (about ₹20 at most). Watch checks can wait indefinitely behind a steady stream of user tests (by design, D30). Private-address blocking is by name only (a public DNS name pointing at 127.0.0.1 passes), which is fine because the agents and scans run in TinyFish's cloud, not on this server. Only Node 22 was available here; Node 20.19 and 26 were not run.
 
 **Results after the fixes:** `npm test` 109 passed, 0 failed (one new test plus new assertions in existing ones); `npm run test:e2e` 30 passed, 0 failed; every script listed above passes; the dashboard builds.
+
+## 2 Nov 2026: runId while running + .env-independent start test (Manideep)
+
+A real-key test on 2 Nov exposed a gap. The polling script waited for each task's `runId` in `GET /api/tests/:id`, but it stayed `null` until the task finished, so Stop was never sent and the full test ran to the end (₹64.77).
+
+| # | Symptom | Cause | Fix | Proof |
+|---|---|---|---|---|
+| H24 | A running task showed `runId: null` in the report and SSE until it finished | `onStarted` in `runner.js` set `task.runId` but emitted nothing | `onStarted` now emits a `task-update` (status `running`, with the runId); `reportJob.upsertTask` already copies the whole task, so it lands in the saved report; a bot-wall retry emits its own new runId the same way | `cascade.test.js` (attempt 1 and 2 runIds seen while running), `api.test.js` (running task has runId in `GET /api/tests/:id`) |
+| H25 | `lifecycle.test.js` "no .env" test failed on any checkout with a `.env` | It asserted the repo had no `.env` | Server reads `AGENTREADY_ENV_FILE` instead of the repo `.env` when set; the test points it at a missing file, so it proves the same thing on every checkout | `lifecycle.test.js` |
+
+`replay-mock.test.js` (queue priority) now counts each lane once, since a running lane updates twice. `npm test`: 111 passed, 0 failed. `npm run test:e2e`: 30 passed, 0 failed.

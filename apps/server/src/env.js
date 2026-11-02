@@ -5,4 +5,4 @@ import { fileURLToPath } from 'node:url';
 import { loadDotEnv } from '@agentready/engine/env';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-export const loadedEnvFiles = loadDotEnv([path.join(repoRoot, '.env')]);
+export const loadedEnvFiles = loadDotEnv([process.env.AGENTREADY_ENV_FILE || path.join(repoRoot, '.env')]) // AGENTREADY_ENV_FILE: tests point it at a missing file;
