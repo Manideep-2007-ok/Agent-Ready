@@ -177,6 +177,10 @@ const MOCKS = {
   // Demo store (apps/demo-store) with ?flaws=on, home + one product page: popup, prices as images without alt,
   // icon-only Add to cart button (product page; the icon cart link still shows a number).
   demoFlawed: { pageTextChars: 520, unlabelledButtons: 1, totalButtonsAndLinks: 23, imagesWithoutAlt: 7, totalImages: 7, priceAsText: false, overlayCoveringPage: true, productSchema: false, robotsTxt: 'missing', sitemap: 'missing', framework: 'unknown', schemaTypes: [], keywordHits: SHOP_HITS },
+  // Fake test hosts only (replay mode): a name with saas / blog / clinic in it reads like that kind of site, so the pack detection can be tried without a live scan.
+  saas: { pageTextChars: 1500, unlabelledButtons: 0, totalButtonsAndLinks: 30, imagesWithoutAlt: 0, totalImages: 4, priceAsText: true, overlayCoveringPage: false, productSchema: false, robotsTxt: 'found', sitemap: 'found', framework: 'unknown', schemaTypes: ['SoftwareApplication'], keywordHits: { cart: 0, pricing: 8, signup: 6, docs: 4, article: 1, newsletter: 1, hours: 0, booking: 0, menu: 0 } },
+  blog: { pageTextChars: 4000, unlabelledButtons: 0, totalButtonsAndLinks: 40, imagesWithoutAlt: 1, totalImages: 8, priceAsText: false, overlayCoveringPage: false, productSchema: false, robotsTxt: 'found', sitemap: 'found', framework: 'unknown', schemaTypes: ['Blog', 'BlogPosting'], keywordHits: { cart: 0, pricing: 0, signup: 0, docs: 0, article: 12, newsletter: 3, hours: 0, booking: 0, menu: 0 } },
+  clinic: { pageTextChars: 1200, unlabelledButtons: 2, totalButtonsAndLinks: 22, imagesWithoutAlt: 2, totalImages: 5, priceAsText: false, overlayCoveringPage: false, productSchema: false, robotsTxt: 'missing', sitemap: 'missing', framework: 'unknown', schemaTypes: ['Dentist'], keywordHits: { cart: 0, pricing: 0, signup: 0, docs: 0, article: 0, newsletter: 0, hours: 3, booking: 5, menu: 2 } },
   clean: { pageTextChars: 1800, unlabelledButtons: 0, totalButtonsAndLinks: 25, imagesWithoutAlt: 0, totalImages: 6, priceAsText: true, overlayCoveringPage: false, productSchema: true, robotsTxt: 'found', sitemap: 'missing', framework: 'unknown', schemaTypes: ['Product', 'Offer'], keywordHits: SHOP_HITS },
 };
 
@@ -193,7 +197,9 @@ export async function instantScan(url) {
       const host = (() => { try { return new URL(url).hostname; } catch { return String(url); } })();
       const flawsOn = /[?&]flaws=on\b/.test(String(url));
       const m = host.includes('nykaa') ? MOCKS.nykaa : host.includes('myntra') ? MOCKS.myntra
-        : host === 'example.com' || host === 'www.example.com' ? MOCKS.example : flawsOn ? MOCKS.demoFlawed : MOCKS.clean;
+        : host === 'example.com' || host === 'www.example.com' ? MOCKS.example
+        : /saas/.test(host) ? MOCKS.saas : /blog/.test(host) ? MOCKS.blog : /clinic/.test(host) ? MOCKS.clinic
+        : flawsOn ? MOCKS.demoFlawed : MOCKS.clean;
       return done({ ...m });
     }
     const [f, b] = await Promise.all([fetchPart(url), browserPart(url)]);
@@ -212,6 +218,7 @@ export async function instantScan(url) {
  */
 export function instantScanFindings(scan, pack = 'shop') {
   const isShop = (normalisePack(pack) ?? 'shop') === 'shop';
+  const who = isShop ? 'an AI shopper' : 'an AI agent';
   if (!scan) return [];
   const mk = (type, severity, text) => {
     const t = FIX_TEMPLATES[type] || {};
@@ -221,10 +228,10 @@ export function instantScanFindings(scan, pack = 'shop') {
   // If the browser part failed, its fields are defaults (0 controls, 0 images): do not report findings from them.
   const browserRan = (scan.totalButtonsAndLinks || 0) > 0 || (scan.totalImages || 0) > 0;
   if (!browserRan) return out;
-  if (scan.overlayCoveringPage) out.push(mk('popup-blocking', 'high', 'A pop-up or banner covers most of the page, so an AI shopper cannot see or click what is underneath.'));
+  if (scan.overlayCoveringPage) out.push(mk('popup-blocking', 'high', `A pop-up or banner covers most of the page, so ${who} cannot see or click what is underneath.`));
   if (scan.unlabelledButtons > 0) {
     const pct = scan.totalButtonsAndLinks ? scan.unlabelledButtons / scan.totalButtonsAndLinks : 0;
-    out.push(mk('unlabelled-buttons', pct > 0.2 ? 'high' : 'medium', `${scan.unlabelledButtons} of ${scan.totalButtonsAndLinks} buttons and links have no text or label, so an AI shopper cannot tell what they do (WCAG 4.1.2 Name, Role, Value).`));
+    out.push(mk('unlabelled-buttons', pct > 0.2 ? 'high' : 'medium', `${scan.unlabelledButtons} of ${scan.totalButtonsAndLinks} buttons and links have no text or label, so ${who} cannot tell what they do (WCAG 4.1.2 Name, Role, Value).`));
   }
   // Only when the page has images (a price could be drawn in one); a text-only page like example.com has no price at all.
   if (isShop && !scan.priceAsText && (scan.totalImages || 0) > 0) out.push(mk('price-in-image', 'high', 'No price was found as text on the page; it may be drawn inside an image, which AI shoppers cannot read.'));

@@ -88,5 +88,6 @@ jobs:
         with:
           url: ${{ steps.target.outputs.url }}
           tinyfish-api-key: ${{ secrets.TINYFISH_API_KEY }}
+          pack: shop
           tasks: find_price,add_to_cart
           min-score: '0'

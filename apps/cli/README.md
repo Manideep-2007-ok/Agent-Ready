@@ -1,6 +1,6 @@
 # AgentReady CLI
 
-**Can AI agents actually use your website?** Real cloud web agents (powered by [TinyFish](https://docs.tinyfish.ai)) try everyday tasks on your site: find a product and its price, add it to the cart, find the return policy, find customer support. You get a score out of 100, the exact fixes that would help, and a detection of bot protection that blocks AI agents.
+**Can AI agents actually use your website?** Real cloud web agents (powered by [TinyFish](https://docs.tinyfish.ai)) try everyday tasks on your site. It works for online stores, SaaS sites, blogs and news sites, and local businesses: the CLI reads your site, picks the matching **task pack** and runs its four tasks. You get a score out of 100, the exact fixes that would help, and a detection of bot protection that blocks AI agents.
 
 ```bash
 export TINYFISH_API_KEY=your-key            # or put it in a .env file in the folder you run from
@@ -21,7 +21,11 @@ Install once instead: `npm i -g @agentready/cli`, then run `agentready https://y
 ```bash
 agentready http://localhost:3000                              # laptop site, via a Cloudflare tunnel
 agentready https://example.com --no-tunnel                    # public site
-agentready https://example.com --tasks find_price,add_to_cart # only some tasks
+agentready https://example.com --pack saas                    # force a pack (default: auto-detect)
+agentready https://example.com --tasks quick                  # the two key tasks of the pack (cheaper)
+agentready https://example.com --tasks find_price,add_to_cart # only some tasks (ids from any pack)
+agentready https://example.com --task "find the delivery fee for a 300 rupee order"  # add a task of your own
+agentready https://example.com --tasks none --task "find the refund terms"           # only your own task
 agentready https://example.com --json > report.json           # machine-readable (progress goes to stderr)
 agentready https://example.com --min-score 80                 # exit code 1 below 80 (for CI)
 agentready https://example.com --badge agentready-badge.svg   # write a score badge
@@ -29,13 +33,26 @@ agentready https://example.com --badge agentready-badge.svg   # write a score ba
 
 | Flag | Meaning |
 | --- | --- |
-| `--tasks a,b` | `find_price`, `add_to_cart`, `find_returns`, `find_contact` (default: all four) |
+| `--pack P` | `auto` (default: the Instant Scan picks), `shop`, `saas`, `content` or `local`. With `--no-scan` and no `--pack`, `shop` is used |
+| `--tasks a,b` | task ids from any pack (default: the four tasks of the pack), `quick` (the pack's two key tasks) or `none` (only `--task`) |
+| `--task "text"` | a task of your own, up to 300 characters. Scored separately, not part of the 100 |
 | `--json` | print the full report as JSON on stdout |
 | `--min-score N` | exit with code 1 if the score is below N (0 to 100) |
 | `--badge FILE` | write an Agent-Ready score badge (SVG) after the run |
 | `--no-tunnel` | test the address as it is (no Cloudflare tunnel) |
 | `--no-scan` | skip the Instant Scan (pop-ups, unlabelled buttons, prices in images) |
 | `--version`, `--help` | version / usage |
+
+**Packs and their tasks**
+
+| Pack | For | Tasks |
+| --- | --- | --- |
+| `shop` | online stores | `find_price`, `add_to_cart`, `find_returns`, `find_contact` |
+| `saas` | software and SaaS sites | `find_pricing_plans`, `reach_signup`, `find_docs`, `contact_sales` |
+| `content` | blogs, news, documentation | `search_topic`, `read_article`, `find_newsletter`, `find_author_contact` |
+| `local` | restaurants, clinics, salons, shops with a location | `find_hours`, `find_location`, `find_menu_or_services`, `reach_booking` |
+
+Tasks that open a form (sign up, newsletter, contact sales, booking) only open it: the agents never submit anything, log in or pay. The SaaS, blog and local tasks are new and still being tuned on real sites.
 
 A report JSON is also saved as `agentready-report-<id>.json` in the current folder. Set `AGENTREADY_SERVER=http://localhost:4000` to upload it to a running AgentReady dashboard.
 
@@ -61,6 +78,9 @@ Commit the SVG that `--badge` writes (or let the GitHub Action upload it) and th
     url: https://your-preview.example.com
     tinyfish-api-key: ${{ secrets.TINYFISH_API_KEY }}
     min-score: 80
+    pack: auto          # or shop, saas, content, local
+    tasks: quick        # or task ids; optional
+    task: ''            # optional: a task of your own in plain words
 ```
 
 Posts one pull request comment (edited on every run), a job summary, and uploads the report and badge. See the repository docs for details.

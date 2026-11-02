@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 // AgentReady CLI: test a website (even one on localhost) with real AI web agents.
-// Usage: agentready <url> [--tasks a,b] [--json] [--min-score N] [--badge file.svg] [--no-tunnel] [--no-scan] [--version] [--help]
+// Usage: agentready <url> [--pack auto|shop|saas|content|local] [--tasks a,b|quick|none] [--task "text"] [--json] [--min-score N]
+//        [--badge file.svg] [--no-tunnel] [--no-scan] [--version] [--help]
 // Exit codes: 0 ok, 1 score below --min-score or the test could not finish, 2 bad usage / setup.
 import { spawn } from 'node:child_process';
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { loadDotEnv } from '@agentready/engine/env';
-import { parseArgs, normaliseUrl, findTunnelUrl, buildTestUrl, LOCAL_RE } from '../src/lib.js';
+import { parseArgs, normaliseUrl, findTunnelUrl, buildTestUrl, LOCAL_RE, checkPackFlags, resolveTasks, packOfTaskList, packLine } from '../src/lib.js';
 
 // 1. Load .env before the engine reads its settings. A missing file is fine. Inside the repo: repo root .env, then the
 //    current folder; as the published npm package (no repo around it): only the current folder. Real env vars always win.
@@ -17,7 +18,7 @@ const inRepo = existsSync(path.join(repoRoot, 'apps/cli/bin/agentready.js'));
 loadDotEnv(process.env.AGENTREADY_ENV_FILE ? [process.env.AGENTREADY_ENV_FILE]
   : [...(inRepo ? [path.join(repoRoot, '.env')] : []), path.join(process.cwd(), '.env')]);
 
-const { runSiteTest, buildFixReport, badgeSvg, fixturesAvailable, instantScan, instantScanFindings, scoreReport, rankFixes, cancelAll, TASK_LABELS, DEFAULT_TASK_ORDER, config } =
+const { runSiteTest, buildFixReport, badgeSvg, fixturesAvailable, instantScan, instantScanFindings, scoreReport, rankFixes, cancelAll, TASK_LABELS, PACKS, PACK_IDS, packSiteLabel, autoPack, hasPackSignals, config } =
   await import('@agentready/engine');
 
 // ---- arguments ----
@@ -28,7 +29,6 @@ if (opts.version && !opts.errors.length) {
   process.exit(0);
 }
 const { json: asJson, minScore } = opts;
-const tasks = opts.tasks ?? DEFAULT_TASK_ORDER;
 
 // Engine logs (e.g. "[mock] ...") use console.log; with --json keep stdout clean for the JSON only.
 const printJson = console.log.bind(console);
@@ -36,14 +36,21 @@ if (asJson) console.log = console.error;
 const say = (...m) => (asJson ? console.error(...m) : console.log(...m)); // progress goes to stderr with --json
 const usage = (why) => {
   if (why) console.error(why);
-  console.error('Usage: agentready <url> [--tasks find_price,add_to_cart] [--json] [--min-score N] [--badge file.svg] [--no-tunnel] [--no-scan]\n' +
-    `Tasks: ${Object.keys(TASK_LABELS).filter((t) => t !== 'custom').join(', ')}\n` +
+  const packTasks = PACK_IDS.map((p) => `  ${p.padEnd(8)} ${PACKS[p].tasks.join(', ')}`).join('\n');
+  console.error('Usage: agentready <url> [--pack auto|shop|saas|content|local] [--tasks ids|quick|none] [--task "text"] [--json] [--min-score N] [--badge file.svg] [--no-tunnel] [--no-scan]\n' +
+    '  --pack P      what kind of site this is. auto (default) reads the site with the Instant Scan and picks one;\n' +
+    '                with --no-scan and no --pack the shop pack is used\n' +
+    '  --tasks LIST  task ids from any pack, comma separated (default: the four tasks of the pack);\n' +
+    '                quick = the two key tasks of the pack (cheaper); none = no pack tasks, only --task\n' +
+    '  --task TEXT   add a task of your own (up to 300 characters). It is scored separately and is not part of the\n' +
+    '                100. With --tasks none it is the only task that runs\n' +
     '  --no-tunnel   test the address as it is (no Cloudflare tunnel); use for sites that are already public\n' +
     '  --no-scan     skip the Instant Scan (pop-ups, unlabelled buttons, prices in images)\n' +
     '  --min-score N exit with code 1 if the score is below N (for CI)\n' +
     '  --badge FILE  write an Agent-Ready score badge (SVG) after the run\n' +
     '  --json        print the full report as JSON on stdout (progress goes to stderr)\n' +
     '  --version     print the version\n' +
+    `Packs and their tasks:\n${packTasks}\n` +
     'Needs TINYFISH_API_KEY (environment variable or a .env file in this folder). Cost: about $0.016 per agent step.');
   process.exit(opts.help && !why ? 0 : 2);
 };
@@ -52,9 +59,9 @@ if (opts.errors.length) usage(opts.errors.join('\n'));
 if (!opts.url) usage('Please give the address of the site to test.');
 let parsed;
 try { parsed = normaliseUrl(opts.url); } catch (e) { usage(`That is not a valid web address (${e.message}).`); }
-const unknown = tasks.filter((t) => !TASK_LABELS[t] || t === 'custom');
-if (unknown.length) usage(`Unknown task(s): ${unknown.join(', ')}`);
-if (!tasks.length) usage('--tasks needs at least one task.');
+const flags = checkPackFlags(opts);
+if (flags.errors.length) usage(flags.errors.join('\n'));
+const customText = flags.customText;
 
 // Without a key every task would "fail" and the report would wrongly blame the site.
 if (config.mock && !fixturesAvailable()) {
@@ -142,24 +149,52 @@ try {
   }
 
   if (config.mock) say('(mock mode: replaying recorded runs, no credits used)');
-  say(`Testing ${testUrl} with ${tasks.length} AI agent task(s)${opts.noScan ? '' : ' and an Instant Scan'}...\n`);
+
+  // ---- which pack? --pack names it; explicit task ids name it too; otherwise the Instant Scan decides (auto) ----
+  // The Instant Scan runs next to the agents (it never throws; a failed scan just has no findings). Only "auto" with no
+  // task ids has to wait for it, because the pack decides which tasks to run.
+  const scanPromise = opts.noScan ? null : instantScan(testUrl).catch(() => null);
+  let pack = opts.pack && opts.pack !== 'auto' ? opts.pack : null;
+  let how = 'flag';
+  const idsGiven = Array.isArray(opts.tasks) && opts.tasks.length > 0 && !flags.quick;
+  if (!pack && idsGiven) { pack = packOfTaskList(opts.tasks); how = 'tasks'; }
+  const needPackNow = !pack && (opts.tasks === null || flags.quick); // auto with the pack's own tasks, or quick
+  if (needPackNow) {
+    if (!scanPromise) { pack = 'shop'; how = 'no-scan'; }
+    else {
+      say('Reading the site to see what kind it is (Instant Scan)...');
+      const scan = await scanPromise;
+      let picked = autoPack(scan);
+      // Replay mode only has shop recordings: a scan with no signal at all (example.com, localhost) stays a shop test.
+      if (config.mock && !hasPackSignals(scan)) picked = { pack: 'shop', detected: false };
+      pack = picked.pack;
+      how = picked.detected ? 'detected' : 'undetected';
+    }
+    say(packLine({ how, pack }));
+  } else if (!pack) {
+    // --tasks none with no --pack: no pack tasks to choose, but the pack still decides which scan findings make sense
+    // (a blog is not told it has no price). It is settled when the scan has finished.
+    how = 'detected';
+  }
+  const tasks = pack ? resolveTasks(opts.tasks, pack) : [];
+  const total = tasks.length + (customText ? 1 : 0);
+  say(`Testing ${testUrl} with ${total} AI agent task(s)${opts.noScan ? '' : ' and an Instant Scan'}...\n`);
 
   // ---- run the test with live progress ----
   const lastStatus = {};
+  const labelOf = (id) => (id === 'custom' ? 'Your task' : TASK_LABELS[id] ?? id);
   const onEvent = (e) => {
     if (e.kind === 'task-update') {
       const { taskId, status } = e.task;
       if (lastStatus[taskId] === status) return;
       lastStatus[taskId] = status;
       const text = status === 'queued' ? 'waiting for an agent' : status;
-      say(`  [${TASK_LABELS[taskId]}] ${text}`);
+      say(`  [${labelOf(taskId)}] ${text}`);
     } else if (e.kind === 'step') {
-      say(`  [${TASK_LABELS[e.taskId]}]   step: ${e.step.label}`);
+      say(`  [${labelOf(e.taskId)}]   step: ${e.step.label}`);
     }
   };
-  // The Instant Scan runs next to the agents (it never throws; a failed scan just has no findings).
-  const scanPromise = opts.noScan ? null : instantScan(testUrl).catch(() => null);
-  let report = await runSiteTest({ url: testUrl, tasks, source: 'cli' }, onEvent);
+  let report = await runSiteTest({ url: testUrl, tasks, pack: pack ?? 'shop', customText: customText ?? undefined, source: 'cli' }, onEvent);
   if (interrupted) await new Promise(() => {}); // the signal handler is cancelling and will exit; never print a half report
   if (report.status === 'cancelled') {
     console.error('The test was stopped before it finished (an agent run was cancelled). No report was written.');
@@ -170,12 +205,18 @@ try {
   if (scanPromise) {
     const scan = await scanPromise;
     if (scan) {
+      if (!pack) { // --tasks none, no --pack: use what the scan says, for the scan findings only
+        pack = autoPack(scan).pack;
+        report.pack = pack;
+        say(packLine({ how: 'detected', pack, usingPack: false }));
+      }
       report.instantScan = scan;
-      report.scanFindings = instantScanFindings(scan);
+      report.scanFindings = instantScanFindings(scan, report.pack);
       Object.assign(report, scoreReport(report)); // the answer checks use what the scan saw (prices in rupees)
       report.topFixes = rankFixes([...report.tasks.flatMap((t) => t.findings ?? []), ...report.scanFindings]);
     } else say('(Instant Scan skipped: it could not finish)');
   }
+  if (how === 'detected' || how === 'undetected') report.packDetected = how === 'detected';
   try { report = await buildFixReport(report, { useAI: !!process.env.LLM_API_KEY && !config.mock }); } catch (e) { say(`(Fix details skipped: ${e.message})`); }
 
   // ---- save + optional upload ----
@@ -212,14 +253,23 @@ try {
       'blocks-automation': 'Blocks automated browsers (agents only got in with stealth mode).',
       'site-broken': 'Site did not load for agents at all, even with proxy and stealth.',
     };
-    const n = report.tasks.length;
-    console.log(`\nAgentReady score: ${report.score}/100${n < 4 ? ` (out of ${n} task${n === 1 ? '' : 's'} tested)` : ''}`);
+    const scored = report.tasks.filter((t) => t.taskId !== 'custom' && !t.replayNote);
+    const n = scored.length;
+    console.log(`\nTested as: ${packSiteLabel(report.pack)}${report.packDetected === true ? ' (detected)' : ''}`);
+    console.log(n ? `AgentReady score: ${report.score}/100${n < 4 ? ` (out of ${n} task${n === 1 ? '' : 's'} tested)` : ''}` : 'AgentReady score: none (only your own task ran, and it is not part of the 100)');
     console.log(`Bot wall: ${verdicts[report.botWall] || report.botWall}`);
     console.log(`Cost: about ₹${Number(report.costRupees).toFixed(2)}\n`);
-    const rows = report.tasks.map((t) => [TASK_LABELS[t.taskId] || t.taskId, t.status, String(t.numSteps), `${Math.round(t.seconds)}s`]);
+    const rows = report.tasks.map((t) => [labelOf(t.taskId), t.status, String(t.numSteps), `${Math.round(t.seconds)}s`]);
     const head = ['Task', 'Result', 'Steps', 'Time'];
     const w = head.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i].length)));
     for (const r of [head, ...rows]) console.log(r.map((c, i) => c.padEnd(w[i])).join('  '));
+    const mine = report.tasks.find((t) => t.taskId === 'custom');
+    if (mine) {
+      console.log(`\nYour task: "${customText}"`);
+      console.log(mine.replayNote ? `  ${mine.replayNote}` : `  ${mine.status === 'passed' ? 'Passed' : 'Not done'}${mine.answer ? `. Answer: ${mine.answer}` : mine.blocker ? `. What stopped the agent: ${mine.blocker}` : ''}`);
+    }
+    const notRun = report.tasks.filter((t) => t.replayNote && t.taskId !== 'custom');
+    if (notRun.length) console.log(`\n${notRun[0].replayNote} (${notRun.length} task${notRun.length === 1 ? '' : 's'} not run)`);
     if (report.topFixes?.length) {
       console.log('\nTop fixes:');
       report.topFixes.slice(0, 3).forEach((f, i) => {

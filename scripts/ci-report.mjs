@@ -6,7 +6,7 @@
 // $GITHUB_OUTPUT when that variable is set. Exit code is always 0 for a readable report (the Action decides pass/fail).
 import { readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { TASK_LABELS } from '../packages/engine/src/goals.js';
+import { TASK_LABELS, packSiteLabel } from '../packages/engine/src/goals.js';
 
 export const MARKER = '<!-- agentready -->';
 
@@ -41,15 +41,17 @@ export function formatReport(report, { minScore = 0, target = '', runUrl = '', e
   }
   const score = Math.round(report.score);
   const passed = score >= minScore;
-  const n = report.tasks?.length ?? 0;
+  const scoredTasks = (report.tasks ?? []).filter((t) => t.taskId !== 'custom' && !t.replayNote);
+  const n = scoredTasks.length;
   lines.push(`## AgentReady: ${score}/100 (${level(score)})`, '',
     minScore > 0 ? `**${passed ? 'Passed' : 'Failed'}**: minimum score is ${minScore}.${passed ? '' : ` This site scored ${minScore - score} point${minScore - score === 1 ? '' : 's'} too low.`}` : 'Report only (no minimum score set).',
     '');
+  lines.push(`Tested as: ${packSiteLabel(report.pack)}${report.packDetected === true ? ' (detected automatically)' : ''}`, '');
   if (target) lines.push(`Tested: ${clean(target, 300)}${n && n < 4 ? ` (${n} task${n === 1 ? '' : 's'}, score scaled to 100)` : ''}`, '');
   lines.push(`Bot wall: ${BOT[report.botWall] ?? clean(report.botWall)}`, '');
   lines.push('| Task | Result | Steps | Time |', '| --- | --- | --- | --- |');
   for (const t of report.tasks ?? []) {
-    lines.push(`| ${clean(TASK_LABELS[t.taskId] ?? t.taskId, 80)} | ${clean(t.status, 20)} | ${Number(t.numSteps) || 0} | ${Math.round(Number(t.seconds) || 0)}s |`);
+    lines.push(`| ${clean(t.taskId === 'custom' ? 'Your own task (not in the score)' : TASK_LABELS[t.taskId] ?? t.taskId, 80)} | ${clean(t.status, 20)} | ${Number(t.numSteps) || 0} | ${Math.round(Number(t.seconds) || 0)}s |`);
   }
   const fixes = (report.topFixes ?? []).slice(0, 3);
   lines.push('');
