@@ -201,6 +201,39 @@ test('leaderboard and race', async () => {
   assert.equal((await call(srv.base, '/api/race/nope')).status, 404);
 });
 
+test('health lists the feature flags; leaderboard reports open; race refuses unrecorded sites', async () => {
+  const h = (await call(srv.base, '/api/health')).json;
+  assert.equal(h.features.RACE, true);
+  assert.equal(h.features.LEADERBOARD, true);
+  assert.equal(typeof h.features.WATCH, 'boolean');
+  const lb = (await call(srv.base, '/api/leaderboard')).json;
+  assert.ok(lb.length >= 3);
+  for (const row of lb) assert.equal((await call(srv.base, `/api/tests/${row.id}`)).status, 200, `cached report ${row.id} opens`);
+  const r = await post(srv, '/api/race', { taskId: 'find_price', urls: ['https://www.nykaa.com', 'https://shop.example.net'] });
+  assert.equal(r.status, 400);
+  assert.match(r.json.error, /replays real agent runs/);
+});
+
+test('race: winner has the fewest steps; POST /api/race/:id/cancel stops every lane', async () => {
+  const done = await post(srv, '/api/race', { taskId: 'find_price', urls: ['https://www.nykaa.com', 'https://www.myntra.com'] });
+  const state = await waitFor(async () => { const r = (await call(srv.base, `/api/race/${done.json.raceId}`)).json; return r.lanes.every((l) => l.report?.status !== 'running') ? r : null; }, { what: 'race to finish' });
+  assert.equal(state.taskId, 'find_price');
+  const stepsOf = (id) => { const t = state.lanes.find((l) => l.reportId === id).task; return t.numSteps ?? t.steps.length; };
+  const steps = state.rank.map((x) => stepsOf(x.reportId));
+  assert.deepEqual(steps, [...steps].sort((a, b) => a - b), 'ranked by fewest steps');
+  assert.deepEqual((await post(srv, `/api/race/${done.json.raceId}/cancel`)).json, { ok: true, cancelled: false }, 'finished race: nothing to stop');
+  assert.equal((await post(srv, '/api/race/nope/cancel')).status, 404);
+
+  const live = await post(slow, '/api/race', { taskId: 'find_price', urls: ['https://www.nykaa.com', 'https://www.myntra.com'] });
+  assert.equal(live.status, 202);
+  await sleep(600);
+  const stop = await post(slow, `/api/race/${live.json.raceId}/cancel`);
+  assert.equal(stop.status, 200);
+  assert.equal(stop.json.cancelled, true);
+  const after = await waitFor(async () => { const r = (await call(slow.base, `/api/race/${live.json.raceId}`)).json; return r.lanes.every((l) => l.report?.status === 'cancelled') ? r : null; }, { what: 'race lanes to stop' });
+  assert.equal(after.lanes.length, 2);
+});
+
 test('webhook always answers 200 fast', async () => {
   const r = await post(srv, '/api/webhooks/tinyfish', { event: 'run.completed', run_id: 'unknown-run' });
   assert.equal(r.status, 200);
@@ -278,7 +311,7 @@ test('structured logs: one JSON line per start/cancel, no secrets', () => {
   const lines = slow.logs().split('\n').filter((l) => l.startsWith('{'));
   const events = lines.map((l) => JSON.parse(l));
   assert.ok(events.some((e) => e.event === 'server.start' && e.port === 4211));
-  const start = events.find((e) => e.event === 'test.start');
+  const start = events.find((e) => e.event === 'test.start' && e.source === 'web');
   assert.ok(start && start.id && start.host.includes('myntra') && start.source === 'web');
   assert.ok(events.some((e) => e.event === 'test.cancel' && e.by === 'user'));
   assert.ok(events.some((e) => e.event === 'test.cancelled' && e.status === 'cancelled'));
@@ -386,4 +419,22 @@ test('a running task shows its runId in GET /api/tests/:id before it finishes', 
   assert.equal(seen.report.status, 'running');
   assert.ok(seen.task.runId);
   await post(slow, `/api/tests/${json.reportId}/cancel`);
+});
+
+test('GET /api/badge/:id.svg: SVG with the score, cached 5 min; unknown or bad ids get a grey "unknown" badge', async () => {
+  const created = await post(srv, '/api/tests', { url: 'nykaa.com' });
+  const id = created.json.reportId;
+  const report = await finished(srv, id);
+  const ok = await call(srv.base, `/api/badge/${id}.svg`);
+  assert.equal(ok.status, 200);
+  assert.match(ok.headers.get('content-type'), /^image\/svg\+xml/);
+  assert.equal(ok.headers.get('cache-control'), 'max-age=300');
+  assert.ok(ok.text.includes(`${report.score}/100`), ok.text);
+  for (const bad of ['rep_nope.svg', '..%2Fetc.svg', 'x'.repeat(200) + '.svg', `${id}`]) {
+    const r = await call(srv.base, `/api/badge/${bad}`);
+    assert.equal(r.status, 404, bad);
+    assert.match(r.headers.get('content-type'), /^image\/svg\+xml/);
+    assert.equal(r.headers.get('cache-control'), 'max-age=300');
+    assert.match(r.text, /unknown/);
+  }
 });

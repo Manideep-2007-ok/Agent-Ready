@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Router } from 'express';
 import { TASK_IDS } from '@agentready/engine/types';
+import { badgeForReport } from '@agentready/engine';
 import { config } from '../config.js';
 import * as store from '../store.js';
 import { startReport, isJobActive } from '../reportJob.js';
@@ -38,7 +39,27 @@ export function parseUploadedReport(body) {
   };
 }
 
-
+/**
+ * Stops one report that may still be running (shared by the test and race cancel routes).
+ * @returns {Promise<{ok:true, cancelled:boolean, status:string}>}
+ */
+export async function cancelRunningReport(report, { engine, events }) {
+  if (report.status !== 'running') return { ok: true, cancelled: false, status: report.status };
+  const result = await engine.cancelReport?.(report.id, 'user');
+  // The agents already finished and only the Instant Scan is still closing: nothing is left to stop (or pay for).
+  if (!result?.found && isJobActive(report.id)) return { ok: true, cancelled: false, status: 'finishing' };
+  if (!result?.found) {
+    // Marked running on disk, but nothing is running here (the server restarted): close it so the page stops spinning.
+    for (const task of report.tasks ?? []) {
+      if (['queued', 'running'].includes(task.status)) { task.status = 'cancelled'; task.blocker = 'The test was stopped.'; }
+    }
+    Object.assign(report, { status: 'cancelled', score: 0, topFixes: [] });
+    await store.saveReport(report);
+    events.publish({ type: 'report-complete', reportId: report.id, report });
+  }
+  logEvent('test.cancel', { id: report.id, by: 'user', runsCancelled: result?.cancelledRuns ?? 0, droppedFromQueue: result?.droppedFromQueue ?? 0 });
+  return { ok: true, cancelled: true, status: 'cancelling' };
+}
 
 export default function testsRoutes({ engine, events }) {
   const router = Router();
@@ -63,6 +84,14 @@ export default function testsRoutes({ engine, events }) {
 
   router.get('/tests', async (_req, res) => res.json(await store.listReports()));
 
+  // Agent-Ready badge for a dashboard report (README / LinkedIn). Always an SVG: an unknown or invalid id gets a grey badge.
+  router.get('/badge/:file', async (req, res) => {
+    const m = /^([\w-]{1,80})\.svg$/.exec(req.params.file);
+    let report = null;
+    if (m) { try { report = await store.getReport(m[1]); } catch { report = null; } }
+    res.status(report ? 200 : 404).set({ 'Content-Type': 'image/svg+xml; charset=utf-8', 'Cache-Control': 'max-age=300' }).send(badgeForReport(report));
+  });
+
   router.get('/tests/:id', async (req, res) => {
     assertSafeId(req.params.id);
     const report = await store.getReport(req.params.id);
@@ -86,21 +115,7 @@ export default function testsRoutes({ engine, events }) {
     assertSafeId(req.params.id);
     const report = await store.getReport(req.params.id);
     if (!report) throw httpError(404, 'We could not find that report.');
-    if (report.status !== 'running') return res.json({ ok: true, cancelled: false, status: report.status });
-    const result = await engine.cancelReport?.(report.id, 'user');
-    // The agents already finished and only the Instant Scan is still closing: nothing is left to stop (or pay for).
-    if (!result?.found && isJobActive(report.id)) return res.json({ ok: true, cancelled: false, status: 'finishing' });
-    if (!result?.found) {
-      // Marked running on disk, but nothing is running here (the server restarted): close it so the page stops spinning.
-      for (const task of report.tasks ?? []) {
-        if (['queued', 'running'].includes(task.status)) { task.status = 'cancelled'; task.blocker = 'The test was stopped.'; }
-      }
-      Object.assign(report, { status: 'cancelled', score: 0, topFixes: [] });
-      await store.saveReport(report);
-      events.publish({ type: 'report-complete', reportId: report.id, report });
-    }
-    logEvent('test.cancel', { id: report.id, by: 'user', runsCancelled: result?.cancelledRuns ?? 0, droppedFromQueue: result?.droppedFromQueue ?? 0 });
-    res.json({ ok: true, cancelled: true, status: 'cancelling' });
+    res.json(await cancelRunningReport(report, { engine, events }));
   });
 
   router.post('/instant-scan', rateLimit('instant-scan'), async (req, res) => {

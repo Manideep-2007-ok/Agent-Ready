@@ -74,7 +74,8 @@ export function watchPage(page, label) {
   });
   page.on('requestfailed', (r) => {
     const f = r.failure()?.errorText || '';
-    if (/simpleicons/.test(r.url()) || /ERR_ABORTED/.test(f)) return; // aborted = a stream/page that was closed on purpose
+    if (/simpleicons/.test(r.url()) || /ERR_ABORTED/.test(f)) return;
+    if (/tinyfish\.io/.test(r.url())) return; // a recorded live-view address: the run is long over, and the sandbox has no route to it // aborted = a stream/page that was closed on purpose
     problems.push(`[${label}] request failed: ${r.url()} ${f}`);
   });
   return { drain: () => problems.splice(0) };

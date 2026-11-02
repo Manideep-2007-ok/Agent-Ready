@@ -1,23 +1,32 @@
 #!/usr/bin/env node
 // AgentReady CLI: test a website (even one on localhost) with real AI web agents.
-// Usage: agentready <url> [--tasks a,b] [--json] [--min-score N] [--no-tunnel] [--no-scan]
+// Usage: agentready <url> [--tasks a,b] [--json] [--min-score N] [--badge file.svg] [--no-tunnel] [--no-scan] [--version] [--help]
 // Exit codes: 0 ok, 1 score below --min-score or the test could not finish, 2 bad usage / setup.
 import { spawn } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { loadDotEnv } from '@agentready/engine/env';
 import { parseArgs, normaliseUrl, findTunnelUrl, buildTestUrl, LOCAL_RE } from '../src/lib.js';
 
-// 1. Load .env (repo root, then current folder) before the engine reads its settings. A missing file is fine.
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-loadDotEnv(process.env.AGENTREADY_ENV_FILE ? [process.env.AGENTREADY_ENV_FILE] : [path.join(repoRoot, '.env'), path.join(process.cwd(), '.env')]);
+// 1. Load .env before the engine reads its settings. A missing file is fine. Inside the repo: repo root .env, then the
+//    current folder; as the published npm package (no repo around it): only the current folder. Real env vars always win.
+const here = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(here, '../../..');
+const inRepo = existsSync(path.join(repoRoot, 'apps/cli/bin/agentready.js'));
+loadDotEnv(process.env.AGENTREADY_ENV_FILE ? [process.env.AGENTREADY_ENV_FILE]
+  : [...(inRepo ? [path.join(repoRoot, '.env')] : []), path.join(process.cwd(), '.env')]);
 
-const { runSiteTest, buildFixReport, instantScan, instantScanFindings, scoreReport, rankFixes, cancelAll, TASK_LABELS, DEFAULT_TASK_ORDER, config } =
+const { runSiteTest, buildFixReport, badgeSvg, fixturesAvailable, instantScan, instantScanFindings, scoreReport, rankFixes, cancelAll, TASK_LABELS, DEFAULT_TASK_ORDER, config } =
   await import('@agentready/engine');
 
 // ---- arguments ----
 const opts = parseArgs(process.argv.slice(2));
+if (opts.version && !opts.errors.length) {
+  const pkg = JSON.parse(readFileSync(path.join(here, '../package.json'), 'utf8'));
+  console.log(pkg.version);
+  process.exit(0);
+}
 const { json: asJson, minScore } = opts;
 const tasks = opts.tasks ?? DEFAULT_TASK_ORDER;
 
@@ -27,11 +36,15 @@ if (asJson) console.log = console.error;
 const say = (...m) => (asJson ? console.error(...m) : console.log(...m)); // progress goes to stderr with --json
 const usage = (why) => {
   if (why) console.error(why);
-  console.error('Usage: agentready <url> [--tasks find_price,add_to_cart] [--json] [--min-score N] [--no-tunnel] [--no-scan]\n' +
+  console.error('Usage: agentready <url> [--tasks find_price,add_to_cart] [--json] [--min-score N] [--badge file.svg] [--no-tunnel] [--no-scan]\n' +
     `Tasks: ${Object.keys(TASK_LABELS).filter((t) => t !== 'custom').join(', ')}\n` +
     '  --no-tunnel   test the address as it is (no Cloudflare tunnel); use for sites that are already public\n' +
     '  --no-scan     skip the Instant Scan (pop-ups, unlabelled buttons, prices in images)\n' +
-    '  --min-score N exit with code 1 if the score is below N (for CI)');
+    '  --min-score N exit with code 1 if the score is below N (for CI)\n' +
+    '  --badge FILE  write an Agent-Ready score badge (SVG) after the run\n' +
+    '  --json        print the full report as JSON on stdout (progress goes to stderr)\n' +
+    '  --version     print the version\n' +
+    'Needs TINYFISH_API_KEY (environment variable or a .env file in this folder). Cost: about $0.016 per agent step.');
   process.exit(opts.help && !why ? 0 : 2);
 };
 if (opts.help) usage();
@@ -44,8 +57,12 @@ if (unknown.length) usage(`Unknown task(s): ${unknown.join(', ')}`);
 if (!tasks.length) usage('--tasks needs at least one task.');
 
 // Without a key every task would "fail" and the report would wrongly blame the site.
+if (config.mock && !fixturesAvailable()) {
+  console.error('TINYFISH_MOCK=1 replays recordings that only exist in the AgentReady repository, so it does not work in the installed package.\nUnset TINYFISH_MOCK and set TINYFISH_API_KEY to test a site for real.');
+  process.exit(2);
+}
 if (!config.mock && !config.apiKey) {
-  console.error('TINYFISH_API_KEY is not set. Add it to .env (repo root or this folder), or set TINYFISH_MOCK=1 to replay recorded runs.');
+  console.error('TINYFISH_API_KEY is not set. Set it as an environment variable or put it in a .env file in this folder.\nCreate a key in your TinyFish account (docs: https://docs.tinyfish.ai). It is only used from this computer.');
   process.exit(2);
 }
 
@@ -164,6 +181,10 @@ try {
   // ---- save + optional upload ----
   const file = path.resolve(`agentready-report-${report.id}.json`);
   writeFileSync(file, JSON.stringify(report, null, 2));
+  if (opts.badge) {
+    try { writeFileSync(path.resolve(opts.badge), badgeSvg({ score: report.score })); say(`Badge saved: ${path.resolve(opts.badge)}`); }
+    catch (e) { console.error(`Could not write the badge to ${opts.badge}: ${e.message}`); }
+  }
   let dashboard = null;
   if (process.env.AGENTREADY_SERVER) {
     const base = process.env.AGENTREADY_SERVER.replace(/\/$/, '');

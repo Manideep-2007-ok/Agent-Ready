@@ -14,6 +14,8 @@ const sleep = (ms, signal) => new Promise((resolve, reject) => {
   const onAbort = () => { clearTimeout(t); reject(abortError()); };
   signal?.addEventListener('abort', onAbort, { once: true });
 });
+/** False when the recordings are not on disk (the published CLI ships without them). */
+export const fixturesAvailable = () => fs.existsSync(DIR);
 /** Counters for tests: how many runs started and which were cancelled. */
 export const stats = { started: 0, cancelled: [] };
 const log = (...a) => console.log('[mock]', ...a);

@@ -4,6 +4,8 @@ export * from './tinyfish.js';
 export { enqueue, getQueueSize, getRunningCount, getQueueState, cancelGroup, QueueCancelled, PRIORITY, priorityForSource } from './queue.js';
 export { createRunContext, getRunContext, isReportActive, activeReportIds, cancelReport, cancelAll, RunContext } from './runContext.js';
 export { loadDotEnv } from './env.js';
+export { fixturesAvailable } from './mock.js';
+export { badgeSvg, badgeValue, badgeForReport } from './badge.js';
 export { runTask, runSiteTest, looksBlocked, parseAgentAnswer, REPLAY_CUSTOM_NOTE } from './runner.js';
 export { runTaskWithBotWall } from './botwall.js';
 export { scoreTask, scoreReport, rankFixes, siteVerdict, USD_INR, detectQuantity, detectCurrencyMismatch } from './scoring.js';

@@ -1,8 +1,10 @@
 // Tab bar + hash routing (#/test/<reportId>[/<beforeId>], #/watch), so a refresh or a shared link opens the same
-// view. No router library needed. Race and Leaderboard are not part of today's build, so they are not shown.
+// view. No router library needed. Race and Leaderboard tabs show only when the server has the feature on.
 import { useEffect, useState } from 'react';
 import TestPage from './pages/TestPage.jsx';
 import WatchPage from './pages/WatchPage.jsx';
+import RacePage from './pages/RacePage.jsx';
+import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
 import PointerCursor from './components/PointerCursor.jsx';
 import { getHealth } from './api.js';
@@ -10,6 +12,8 @@ import { getHealth } from './api.js';
 const TABS = [
   { id: 'test', label: 'Test' },
   { id: 'watch', label: 'Watch' },
+  { id: 'race', label: 'Race', feature: 'RACE' },
+  { id: 'leaderboard', label: 'Leaderboard', feature: 'LEADERBOARD' },
 ];
 
 function readHash() {
@@ -51,7 +55,13 @@ export default function App() {
   const fancyCursor = useFancyCursor();
   // Replay mode (TINYFISH_MOCK=1, e.g. the public copy): say so plainly, so nobody mistakes a replay for a live test.
   const [replay, setReplay] = useState(false);
-  useEffect(() => { getHealth().then((h) => setReplay(Boolean(h.mock))).catch(() => {}); }, []);
+  // Server feature flags (FEATURE_RACE etc.): null until /api/health answers; Race and Leaderboard stay hidden until then.
+  const [features, setFeatures] = useState(null);
+  useEffect(() => { getHealth().then((h) => { setReplay(Boolean(h.mock)); setFeatures(h.features ?? {}); }).catch(() => {}); }, []);
+  const tabOn = (tab) => !tab.feature || features?.[tab.feature] === true;
+  const tabs = TABS.filter(tabOn);
+  // A link to a page whose feature is off (or not known yet) shows the Test page's tab as current.
+  const page = tabOn(TABS.find((t) => t.id === route.page)) ? route.page : (features === null ? route.page : 'test');
 
   useEffect(() => {
     const onChange = () => setRoute(readHash());
@@ -67,9 +77,9 @@ export default function App() {
           <span className="tagline">Can AI agents actually use your website?</span>
         </div>
         <nav className="tabs" aria-label="Pages">
-          {TABS.map((tab) => (
-            <a key={tab.id} href={`#/${tab.id}`} className={route.page === tab.id ? 'tab active' : 'tab'}
-              aria-current={route.page === tab.id ? 'page' : undefined}>
+          {tabs.map((tab) => (
+            <a key={tab.id} href={`#/${tab.id}`} className={page === tab.id ? 'tab active' : 'tab'}
+              aria-current={page === tab.id ? 'page' : undefined}>
               {tab.label}
             </a>
           ))}
@@ -82,8 +92,10 @@ export default function App() {
         </div>
       )}
       <main className="page">
-        {route.page === 'test' && <TestPage reportId={route.param} beforeId={route.extra} />}
-        {route.page === 'watch' && <WatchPage />}
+        {page === 'test' && <TestPage reportId={route.param} beforeId={route.extra} />}
+        {page === 'watch' && <WatchPage />}
+        {page === 'race' && <RacePage raceId={route.param} />}
+        {page === 'leaderboard' && <LeaderboardPage />}
       </main>
       <ThemeToggle />
       {fancyCursor && <PointerCursor />}

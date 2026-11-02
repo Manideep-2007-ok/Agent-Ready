@@ -174,3 +174,18 @@ test('a site on localhost without cloudflared gets install help (exit 2)', async
   assert.match(r.stderr, /needs "cloudflared"/);
   assert.match(r.stderr, /brew install cloudflared/);
 });
+
+test('--version prints the package version; --badge writes an SVG with the score; badge flag needs a value', async () => {
+  const v = await cli(['--version']);
+  assert.equal(v.code, 0);
+  assert.equal(v.stdout.trim(), JSON.parse(fs.readFileSync(path.join(root, 'apps/cli/package.json'), 'utf8')).version);
+  const r = await cli(['https://www.nykaa.com', '--no-tunnel', '--no-scan', '--json', '--tasks', 'find_price', '--badge', 'b.svg']);
+  assert.equal(r.code, 0, r.stderr);
+  const score = JSON.parse(r.stdout).score;
+  const svg = fs.readFileSync(path.join(r.cwd, 'b.svg'), 'utf8');
+  assert.match(svg, /^<svg /);
+  assert.ok(svg.includes(`${score}/100`), svg);
+  const bad = await cli(['https://www.nykaa.com', '--badge']);
+  assert.equal(bad.code, 2);
+  assert.match(bad.stderr, /--badge needs a value/);
+});
