@@ -133,3 +133,8 @@ export function useLiveEvents(reportId) {
 
   return state;
 }
+
+// Race Mode and the leaderboard.
+export const startRace = (taskId, urls) => api('/race', { method: 'POST', body: { taskId, urls } });
+export const getRace = (id) => api(`/race/${encodeURIComponent(id)}`);
+export const cancelRace = (id) => api(`/race/${encodeURIComponent(id)}/cancel`, { method: 'POST' });

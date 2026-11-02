@@ -434,6 +434,100 @@ try {
   }, { page: watchSlow.page });
   await t.step('Watch page (slow): no browser errors', async () => { await closeWithCheck(watchSlow, 'watch-slow'); });
 
+  console.log('Race and Leaderboard');
+  const rl = await newPage(fast.base, { label: 'race-leaderboard' });
+  await t.step('Race tab: a replay race of 3 recorded sites finishes and names a winner', async () => {
+    const { page } = rl;
+    await page.getByRole('link', { name: 'Race', exact: true }).click();
+    await waitHash(page, /#\/race/);
+    await page.getByRole('heading', { name: /^Race:/ }).waitFor();
+    expect(await page.getByRole('button', { name: 'Start race' }).isDisabled(), 'Start is disabled with no sites');
+    for (const name of ['Nykaa', 'Myntra', 'Demo store']) await page.getByRole('button', { name }).click();
+    expect(await page.getByLabel('Website 3').inputValue() !== '', 'third site filled by the chip');
+    await page.getByRole('button', { name: 'Start race' }).click();
+    await waitHash(page, /#\/race\/race_/);
+    await page.locator('.race-lane').nth(2).waitFor();
+    expect(await page.getByRole('button', { name: 'Stop race' }).isVisible(), 'Stop race button while racing');
+    expect(await page.locator('.race-winner').count() === 0, 'no winner is named while sites are still running');
+    await page.locator('.race-summary-win').waitFor({ timeout: 90000 });
+    await page.locator('.race-winner').waitFor();
+    expect(await page.locator('.race-winner').count() === 1, 'exactly one winner lane');
+    expect(await page.locator('.race-summary-win').innerText().then((x) => /Winner/.test(x) && /steps/.test(x)), 'summary names the winner');
+    expect(await page.locator('.race-lane .ar-lane').count() === 3, 'three lanes');
+    expect(await noHScroll(page), 'race page fits');
+    await shot(page, 'race-done');
+    // a refresh keeps the finished race
+    await page.reload();
+    await page.locator('.race-summary-win').waitFor();
+  }, { page: rl.page });
+  await t.step('Race: an unrecorded site shows the server\'s plain message, and the page survives', async () => {
+    const { page } = rl;
+    await page.goto(fast.base + '/#/race');
+    await page.getByLabel('Website 1').fill('nykaa.com');
+    await page.getByLabel('Website 2').fill('shop.example.net');
+    await page.getByRole('button', { name: 'Start race' }).click();
+    await page.getByRole('alert').filter({ hasText: 'replays real agent runs' }).waitFor();
+    expect(await page.getByRole('button', { name: 'Start race' }).isEnabled(), 'can try again');
+  }, { page: rl.page });
+  await t.step('Leaderboard tab: ranked rows, and a row opens its report', async () => {
+    const { page } = rl;
+    await page.getByRole('link', { name: 'Leaderboard', exact: true }).click();
+    await waitHash(page, /#\/leaderboard/);
+    await page.locator('.lb-row').first().waitFor();
+    const n = await page.locator('.lb-row').count();
+    expect(n >= 3, `at least 3 rows (${n})`);
+    const scores = await page.locator('.lb-score .chip').allInnerTexts();
+    const nums = scores.map((x) => parseInt(x, 10));
+    expect(nums.every((v, i) => i === 0 || nums[i - 1] >= v), `ranked by score: ${scores.join(' | ')}`);
+    expect(scores.every((x) => /Ready|Partly ready|Not ready/.test(x)), 'score has a text label');
+    expect((await page.locator('.lb-wall').allInnerTexts()).some((x) => /Blocks cloud AI agents/.test(x)), 'bot-wall status shown');
+    await shot(page, 'leaderboard');
+    await page.locator('.lb-row').first().getByRole('link', { name: /View report/ }).click();
+    await waitHash(page, /#\/test\/rep_/);
+    await page.locator('.score-card').waitFor();
+    expect(await noHScroll(page), 'report fits');
+  }, { page: rl.page });
+  await t.step('Race and Leaderboard in dark theme', async () => {
+    const { page } = rl;
+    await page.goto(fast.base + '/#/leaderboard');
+    await page.locator('.lb-row').first().waitFor();
+    await page.evaluate(() => { document.documentElement.setAttribute('data-theme', 'dark'); });
+    await sleep(300);
+    const bg = await page.locator('.lb-row').first().evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(bg !== 'rgb(255, 255, 255)', `row is not white in dark theme (${bg})`);
+    await shot(page, 'leaderboard-dark');
+    await page.evaluate(() => { document.documentElement.setAttribute('data-theme', 'light'); });
+  }, { page: rl.page });
+  await t.step('Race: Stop race stops every site (slow replay)', async () => {
+    const slowRace = await newPage(slow.base, { label: 'race-slow' });
+    try {
+      const { page } = slowRace;
+      await page.goto(slow.base + '/#/race');
+      await page.getByLabel('Website 1').fill('nykaa.com');
+      await page.getByLabel('Website 2').fill('myntra.com');
+      await page.getByRole('button', { name: 'Start race' }).click();
+      await page.getByRole('button', { name: 'Stop race' }).click();
+      await page.locator('.race-summary', { hasText: 'Race stopped' }).or(page.locator('.stopped-card')).first().waitFor({ timeout: 30000 });
+      expect(await page.locator('.race-winner').count() === 0, 'a stopped race names no winner');
+    } finally { await closeWithCheck(slowRace, 'race-slow'); }
+  }, { page: rl.page });
+  await t.step('Race and Leaderboard page: no browser errors', async () => { await closeWithCheck(rl, 'race-leaderboard'); });
+
+  console.log('Feature flags');
+  const off = await startServer({ port: 4232, speed: 30, env: { FEATURE_RACE: 'false', FEATURE_LEADERBOARD: 'false' } });
+  try {
+    const flagged = await newPage(off.base, { label: 'flags-off' });
+    await t.step('with the features off, Race and Leaderboard tabs are hidden and their links land on Test', async () => {
+      const { page } = flagged;
+      await page.getByRole('link', { name: 'Watch', exact: true }).waitFor();
+      expect(await page.getByRole('link', { name: 'Race', exact: true }).count() === 0, 'no Race tab');
+      expect(await page.getByRole('link', { name: 'Leaderboard', exact: true }).count() === 0, 'no Leaderboard tab');
+      await page.goto(off.base + '/#/race');
+      await page.getByLabel('Website to test').waitFor();
+      await closeWithCheck(flagged, 'flags-off');
+    }, { page: flagged.page });
+  } finally { await off.stop(); }
+
   console.log('Phone width (390 px)');
   const phone = await newPage(fast.base, { width: 390, height: 800, label: 'phone' });
   await t.step('no sideways scrolling on home, report, stopped report, Watch', async () => {
@@ -441,7 +535,7 @@ try {
     await page.getByRole('heading', { level: 1 }).waitFor();
     expect(await noHScroll(page), 'home fits');
     await shot(page, 'phone-home');
-    for (const h of ['#/test/rep_20261031_demo_nykaa', '#/test/rep_20261031_demo_myntra', '#/test/rep_demo_flaws_off/rep_demo_flaws_on', '#/watch']) {
+    for (const h of ['#/test/rep_20261031_demo_nykaa', '#/test/rep_20261031_demo_myntra', '#/test/rep_demo_flaws_off/rep_demo_flaws_on', '#/watch', '#/race', '#/leaderboard']) {
       await page.goto(fast.base + '/' + h);
       await page.locator('.score-card, .watch-card, .card').first().waitFor();
       await sleep(300);

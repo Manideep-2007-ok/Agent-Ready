@@ -66,6 +66,7 @@ const version = (() => {
 // queue = who is using the agent slots right now (the dashboard uses it to explain "Waiting for an agent").
 app.get('/api/health', (_req, res) => res.json({
   ok: true, version, mock: config.mock, demoStoreUrl: config.demoStoreUrl || null,
+  features: { ...config.features },
   queue: engine.getQueueState?.() ?? null,
   activeTests: engine.activeReportIds?.().length ?? 0,
 }));

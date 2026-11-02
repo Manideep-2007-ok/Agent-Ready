@@ -254,3 +254,29 @@ A real-key test on 2 Nov exposed a gap. The polling script waited for each task'
 | H26 | A test stopped ~5 s in showed "Agent cost so far ≈ ₹1.41" (1 step) but TinyFish recorded `num_of_steps` 0 for the CANCELLED runs and billed nothing | The cost used our live PROGRESS count | After a stop, `runTask` sends the `cancelled` state first (Stop stays fast), then waits for the cancel calls (`ctx.cancelDone`, max 8 s), reads the run record and uses its `num_of_steps`; a second `task-update` carries the corrected count. Any failure keeps the live count. Not done in replay mode | `cascade.test.js` (cost 0 after stop; live count kept when the record is unreadable) |
 | H27 | STARTED arriving just after Stop left that run going until its time cap | `trackRun` on an already cancelled context only added the id to a list nobody read again | `trackRun` on a cancelled context cancels the run on TinyFish at once (never throws); `runTask` also treats a stream that finishes after a stop as cancelled (no retry, no `running` update). Fake gained a per-event `delay` | `cascade.test.js` (late STARTED: POST /cancel for that run id, task `cancelled`, one run only) |
 | H28 | CLI tests read the developer's repo `.env`; an `AGENTREADY_SERVER` there would receive test reports | The CLI always loaded the repo `.env` | CLI honours `AGENTREADY_ENV_FILE` (like the server); the test helper sets it to a missing file and blanks `AGENTREADY_SERVER` | `npm test` also run with a temporary root `.env` holding `AGENTREADY_SERVER=http://127.0.0.1:9`: 114 passed |
+
+## 2 Nov 2026: Launch (Race and Leaderboard back in the dashboard)
+
+The project owner asked for the Race and Leaderboard pages to return for the public launch (files owned by Sai Shakti per ARCHITECTURE section 3; changed on request). Replay mode only, no real TinyFish call.
+
+| # | Symptom | Cause | Fix | Proof |
+|---|---|---|---|---|
+| H29 | No Race or Leaderboard tab; the pages did not exist in `apps/web` | Hidden on 1 Nov | `RacePage.jsx`, `LeaderboardPage.jsx`, tabs in `App.jsx` (hash routes), styles in `styles.css`; tab hidden when `/api/health` `features.RACE` / `LEADERBOARD` is false (`features` is new in health) | e2e: race of 3 recorded sites, leaderboard, flags off |
+| H30 | `POST /api/race` in replay mode accepted any site and replayed an unrelated recording | The race route skipped `assertReplayable` | Race refuses sites with no recording (400, the same plain message as a test) | `api.test.js` |
+| H31 | No way to stop a race | Only `/api/tests/:id/cancel` existed | `POST /api/race/:id/cancel` stops every lane through the shared `cancelRunningReport` (moved out of the tests route, same behaviour) | `api.test.js`, e2e "Stop race" |
+| H32 | Race `rank` ordered by seconds only | Fewest steps is the agreed meaning of "easiest" | Rank by steps, then seconds | `api.test.js` |
+
+Checked by hand (Playwright screenshots, light/dark, 1280 and 390 px, no sideways scroll): race form with chips, race running, race finished with winner, leaderboard. The winner is not highlighted while other sites still run.
+
+## 2 Nov 2026: Launch (npm package, CI Action, badge) (Manideep)
+
+Made the CLI installable by anyone and the CI check reusable for the LinkedIn launch. No real TinyFish call, no key; everything ran in replay mode or with a fake.
+
+| # | Symptom | Cause | Fix | Proof |
+|---|---|---|---|---|
+| H33 | `@agentready/cli` could not be published: `apps/cli` is private and depends on the unpublished workspace `@agentready/engine` | Monorepo layout | `scripts/pack-cli.mjs` builds `dist/cli` (CLI + engine source copy, two imports rewritten, only `playwright-core` as dependency, README, no recordings). Source `apps/cli` stays private so nobody publishes it by mistake | `pack.test.js`; tarball installed into a temp folder outside the repo: `--version`, `--help`, bad option (2), no key (2), replay mode (2, clear message) |
+| H34 | Outside the repo the CLI read a `.env` three folders above the package and `TINYFISH_MOCK=1` crashed (`fixtures` folder missing) | Repo-root paths | Repo-root `.env` only when run inside the repo; `.env` of the current folder always; `fixturesAvailable()` -> clear message, exit 2 | `pack.test.js` (copied out of the repo, no PATH tools) |
+| H35 | No `--version`; no badge | Never built | `--version`; `badgeSvg` (engine, pure, escaped), `--badge FILE`, `GET /api/badge/:id.svg` (404 + grey badge for unknown ids, 5 min cache) | `badge.test.js`, `cli.test.js`, `api.test.js` |
+| H36 | CI check was a stretch idea with nothing built | | Root `action.yml` (composite), `scripts/ci-report.mjs` (summary + PR comment markdown, escaped), label-gated `.github/workflows/agentready.yml` (preview of the commit else production demo store, skips green without the secret) | `ci-report.test.js`; the action's shell steps run locally against the replay recording (summary and comment produced, fail-below-minimum step exits 1); SIGTERM to the run step cancelled the CLI's run ("Stopped 1 agent run(s)"); both YAML files parse |
+
+Not verifiable here: the workflow and action on a real GitHub runner (checkout, setup-node, github-script, upload-artifact tags; the Vercel deployment lookup; comment editing), `npm publish`, and the `@agentready` npm org. Steps in `docs/PUBLISHING.md`.

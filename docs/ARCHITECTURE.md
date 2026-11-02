@@ -61,6 +61,7 @@ agent-ready/
     runContext.js               cancel switch per test: abort streams, drop queued tasks, cancel runs on TinyFish (Manideep)
     env.js                      tiny .env loader (a missing .env is fine)               (Manideep)
     runner.js                   runTask, runSiteTest, SSE -> poll fallback, events     (Manideep)
+    badge.js                    badgeSvg: flat Agent-Ready score badge (pure)           (Manideep)
     botwall.js                  lite -> IN proxy -> stealth cascade                     (Manideep)
     scoring.js                  points, findings, cost meter                           (Manideep)
     report.js                   build SiteReport, verify claims, top fixes            (Sai Shakti)
@@ -96,6 +97,9 @@ agent-ready/
     components/InstantScanCard.jsx                                                      (Akhil)
   apps/cli/bin/agentready.js    CLI                                                     (Akhil)
   apps/demo-store/              index.html, product.html, cart.html, help/.../returns.html, contact.html, flaws.js, style.css, price.png (Akhil)
+  action.yml                    reusable GitHub Action (section 16)                    (Manideep)
+  .github/workflows/agentready.yml   label-gated PR check                           (Manideep)
+  scripts/pack-cli.mjs, ci-report.mjs   npm package builder, report markdown        (Manideep)
   data/                         runtime JSON (gitignored) + data/cached-demo/ (committed fixtures and demo backups)
 ```
 
@@ -273,7 +277,7 @@ For each finding:
 
 | Method + path | Body / query | Returns |
 |---|---|---|
-| `GET /api/health` | | `{ok, version, mock, demoStoreUrl, queue:{maxParallel,running,queued,bySource,groups}, activeTests}` (`demoStoreUrl` is null when not set) |
+| `GET /api/health` | | `{ok, version, mock, demoStoreUrl, features:{RACE,WATCH,FIXES_AI,CUSTOM_TASK,LEADERBOARD,CLI_UPLOAD}, queue:{maxParallel,running,queued,bySource,groups}, activeTests}` (`demoStoreUrl` is null when not set; the dashboard hides the Race and Leaderboard tabs when their flag is false) |
 | `POST /api/tests` | `{url, tasks?, customTask?}` | `{reportId}`; starts Instant Scan + test in background |
 | `GET /api/tests/:id` | | `SiteReport` (includes `scanFindings` once the Instant Scan is done) |
 | `GET /api/tests/:id/events` | | SSE `LiveEvent` stream; first message replays current report |
@@ -284,7 +288,8 @@ For each finding:
 | `POST /api/reports/:id/fixes` | | enriched `SiteReport` |
 | `POST /api/reports` | `SiteReport` (from the CLI) | `201 {reportId}`; keeps the CLI's id, `409` if a web/watch report uses it; flag `CLI_UPLOAD` |
 | `POST /api/race` | `{taskId, urls}` (max 3) | `{raceId}` |
-| `GET /api/race/:id` / `.../events` | | race state / SSE |
+| `GET /api/race/:id` | | race state: `{id, taskId, lanes:[{url, reportId, report, task}], rank:[{reportId, place}]}`; `rank` = passed sites, fewest steps first, then fastest |
+| `POST /api/race/:id/cancel` | | `{ok, cancelled}`; stops every site of the race (idempotent, 404 unknown id). In replay mode `POST /api/race` refuses sites with no recording (400, plain message) |
 | `GET /api/watch` | | `Watch[]` |
 | `POST /api/watch` | `{url, everyMinutes, tasks}` | `Watch` |
 | `POST /api/watch/:id/run-now` | | `{reportId}` (409 if a check is already running) |
@@ -292,6 +297,7 @@ For each finding:
 | `GET /api/watch/:id/history` | | `SiteReport[]` |
 | `PATCH /api/watch/:id` | `{enabled?, everyMinutes?}` | `Watch`. `enabled:false` also cancels the check running right now |
 | `POST /api/webhooks/tinyfish` | TinyFish webhook | `200` |
+| `GET /api/badge/:id.svg` | | flat SVG badge with the report's score (`image/svg+xml`, `Cache-Control: max-age=300`); a missing or invalid id returns a grey "unknown" badge with status 404 |
 | `GET /api/leaderboard` | | reports from `data/cached-demo/leaderboard/` ranked |
 | `POST /api/demo-store/flaws` | `{on:boolean}` | used by "Apply fixes": returns the store URL with `?flaws=on|off` |
 
@@ -339,7 +345,9 @@ Store API: `saveReport(r)`, `getReport(id)`, `listReports()`, `saveWatch(w)`, `l
 
 ## 13. Dashboard (`apps/web`)
 
-Pages (simple tab bar, no auth): **Test**, **Watch**, **Race**, **Leaderboard**.
+Pages (simple tab bar, no auth): **Test**, **Watch**, **Race**, **Leaderboard**. Race and Leaderboard show only when `/api/health` `features.RACE` / `features.LEADERBOARD` is true (hash routes `#/race[/<raceId>]`, `#/leaderboard`).
+
+**Race page:** one task + 2-3 sites; in replay mode quick-pick chips for the recorded sites (Nykaa, Myntra, Swiggy, demo store). Each site is a normal report followed live in a shared `Lane`; the page polls `GET /api/race/:id` for the ranking. The winner (fewest steps, then fastest, among passed sites) is shown only after every site has finished. "Stop race" calls `POST /api/race/:id/cancel`. **Leaderboard page:** `/api/leaderboard` rows ranked by score (rank, site, score with a text band, bot-wall status, date, link to `#/test/<id>`); cached reports open through `GET /api/tests/:id`.
 
 Test page layout (top to bottom):
 1. URL input + "Test my site" + optional custom task box.
@@ -369,7 +377,7 @@ With flaws off: normal text price, labelled button, footer Returns link, no popu
 
 ## 15. CLI (`apps/cli/bin/agentready.js`)
 
-`npx agentready <localhost-url> [--tasks find_price,add_to_cart] [--json] [--min-score N] [--no-tunnel] [--no-scan]`
+`npx @agentready/cli <url> [--tasks find_price,add_to_cart] [--json] [--min-score N] [--badge file.svg] [--no-tunnel] [--no-scan] [--version]` (inside the repo: `node apps/cli/bin/agentready.js`)
 1. Check `cloudflared --version`; if missing print install help (`sudo pacman -S cloudflared` / `brew install cloudflared` / Cloudflare docs).
 2. Spawn `cloudflared tunnel --no-autoupdate --url <localhost-url>`; read stderr until a `https://*.trycloudflare.com` URL appears (timeout 30 s); wait 5 s for it to become reachable.
 3. `runSiteTest({url: tunnelUrl, tasks, source:'cli'})` using `TINYFISH_API_KEY` from env or `.env`; at the same time the **Instant Scan** runs on the same address (skip with `--no-scan`) so pop-ups, unlabelled buttons and prices in images show up as fixes. Ctrl+C / SIGTERM / SIGHUP first cancel the in-flight agent runs (exit 130/143/129), then stop the tunnel; a second Ctrl+C leaves at once.
@@ -378,9 +386,15 @@ With flaws off: normal text price, labelled button, footer Returns link, no popu
 
 ---
 
-## 16. CI check (stretch, `.github/workflows/agentready.yml`)
+## 16. CI check (`action.yml`, `.github/workflows/agentready.yml`) and the npm package
 
-On `pull_request`: wait for the preview URL (Vercel deployment status) -> run `node apps/cli/bin/agentready.js <previewUrl> --min-score 80 --json` without a tunnel (`--no-tunnel`) -> post a PR comment with the score. Needs repo secret `TINYFISH_API_KEY`. Locked previews (Vercel Deployment Protection) are out of scope today.
+**Reusable composite action** (`action.yml` at the repo root, used as `Manideep-2007-ok/Agent-Ready@<ref>`; D37). Inputs: `url` (required), `tinyfish-api-key` (required), `tasks` (default `find_price,add_to_cart`), `min-score` (default `0` = report only), `comment` (default `true`), `github-token`, `cli-version` (empty = build the CLI from the action's own source with `scripts/pack-cli.mjs`; a version = install `@agentready/cli` from npm). Outputs `score`, `passed`. Steps: set up Node 20 -> install CLI -> run `agentready <url> --no-tunnel --json --tasks ... --badge` (in the background with a signal trap, so a cancelled job sends the CLI SIGTERM and its TinyFish runs are cancelled) -> `scripts/ci-report.mjs` turns the JSON into markdown (job summary + PR comment body starting with the hidden marker `<!-- agentready -->`; agent/site text is escaped) -> `actions/github-script` finds the comment with that marker and edits it, else creates one (a read-only fork token only warns) -> upload report JSON, badge SVG and comment as artifact `agentready-report` -> fail the job if the score is below `min-score` or the test could not finish. Action versions are pinned to exact tags.
+
+**Our workflow** runs only when the PR has the label `agentready` (`labeled`, `synchronize`, `reopened`; a different label being added does not start it) and by `workflow_dispatch` with an optional `url`. Target: the Vercel preview of the PR head commit (GitHub deployments + statuses, waits up to ~5 min, must answer HTTP 200), else the production demo store `https://agent-ready-demo.vercel.app/?flaws=on`. Without the secret `TINYFISH_API_KEY` the job prints a notice and finishes green. Permissions: `contents: read`, `pull-requests: write`, `deployments: read`. Concurrency is per PR with cancel-in-progress. Locked previews (Vercel Deployment Protection) are out of scope: the workflow falls back to production.
+
+**npm package** (D38): `npx @agentready/cli https://site.com --no-tunnel`. `apps/cli` stays `private`; `node scripts/pack-cli.mjs [--pack]` generates `dist/cli` (CLI + a copy of `packages/engine/src` with the imports rewritten; only dependency `playwright-core`). `.env` is read from the current folder (and the repo root only when run inside the repo); replay mode needs recordings that only exist in the repo, so outside it `TINYFISH_MOCK=1` exits 2 with an explanation. Publish steps: [`PUBLISHING.md`](PUBLISHING.md).
+
+**Badge** (D39): `badgeSvg({score, label})` in `packages/engine/src/badge.js`; CLI `--badge file.svg`; server `GET /api/badge/:id.svg`. README snippet: `![Agent-Ready score](agentready-badge.svg)`.
 
 ---
 

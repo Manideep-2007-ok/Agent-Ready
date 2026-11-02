@@ -9,6 +9,16 @@ Built by Team Mavericks (Manideep Thumu, Sai Shakti Nayak, Akhil Daitha) at Swim
 - Research and test evidence: [`docs/RESEARCH.md`](docs/RESEARCH.md)
 - Rules for coding agents: [`AGENTS.md`](AGENTS.md)
 
+## Try it from your terminal
+
+```bash
+export TINYFISH_API_KEY=your-key
+npx @agentready/cli https://your-site.com --no-tunnel          # public site
+npx @agentready/cli http://localhost:3000                       # your laptop (needs cloudflared)
+```
+
+Add `--badge agentready-badge.svg` and show your score: `![Agent-Ready score](agentready-badge.svg)`. In CI use the GitHub Action (`Manideep-2007-ok/Agent-Ready@v1`, see [`docs/PUBLISHING.md`](docs/PUBLISHING.md)). Not on npm until the owner publishes it.
+
 ## Quick start
 
 ```bash
