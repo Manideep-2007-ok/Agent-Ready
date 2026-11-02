@@ -274,3 +274,23 @@ test('STARTED arriving after Stop: that run is still cancelled on TinyFish, the 
   assert.equal(report.tasks[0].status, 'cancelled');
   assert.equal(fake.calls.sse.length, 1, 'no retry');
 });
+
+test('after Stop the lane says cancelled at once and the agent slot is free while TinyFish is slow to give the step count', async () => {
+  fake = installFakeTinyFish({
+    getRunStatuses: (runId) => tick(600).then(() => runRecord({ runId, status: 'CANCELLED', steps: 0, result: null })),
+    runSse: () => ({ events: [{ type: 'STARTED' }, { type: 'PROGRESS', purpose: 'Open the page' }], end: 'hang' }),
+  });
+  const updates = [];
+  const pending = runSiteTest({ url: URL_, id: 'rep_cost_slow', tasks: ['find_price'] }, (e) => { if (e.kind === 'task-update') updates.push({ status: e.task.status, at: Date.now() }); });
+  await until(() => fake.calls.sse.length === 1);
+  await tick(60);
+  const t0 = Date.now();
+  await cancelReport('rep_cost_slow', 'user');
+  await until(() => updates.some((u) => u.status === 'cancelled'), 300);
+  assert.ok(updates.find((u) => u.status === 'cancelled').at - t0 < 300, 'lane shows cancelled before the record read finishes');
+  await until(() => getQueueState().running === 0, 300); // the slot does not wait on the record read
+  const report = await pending;
+  assert.ok(Date.now() - t0 >= 500, 'the report waited for the record');
+  assert.equal(report.tasks[0].numSteps, 0);
+  assert.equal(report.costRupees, 0);
+});

@@ -77,7 +77,7 @@ export function installFakeTinyFish(handlers = {}) {
     if (m) {
       const n = calls.getRun.filter((r) => r === m[1]).length;
       calls.getRun.push(m[1]);
-      const custom = handlers.getRunStatuses?.(m[1], n);
+      const custom = await handlers.getRunStatuses?.(m[1], n); // may be a promise (a slow TinyFish)
       if (typeof custom === 'number') return new Response('upstream error', { status: custom });
       if (custom) return new Response(JSON.stringify(custom), { status: 200 });
       return new Response(JSON.stringify(runs.get(m[1]) ?? runRecord({ runId: m[1] })), { status: 200 });

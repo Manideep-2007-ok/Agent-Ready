@@ -31,7 +31,11 @@ export class RunContext {
    */
   trackRun(runId) {
     if (!runId) return;
-    if (this.cancelled) { Promise.resolve().then(() => tf.cancelRun(runId)).catch(() => {}); return; }
+    if (this.cancelled) {
+      const late = Promise.resolve().then(() => tf.cancelRun(runId)).catch(() => {});
+      this.cancelDone = Promise.all([this.cancelDone, late]); // the cost read waits for this cancel too
+      return;
+    }
     this.runIds.add(runId);
   }
   untrackRun(runId) { this.runIds.delete(runId); }
