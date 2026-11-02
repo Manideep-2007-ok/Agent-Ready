@@ -280,3 +280,11 @@ Made the CLI installable by anyone and the CI check reusable for the LinkedIn la
 | H36 | CI check was a stretch idea with nothing built | | Root `action.yml` (composite), `scripts/ci-report.mjs` (summary + PR comment markdown, escaped), label-gated `.github/workflows/agentready.yml` (preview of the commit else production demo store, skips green without the secret) | `ci-report.test.js`; the action's shell steps run locally against the replay recording (summary and comment produced, fail-below-minimum step exits 1); SIGTERM to the run step cancelled the CLI's run ("Stopped 1 agent run(s)"); both YAML files parse |
 
 Not verifiable here: the workflow and action on a real GitHub runner (checkout, setup-node, github-script, upload-artifact tags; the Vercel deployment lookup; comment editing), `npm publish`, and the `@agentready` npm org. Steps in `docs/PUBLISHING.md`.
+
+## 2 Nov 2026: Launch (README and demo GIF) (Manideep)
+
+Public landing page for the LinkedIn launch. No real TinyFish call; the GIF was recorded in replay mode.
+
+| # | Symptom | Cause | Fix | Proof |
+|---|---|---|---|---|
+| H37 | Root README was a short internal note; no picture, no per-surface quick start | Written for the hackathon | New README: pitch, three bullets, hero GIF, badge example, quick start (CLI, Action, dashboard, live demo), what it checks, docs, credits, "License: not yet chosen". The CLI line says publishing is in progress (remove it after `npm publish`). Cost line is derived from the demo store runs (₹27 to ₹49 for four tasks) | `docs/media/agentready-demo.gif` (4.7 MB, 880 px, 8 fps, about 25 s: Nykaa test with four lanes, score and top fixes, demo store 91 to 97), recorded with Playwright video + ffmpeg palette GIF against the built server in replay mode; the hero globe (WebGL is black in headless Chromium) and the custom cursor were hidden for the recording only; `docs/media/agentready-badge-example.svg` from `badgeSvg({score:97})` |
