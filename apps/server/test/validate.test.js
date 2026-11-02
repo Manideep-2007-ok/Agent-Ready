@@ -32,7 +32,8 @@ test('parseSiteUrl refuses non-http schemes, credentials, spaces and long addres
 
 test('parseSiteUrl refuses addresses a cloud browser cannot reach (live mode)', () => {
   for (const host of ['localhost', 'localhost:3000', '127.0.0.1', '127.1.2.3', '10.0.0.5', '192.168.1.20', '172.16.0.1', '172.31.255.255', '169.254.169.254',
-    '0.0.0.0', '[::1]', 'shop.local', 'db.internal', 'x.localhost', '100.64.0.1', '[fd00::1]', '[fe80::1]']) {
+    '0.0.0.0', '[::1]', 'shop.local', 'db.internal', 'x.localhost', '100.64.0.1', '[fd00::1]', '[fe80::1]',
+    'localhost.', 'http://localhost.:3000', '[::ffff:127.0.0.1]', '[::ffff:192.168.1.2]', '2130706433', '0x7f.1']) {
     rejects(() => v.parseSiteUrl(host), /cannot reach localhost or private addresses/);
   }
   assert.doesNotThrow(() => v.parseSiteUrl('172.32.0.1'), 'outside the private range');

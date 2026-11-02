@@ -17,6 +17,14 @@ export function rankTopFixes(report, engine) {
   return engine.rankFixes([...report.tasks.flatMap((t) => t.findings ?? []), ...(report.scanFindings ?? [])]);
 }
 
+// Tests this server process is still working on (agents running, or the Instant Scan still finishing), plus starts
+// that passed the limit check but have no id yet. The cancel route uses it to tell "still finishing" from "orphaned
+// by a restart"; the limit counts both so a burst of requests cannot slip past it.
+const activeJobs = new Set();
+let pendingStarts = 0;
+/** Is this report still being worked on by this process? */
+export const isJobActive = (id) => activeJobs.has(id);
+
 const slug = (url) => new URL(url).hostname.replace(/^www\./, '').split('.')[0].replace(/[^\w]/g, '') || 'site';
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -38,11 +46,33 @@ export async function startReport(request, { engine, events }) {
   const { url, customText, source = 'web', instantScan = true } = request;
   // Every running test can spend agent steps; refuse a flood instead of queueing without limit.
   const limit = Number(process.env.MAX_ACTIVE_TESTS) > 0 ? Number(process.env.MAX_ACTIVE_TESTS) : 6;
-  if ((engine.activeReportIds?.() ?? []).length >= limit) {
+  const busy = new Set([...(engine.activeReportIds?.() ?? []), ...activeJobs]).size + pendingStarts;
+  if (busy >= limit) {
     throw httpError(429, `${limit} tests are already running. Please wait for one to finish (or stop one) and try again.`);
   }
+  pendingStarts++; // held until the report has an id and is in activeJobs
+  let report;
+  try {
+    report = await createRunningReport(request);
+    activeJobs.add(report.id);
+  } finally {
+    pendingStarts--;
+  }
   const tasks = request.tasks?.length ? request.tasks : [...DEFAULT_TASK_ORDER];
+  logEvent('test.start', { id: report.id, host: safeUrl(url), source, tasks: tasks.length + (customText ? 1 : 0) });
 
+  // Not awaited: the dashboard gets the id now and follows progress over SSE.
+  runInBackground(report, { tasks, customText, instantScan }, { engine, events })
+    .catch((err) => {
+      logEvent('test.error', { id: report.id, message: err?.message || String(err) });
+      console.error(`[${report.id}] test crashed:`, err);
+    })
+    .finally(() => activeJobs.delete(report.id));
+  return report.id;
+}
+
+/** Save the "running" report the dashboard opens while the agents work. */
+async function createRunningReport({ url, source = 'web' }) {
   /** @type {SiteReport} */
   const report = {
     id: await newReportId(url),
@@ -60,14 +90,7 @@ export async function startReport(request, { engine, events }) {
     topFixes: [],
   };
   await store.saveReport(report);
-  logEvent('test.start', { id: report.id, host: safeUrl(url), source, tasks: tasks.length + (customText ? 1 : 0) });
-
-  // Not awaited: the dashboard gets the id now and follows progress over SSE.
-  runInBackground(report, { tasks, customText, instantScan }, { engine, events }).catch((err) => {
-    logEvent('test.error', { id: report.id, message: err?.message || String(err) });
-    console.error(`[${report.id}] test crashed:`, err);
-  });
-  return report.id;
+  return report;
 }
 
 async function runInBackground(report, { tasks, customText, instantScan }, { engine, events }) {
@@ -117,7 +140,8 @@ async function runInBackground(report, { tasks, customText, instantScan }, { eng
         .then((result) => {
           report.instantScan = result;
           report.scanFindings = engine.instantScanFindings?.(result) ?? [];
-          report.topFixes = rankTopFixes(report, engine);
+          // A stopped test keeps no Top fixes (D29), even when its scan finishes after the stop.
+          if (report.status !== 'cancelled') report.topFixes = rankTopFixes(report, engine);
           save();
           events.publish({ type: 'instant-scan', reportId, scan: result });
         })

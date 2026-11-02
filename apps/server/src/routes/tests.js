@@ -5,7 +5,7 @@ import { Router } from 'express';
 import { TASK_IDS } from '@agentready/engine/types';
 import { config } from '../config.js';
 import * as store from '../store.js';
-import { startReport } from '../reportJob.js';
+import { startReport, isJobActive } from '../reportJob.js';
 import { logEvent } from '../log.js';
 import { rateLimit } from '../rateLimit.js';
 import { SAFE_ID, SCORED_TASKS, assertSafeId, httpError, parseSiteUrl, parseTasks, parseCustomTask } from '../validate.js';
@@ -88,6 +88,8 @@ export default function testsRoutes({ engine, events }) {
     if (!report) throw httpError(404, 'We could not find that report.');
     if (report.status !== 'running') return res.json({ ok: true, cancelled: false, status: report.status });
     const result = await engine.cancelReport?.(report.id, 'user');
+    // The agents already finished and only the Instant Scan is still closing: nothing is left to stop (or pay for).
+    if (!result?.found && isJobActive(report.id)) return res.json({ ok: true, cancelled: false, status: 'finishing' });
     if (!result?.found) {
       // Marked running on disk, but nothing is running here (the server restarted): close it so the page stops spinning.
       for (const task of report.tasks ?? []) {

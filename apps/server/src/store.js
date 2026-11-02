@@ -88,12 +88,12 @@ export async function listReports(limit = 50) {
  * Reports still marked 'running' on disk. At server start nothing can really be running, so these were cut off by a
  * restart or crash; recoverInterruptedReports() closes them so lanes do not spin forever.
  */
-export async function recoverInterruptedReports() {
+export async function recoverInterruptedReports({ isActive = () => false } = {}) {
   const names = await listJson(dirs.reports);
   let fixed = 0;
   for (const name of names) {
     const report = await readJson(path.join(dirs.reports, name));
-    if (!report || report.status !== 'running') continue;
+    if (!report || report.status !== 'running' || isActive(report.id)) continue; // a test started since boot is real
     for (const task of report.tasks ?? []) {
       if (['queued', 'running'].includes(task.status)) {
         task.status = 'cancelled';

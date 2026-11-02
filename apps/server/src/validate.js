@@ -18,7 +18,10 @@ export const isSafeId = (id) => typeof id === 'string' && SAFE_ID.test(id);
 
 /** Addresses a cloud browser can never reach. */
 function isPrivateHost(host) {
-  const h = host.toLowerCase().replace(/^\[|\]$/g, '');
+  // "localhost." (trailing dot) is the same host; [::ffff:127.0.0.1] (IPv4-mapped IPv6, normalised to ::ffff:7f00:1) is 127.0.0.1.
+  let h = host.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.+$/, '');
+  const mapped = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(h);
+  if (mapped) { const a = parseInt(mapped[1], 16), b = parseInt(mapped[2], 16); h = `${a >> 8}.${a & 255}.${b >> 8}.${b & 255}`; }
   if (h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local') || h.endsWith('.internal') || h.endsWith('.lan')) return true;
   if (h === '::1' || h === '::' || /^f[cd][0-9a-f]{2}:/.test(h) || /^fe80:/.test(h)) return true;
   const m = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(h);

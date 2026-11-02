@@ -15,6 +15,7 @@ import { startWatches, setPublisher } from './watch.js';
 import * as store from './store.js';
 import { logEvent } from './log.js';
 import { errorHandler } from './errors.js';
+import { isJobActive } from './reportJob.js';
 
 const { engine, stubbed: stubbedEngine } = await loadEngine();
 const { events, stubbed: stubbedEvents } = await loadEvents();
@@ -103,7 +104,7 @@ const server = app.listen(config.port, host, () => {
   if (stubbedEvents) console.log('  dev stand-in SSE hub in use (events.js not found)');
   logEvent('server.start', { port: config.port, version, mock: config.mock, host });
   // Reports left "running" by a restart can never finish: close them so their lanes stop spinning.
-  store.recoverInterruptedReports()
+  store.recoverInterruptedReports({ isActive: (id) => isJobActive(id) || Boolean(engine.isReportActive?.(id)) })
     .then((n) => { if (n) logEvent('server.recovered', { interruptedTests: n }); })
     .catch((err) => console.error('[server] could not recover interrupted tests:', err.message))
     .finally(() => {

@@ -367,7 +367,10 @@ export default function TestPage({ reportId, beforeId }) {
   // Stop test: the server cancels the agent runs and drops queued tasks; the stream then ends with a 'cancelled' report.
   const onStop = async () => {
     setStopping(true);
-    try { await cancelTest(reportId); } catch (e) { setError(e.message); setStopping(false); }
+    try {
+      const r = await cancelTest(reportId);
+      if (!r?.cancelled) setStopping(false); // already finished (or only the scan is closing): the report arrives on its own
+    } catch (e) { setError(e.message); setStopping(false); }
   };
   const stopped = live.report?.status === 'cancelled';
 
