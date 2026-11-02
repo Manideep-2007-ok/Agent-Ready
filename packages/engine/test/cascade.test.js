@@ -162,6 +162,26 @@ test('stream dropped before COMPLETE: poll the run until it finishes (and surviv
   assert.equal(fake.calls.sse.length, 1);
 });
 
+test('stop while polling after a dropped stream: polling ends, the run is cancelled on TinyFish, no retry', async () => {
+  fake = installFakeTinyFish({
+    runSse: () => ({ events: [{ type: 'STARTED' }, { type: 'PROGRESS', purpose: 'One' }], end: 'drop' }),
+    getRunStatuses: (runId) => runRecord({ runId, status: 'RUNNING', steps: 1 }), // never finishes on its own
+  });
+  const ctx = createRunContext({ id: 'rep_poll_cancel' });
+  const pending = runTaskWithBotWall({ url: URL_, taskId: 'find_price' }, () => {}, ctx);
+  await until(() => fake.calls.getRun.length >= 2); // polling now
+  await ctx.cancel('user');
+  const r = await pending;
+  ctx.release();
+  assert.equal(r.status, 'cancelled');
+  assert.equal(r.verdict, 'none');
+  assert.deepEqual(fake.calls.cancel, [fake.calls.sse[0].runId], 'the polled run is cancelled on TinyFish');
+  const polls = fake.calls.getRun.length;
+  await tick(100);
+  assert.equal(fake.calls.getRun.length, polls, 'polling stopped');
+  assert.equal(fake.calls.sse.length, 1, 'no bot-wall retry');
+});
+
 test('TinyFish answers 503 on start: a plain failure, no retry, key never shown', async () => {
   fake = installFakeTinyFish({ runSse: () => ({ end: 'http', status: 503 }) });
   const r = await runTaskWithBotWall({ url: URL_, taskId: 'find_price' });
