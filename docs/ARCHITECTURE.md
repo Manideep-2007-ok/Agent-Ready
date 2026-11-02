@@ -155,7 +155,9 @@ getWallet()
 // runner.js
 runTask({ url, taskId, customText, mode, proxy }, onEvent, ctx?)   // -> TaskResult (single attempt)
 runTaskWithBotWall({ url, taskId, customText }, onEvent, ctx?)     // -> TaskResult with attempts[] (botwall.js)
-runSiteTest({ url, tasks=DEFAULT_TASK_ORDER, customText, source, id, ctx? }, onEvent) // -> SiteReport (status 'cancelled' if stopped)
+runSiteTest({ url, tasks?, pack?, customText, source, id, ctx? }, onEvent) // -> SiteReport (status 'cancelled' if stopped)
+  // pack = 'shop'|'saas'|'content'|'local' (D40). tasks may come from any pack. No tasks -> the pack's four; no pack -> the pack of the tasks; neither -> shop.
+  // The report stores `pack` (and `customText`). In replay mode a task from another pack is not run: replayNote, no points, no findings.
 
 // runContext.js: stopping a test (D29)
 cancelReport(reportId, reason)   // -> {found, cancelledRuns, droppedFromQueue}; aborts SSE/polling, drops queued tasks, POST /cancel for in-flight runs
@@ -163,6 +165,11 @@ cancelAll(reason)                // every running test (server or CLI shutting d
 createRunContext({id, source})   // the cancel switch itself; runSiteTest makes one per test, Watch shares one across a check + its confirming re-run
 // queue.js
 enqueue(fn, {priority, group, source}) ; getQueueState()  // -> {maxParallel, running, queued, bySource, groups}
+
+// goals.js (pure): PACKS {shop,saas,content,local} -> {label, siteLabel, tasks (default order), quick (two key tasks)}
+// TASK_GOALS / TASK_LABELS for all 16 task ids, buildGoal(taskId, customText), normalisePack('shopping' -> 'shop'),
+// packOfTask(id), packForTasks(ids), defaultTasksFor(pack), packSiteLabel(pack)   (D40; shop ids and wording are unchanged)
+// packs.js (pure): detectPack(instantScan, pageText?) -> PackId ; autoPack(scan) -> {pack, detected} (shop when the scan read nothing)
 
 // scoring.js (pure functions, no I/O)
 scoreTask(taskResult)                       // -> {points, findings}
@@ -204,7 +211,7 @@ detectFramework(page)                       // Playwright page -> 'nextjs'|'shop
 
 ## 7. Scoring (`scoring.js`)
 
-Each task max 25, total 100 (custom task scored separately, not in the 100). When fewer than 4 tasks run (CLI `--tasks`, a 1-task Watch), the total is scaled to 100: `round(sum * 4 / tasksRun)`.
+Each task max 25, total 100 for any pack (custom task scored separately, not in the 100; a replay placeholder task, see section 17, is not counted either). When fewer than 4 tasks run (CLI `--tasks`, a 1-task Watch), the total is scaled to 100: `round(sum * 4 / tasksRun)`. The point rules are the same for every task in every pack. The 12 new fail findings (D40) use the same shape as the shop ones: a site cause, a fix, a standard and a pass check, never "the agent got confused" (D22). Their goal wording is **untested on live agents** until `docs/PACK-LIVE-TEST.md` has been run.
 
 | Rule | Points |
 |---|---|
@@ -225,6 +232,18 @@ Findings created by scoring (others come from Instant Scan):
 | failed, task `find_price` | `price-not-found` | high |
 | failed, task `find_returns` | `returns-not-found` | medium |
 | failed, task `find_contact` | `contact-not-found` | medium |
+| failed, task `find_pricing_plans` (saas) | `pricing-not-found` | high |
+| failed, task `reach_signup` (saas) | `signup-not-found` | high |
+| failed, task `find_docs` (saas) | `docs-not-found` | medium |
+| failed, task `contact_sales` (saas) | `sales-contact-not-found` | medium |
+| failed, task `search_topic` (content) | `search-not-found` | medium |
+| failed, task `read_article` (content) | `article-not-readable` | high |
+| failed, task `find_newsletter` (content) | `newsletter-not-found` | low |
+| failed, task `find_author_contact` (content) | `author-contact-not-found` | low |
+| failed, task `find_hours` (local) | `hours-not-found` | high |
+| failed, task `find_location` (local) | `location-not-found` | high |
+| failed, task `find_menu_or_services` (local) | `menu-not-found` | medium |
+| failed, task `reach_booking` (local) | `booking-not-found` | high |
 | used web search | `needed-web-search` | medium |
 | >10 steps | `too-many-steps` | medium |
 | >=180 s | `slow` | low |
@@ -236,7 +255,7 @@ Answer checks (D28, findings only: they never fail a task or change points; `poi
 | `add_to_cart` passed and the answer or a step label states a quantity above 1 ("quantity: 2", "2 units", "x3") | `wrong-quantity` | medium |
 | `find_price`/`add_to_cart` passed, answer quotes a dollar price with no rupee sign, and the site shows rupees (Instant Scan `priceAsText`, or the agent's own step labels contain ₹/Rs) | `currency-mismatch` | low |
 
-A `cancelled` task scores 0 points and has no findings.
+The answer checks are shop-only (they look at `find_price` / `add_to_cart` answers). A `cancelled` task scores 0 points and has no findings.
 
 `pointsIfFixed` = points the task would gain if the finding disappeared (e.g. failed -> passed in 5 steps = up to +25).
 `costRupees = totalSteps * 0.016 * 88` (all attempts included).
@@ -254,10 +273,11 @@ Run in parallel:
   - `overlayCoveringPage`: any visible element with `position: fixed|sticky` covering >30% of the viewport.
   - `productSchema`: any `script[type="application/ld+json"]` containing `Product` or `Offer`.
   - `framework`: `detectFramework(page)`.
+  - `schemaTypes` and `keywordHits` (D40): the schema.org `@type` names in the JSON-LD, and how often words for cart, pricing, sign-up, docs, article, newsletter, hours, booking and menu appear in the page text (each count capped at 20). Same page evaluate, no extra cost. `detectPack(scan)` (`packs.js`, pure) turns them into a pack: product schema, Add to cart or price text score for `shop`; software schema, pricing/sign-up/docs words for `saas`; article schema, blog/newsletter words for `content`; LocalBusiness schema, opening hours, reserve/appointment/menu words for `local`. Highest score wins; no signal or a tie goes to `content`, then `saas`, `local`, `shop` (shop wins only through product signals). A scan that read nothing means "auto" falls back to `shop`.
 - Then open one same-origin product link from the home page (`/product`, `/products/`, `/p/`, `/dp/`, 12 s cap) and run the same audit there; counts add up, a problem on either page counts. Many flaws (icon-only Add to cart, price images) live on product pages.
 - robots.txt / sitemap that Fetch could not read are reported as `missing`; `error` only when the whole Fetch call failed.
-- Always `closeBrowserSession` in `finally`. Instant Scan findings: `popup-blocking`, `unlabelled-buttons`, `price-in-image` (no price text but price expected), `no-product-schema` (low severity).
-- The server stores them as `SiteReport.scanFindings` (`instantScanFindings(scan)`) as soon as the scan finishes. They are not part of the 100-point score (`pointsIfFixed: 0`), are shown in the findings list next to task findings, and can enter the Top 3 (D25).
+- Always `closeBrowserSession` in `finally`. Instant Scan findings: `popup-blocking`, `unlabelled-buttons`, `price-in-image` (no price text but price expected), `no-product-schema` (low severity). The last two are shop-only: `instantScanFindings(scan, pack)` never flags a blog, SaaS or local site for "no price" (D40).
+- The server stores them as `SiteReport.scanFindings` (`instantScanFindings(scan, pack)`) as soon as the scan finishes. They are not part of the 100-point score (`pointsIfFixed: 0`), are shown in the findings list next to task findings, and can enter the Top 3 (D25).
 
 ---
 

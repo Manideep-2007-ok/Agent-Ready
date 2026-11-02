@@ -3,7 +3,19 @@
 // Editors and coding agents read these @typedefs; import them with:
 //   /** @typedef {import('@agentready/engine/types').SiteReport} SiteReport */
 
-/** @typedef {'find_price'|'add_to_cart'|'find_returns'|'find_contact'|'custom'} TaskId */
+/**
+ * shop: find_price, add_to_cart, find_returns, find_contact. saas: find_pricing_plans, reach_signup, find_docs, contact_sales.
+ * content: search_topic, read_article, find_newsletter, find_author_contact. local: find_hours, find_location,
+ * find_menu_or_services, reach_booking. 'custom' is the user's own task (scored separately, not in the 100).
+ * @typedef {'find_price'|'add_to_cart'|'find_returns'|'find_contact'
+ *   |'find_pricing_plans'|'reach_signup'|'find_docs'|'contact_sales'
+ *   |'search_topic'|'read_article'|'find_newsletter'|'find_author_contact'
+ *   |'find_hours'|'find_location'|'find_menu_or_services'|'reach_booking'|'custom'} TaskId
+ */
+/**
+ * Task pack = the kind of site a test is written for (D40). Reports made before packs existed say 'shopping' (= 'shop').
+ * @typedef {'shop'|'saas'|'content'|'local'} PackId
+ */
 /** @typedef {'lite'|'stealth'} BrowserMode */
 /** @typedef {'off'|'IN'|'US'} ProxySetting */
 /** @typedef {'queued'|'running'|'passed'|'failed'|'blocked'|'cancelled'} TaskStatus   cancelled = the test was stopped (final, never retried) */
@@ -15,7 +27,10 @@
 /**
  * @typedef {'blocks-cloud-agents'|'blocks-automation'|'site-broken'|'needed-web-search'|'cart-not-found'
  *   |'price-not-found'|'returns-not-found'|'contact-not-found'|'too-many-steps'|'slow'|'popup-blocking'
- *   |'unlabelled-buttons'|'price-in-image'|'no-product-schema'|'wrong-quantity'|'currency-mismatch'} FindingType
+ *   |'unlabelled-buttons'|'price-in-image'|'no-product-schema'|'wrong-quantity'|'currency-mismatch'
+ *   |'pricing-not-found'|'signup-not-found'|'docs-not-found'|'sales-contact-not-found'
+ *   |'search-not-found'|'article-not-readable'|'newsletter-not-found'|'author-contact-not-found'
+ *   |'hours-not-found'|'location-not-found'|'menu-not-found'|'booking-not-found'} FindingType
  */
 
 /**
@@ -110,6 +125,8 @@
  * @property {'found'|'missing'|'error'} sitemap
  * @property {Framework} framework
  * @property {number} seconds
+ * @property {string[]} [schemaTypes]   schema.org @type names found in JSON-LD (used by detectPack)
+ * @property {Record<string,number>} [keywordHits]  how often cart, pricing, signup, docs, article, newsletter, hours, booking and menu words appear (used by detectPack)
  */
 
 /**
@@ -118,7 +135,8 @@
  * @property {string} url
  * @property {ReportSource} source
  * @property {string} testedAt          ISO
- * @property {'shopping'} pack
+ * @property {PackId} pack             kind of site tested (older reports say 'shopping' = shop; read it with normalisePack)
+ * @property {string} [customText]      the custom task's text, when one was run
  * @property {'running'|'complete'|'cancelled'} status   cancelled = stopped by the user (no score)
  * @property {number} score             0-100
  * @property {BotWallVerdict} botWall
@@ -146,6 +164,7 @@
  * @property {string} id
  * @property {string} url
  * @property {TaskId[]} tasks
+ * @property {PackId} [pack]            pack the tasks came from (older watches have none: shop)
  * @property {number} everyMinutes
  * @property {boolean} enabled
  * @property {string} createdAt
@@ -153,9 +172,19 @@
  * @property {boolean} failing
  */
 
-export const TASK_IDS = /** @type {const} */ (['find_price', 'add_to_cart', 'find_returns', 'find_contact', 'custom']);
+export const TASK_IDS = /** @type {const} */ ([
+  'find_price', 'add_to_cart', 'find_returns', 'find_contact',
+  'find_pricing_plans', 'reach_signup', 'find_docs', 'contact_sales',
+  'search_topic', 'read_article', 'find_newsletter', 'find_author_contact',
+  'find_hours', 'find_location', 'find_menu_or_services', 'reach_booking',
+  'custom',
+]);
 export const FINDING_TYPES = /** @type {const} */ ([
   'blocks-cloud-agents', 'blocks-automation', 'site-broken', 'needed-web-search', 'cart-not-found',
   'price-not-found', 'returns-not-found', 'contact-not-found', 'too-many-steps', 'slow', 'popup-blocking',
   'unlabelled-buttons', 'price-in-image', 'no-product-schema', 'wrong-quantity', 'currency-mismatch',
+  'pricing-not-found', 'signup-not-found', 'docs-not-found', 'sales-contact-not-found',
+  'search-not-found', 'article-not-readable', 'newsletter-not-found', 'author-contact-not-found',
+  'hours-not-found', 'location-not-found', 'menu-not-found', 'booking-not-found',
 ]);
+export const PACK_ID_LIST = /** @type {const} */ (['shop', 'saas', 'content', 'local']);

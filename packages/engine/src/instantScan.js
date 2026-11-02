@@ -4,6 +4,8 @@ import { chromium } from 'playwright-core';
 import { config } from './config.js';
 import { fetchPages, createBrowserSession, closeBrowserSession } from './tinyfish.js';
 import { detectFramework, FIX_TEMPLATES } from './fixes.js';
+import { KEYWORD_SOURCES, KEYWORD_CAP } from './packs.js';
+import { normalisePack } from './goals.js';
 
 /** @typedef {import('./types.js').InstantScan} InstantScan */
 /** @typedef {import('./types.js').Finding} Finding */
@@ -19,7 +21,8 @@ const withTimeout = (p, ms, label) => {
 
 /** The in-page audit. Exported so it can be tested against any Playwright page. */
 export async function auditPage(page) {
-  return page.evaluate(() => {
+  // The keyword patterns are shared with detectPack (packs.js); they travel into the page as text.
+  return page.evaluate(({ sources, cap }) => {
     const visible = (el) => {
       const r = el.getBoundingClientRect();
       const s = getComputedStyle(el);
@@ -45,12 +48,18 @@ export async function auditPage(page) {
       const h = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0));
       if ((w * h) / (vw * vh) > 0.3) { overlayCoveringPage = true; break; }
     }
-    const productSchema = [...document.querySelectorAll('script[type="application/ld+json"]')].some((s) => /Product|Offer/.test(s.textContent || ''));
+    const ld = [...document.querySelectorAll('script[type="application/ld+json"]')].map((s) => s.textContent || '');
+    const productSchema = ld.some((t) => /Product|Offer/.test(t));
+    // Same reading as schemaTypesFromJsonLd (packs.js), written out here because a page may forbid eval/new Function.
+    const schemaTypes = [...new Set(ld.flatMap((t) => [...t.matchAll(/"@type"\s*:\s*(\[[^\]]*\]|"[^"]*")/g)].flatMap((m) => [...m[1].matchAll(/"([^"]+)"/g)].map((n) => n[1].replace(/^.*[/#]/, '')))))];
+    const lower = text.toLowerCase();
+    const keywordHits = {};
+    for (const [key, source] of Object.entries(sources)) keywordHits[key] = Math.min(cap, (lower.match(new RegExp(source, 'g')) || []).length);
     return {
       unlabelledButtons, totalButtonsAndLinks: controls.length, imagesWithoutAlt, totalImages: imgs.length,
-      priceAsText: /₹\s?\d|Rs\.?\s?\d|INR\s?\d/.test(text), overlayCoveringPage, productSchema,
+      priceAsText: /₹\s?\d|Rs\.?\s?\d|INR\s?\d/.test(text), overlayCoveringPage, productSchema, schemaTypes, keywordHits,
     };
-  });
+  }, { sources: KEYWORD_SOURCES, cap: KEYWORD_CAP });
 }
 
 // Fetch answered for this URL but had no content (404, empty, blocked): call it "missing" in plain words.
@@ -106,6 +115,8 @@ function mergeAudits(home, product) {
     priceAsText: home.priceAsText || product.priceAsText,
     overlayCoveringPage: home.overlayCoveringPage || product.overlayCoveringPage,
     productSchema: home.productSchema || product.productSchema,
+    schemaTypes: [...new Set([...(home.schemaTypes || []), ...(product.schemaTypes || [])])],
+    keywordHits: Object.fromEntries(Object.keys({ ...home.keywordHits, ...product.keywordHits }).map((k) => [k, Math.min(KEYWORD_CAP, (home.keywordHits?.[k] || 0) + (product.keywordHits?.[k] || 0))])),
   };
 }
 
@@ -120,7 +131,7 @@ export async function auditSite(page, url) {
   return { ...mergeAudits(home, product), framework };
 }
 
-const BROWSER_DEFAULTS = { unlabelledButtons: 0, totalButtonsAndLinks: 0, imagesWithoutAlt: 0, totalImages: 0, priceAsText: false, overlayCoveringPage: false, productSchema: false, framework: 'unknown' };
+const BROWSER_DEFAULTS = { unlabelledButtons: 0, totalButtonsAndLinks: 0, imagesWithoutAlt: 0, totalImages: 0, priceAsText: false, overlayCoveringPage: false, productSchema: false, framework: 'unknown', schemaTypes: [], keywordHits: {} };
 
 async function browserPart(url) {
   let session = null, browser = null, timedOut = false;
@@ -156,15 +167,17 @@ async function browserPart(url) {
   }
 }
 
+// Replay scans of the recorded shops: they mention Add to cart, so detectPack calls them shops.
+const SHOP_HITS = { cart: 6, pricing: 0, signup: 0, docs: 0, article: 0, newsletter: 0, hours: 0, booking: 0, menu: 0 };
 const MOCKS = {
-  nykaa: { pageTextChars: 284, unlabelledButtons: 41, totalButtonsAndLinks: 230, imagesWithoutAlt: 18, totalImages: 26, priceAsText: true, overlayCoveringPage: true, productSchema: false, robotsTxt: 'found', sitemap: 'found', framework: 'unknown' },
-  myntra: { pageTextChars: 3100, unlabelledButtons: 515, totalButtonsAndLinks: 619, imagesWithoutAlt: 12, totalImages: 12, priceAsText: true, overlayCoveringPage: false, productSchema: false, robotsTxt: 'found', sitemap: 'found', framework: 'unknown' },
+  nykaa: { pageTextChars: 284, unlabelledButtons: 41, totalButtonsAndLinks: 230, imagesWithoutAlt: 18, totalImages: 26, priceAsText: true, overlayCoveringPage: true, productSchema: false, robotsTxt: 'found', sitemap: 'found', framework: 'unknown', schemaTypes: [], keywordHits: SHOP_HITS },
+  myntra: { pageTextChars: 3100, unlabelledButtons: 515, totalButtonsAndLinks: 619, imagesWithoutAlt: 12, totalImages: 12, priceAsText: true, overlayCoveringPage: false, productSchema: false, robotsTxt: 'found', sitemap: 'found', framework: 'unknown', schemaTypes: [], keywordHits: SHOP_HITS },
   // example.com: one link, no images, no price, no robots.txt.
-  example: { pageTextChars: 230, unlabelledButtons: 0, totalButtonsAndLinks: 1, imagesWithoutAlt: 0, totalImages: 0, priceAsText: false, overlayCoveringPage: false, productSchema: false, robotsTxt: 'missing', sitemap: 'missing', framework: 'unknown' },
+  example: { pageTextChars: 230, unlabelledButtons: 0, totalButtonsAndLinks: 1, imagesWithoutAlt: 0, totalImages: 0, priceAsText: false, overlayCoveringPage: false, productSchema: false, robotsTxt: 'missing', sitemap: 'missing', framework: 'unknown', schemaTypes: [], keywordHits: {} },
   // Demo store (apps/demo-store) with ?flaws=on, home + one product page: popup, prices as images without alt,
   // icon-only Add to cart button (product page; the icon cart link still shows a number).
-  demoFlawed: { pageTextChars: 520, unlabelledButtons: 1, totalButtonsAndLinks: 23, imagesWithoutAlt: 7, totalImages: 7, priceAsText: false, overlayCoveringPage: true, productSchema: false, robotsTxt: 'missing', sitemap: 'missing', framework: 'unknown' },
-  clean: { pageTextChars: 1800, unlabelledButtons: 0, totalButtonsAndLinks: 25, imagesWithoutAlt: 0, totalImages: 6, priceAsText: true, overlayCoveringPage: false, productSchema: true, robotsTxt: 'found', sitemap: 'missing', framework: 'unknown' },
+  demoFlawed: { pageTextChars: 520, unlabelledButtons: 1, totalButtonsAndLinks: 23, imagesWithoutAlt: 7, totalImages: 7, priceAsText: false, overlayCoveringPage: true, productSchema: false, robotsTxt: 'missing', sitemap: 'missing', framework: 'unknown', schemaTypes: [], keywordHits: SHOP_HITS },
+  clean: { pageTextChars: 1800, unlabelledButtons: 0, totalButtonsAndLinks: 25, imagesWithoutAlt: 0, totalImages: 6, priceAsText: true, overlayCoveringPage: false, productSchema: true, robotsTxt: 'found', sitemap: 'missing', framework: 'unknown', schemaTypes: ['Product', 'Offer'], keywordHits: SHOP_HITS },
 };
 
 /**
@@ -192,10 +205,13 @@ export async function instantScan(url) {
 
 /**
  * Findings from an Instant Scan. Not part of the 100-point score, so pointsIfFixed is 0.
+ * Price and product-data findings only make sense for shops: a blog or a SaaS site is not flagged for "no price" (D40).
  * @param {InstantScan} scan
+ * @param {import('./types.js').PackId|string} [pack]  the pack the site is tested as; default shop (what every earlier caller meant)
  * @returns {Finding[]}
  */
-export function instantScanFindings(scan) {
+export function instantScanFindings(scan, pack = 'shop') {
+  const isShop = (normalisePack(pack) ?? 'shop') === 'shop';
   if (!scan) return [];
   const mk = (type, severity, text) => {
     const t = FIX_TEMPLATES[type] || {};
@@ -211,7 +227,7 @@ export function instantScanFindings(scan) {
     out.push(mk('unlabelled-buttons', pct > 0.2 ? 'high' : 'medium', `${scan.unlabelledButtons} of ${scan.totalButtonsAndLinks} buttons and links have no text or label, so an AI shopper cannot tell what they do (WCAG 4.1.2 Name, Role, Value).`));
   }
   // Only when the page has images (a price could be drawn in one); a text-only page like example.com has no price at all.
-  if (!scan.priceAsText && (scan.totalImages || 0) > 0) out.push(mk('price-in-image', 'high', 'No price was found as text on the page; it may be drawn inside an image, which AI shoppers cannot read.'));
-  if (!scan.productSchema) out.push(mk('no-product-schema', 'low', 'The page has no schema.org Product data, so agents must guess product details from the page layout.'));
+  if (isShop && !scan.priceAsText && (scan.totalImages || 0) > 0) out.push(mk('price-in-image', 'high', 'No price was found as text on the page; it may be drawn inside an image, which AI shoppers cannot read.'));
+  if (isShop && !scan.productSchema) out.push(mk('no-product-schema', 'low', 'The page has no schema.org Product data, so agents must guess product details from the page layout.'));
   return out;
 }
