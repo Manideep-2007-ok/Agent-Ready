@@ -1,5 +1,6 @@
 // Input checks shared by every route. Each throws an error with a status and a plain-language message.
 import { TASK_IDS } from '@agentready/engine/types';
+import { PACK_IDS, SHOP_TASKS } from '@agentready/engine/goals';
 import { config } from './config.js';
 
 export const MAX_URL_LENGTH = 2048;
@@ -64,14 +65,26 @@ export function parseSiteUrl(input) {
   return url.toString();
 }
 
+/**
+ * The kind of site (a task pack), or 'auto' (let the Instant Scan decide). Undefined stays undefined.
+ * @param {unknown} value
+ * @param {{allowAuto?: boolean}} [opts]
+ */
+export function parsePack(value, { allowAuto = true } = {}) {
+  if (value === undefined || value === null || value === '') return undefined;
+  const allowed = allowAuto ? ['auto', ...PACK_IDS] : PACK_IDS;
+  if (typeof value !== 'string' || !allowed.includes(value)) throw httpError(400, `pack must be one of: ${allowed.join(', ')}`);
+  return value;
+}
+
 /** A list of scored task ids (no custom: that has its own field). Undefined stays undefined; duplicates are dropped. */
 export function parseTasks(tasks, { required = false } = {}) {
   if (tasks === undefined || tasks === null) {
-    if (required) throw httpError(400, `tasks must be a list of: ${SCORED_TASKS.join(', ')}`);
+    if (required) throw httpError(400, `tasks must be a list of task ids from any pack: ${SCORED_TASKS.join(', ')}`);
     return undefined;
   }
   if (!Array.isArray(tasks) || !tasks.length || tasks.some((t) => !SCORED_TASKS.includes(t))) {
-    throw httpError(400, `tasks must be a list of: ${SCORED_TASKS.join(', ')}`);
+    throw httpError(400, `tasks must be a list of task ids from any pack: ${SCORED_TASKS.join(', ')}`);
   }
   return [...new Set(tasks)];
 }

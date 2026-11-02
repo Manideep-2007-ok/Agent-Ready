@@ -137,6 +137,8 @@
  * @property {string} testedAt          ISO
  * @property {PackId} pack             kind of site tested (older reports say 'shopping' = shop; read it with normalisePack)
  * @property {string} [customText]      the custom task's text, when one was run
+ * @property {boolean} [packDetected]    pack 'auto': true when the Instant Scan chose the pack, false when it could not read the page and shop was used
+ * @property {boolean} [detectingPack]  pack 'auto': true while the Instant Scan is still choosing (no lanes yet); removed once chosen
  * @property {'running'|'complete'|'cancelled'} status   cancelled = stopped by the user (no score)
  * @property {number} score             0-100
  * @property {BotWallVerdict} botWall
@@ -154,6 +156,7 @@
  *   |{type:'step',reportId:string,taskId:TaskId,step:Step}
  *   |{type:'streaming-url',reportId:string,taskId:TaskId,url:string}
  *   |{type:'instant-scan',reportId:string,scan:InstantScan}
+ *   |{type:'pack-detected',reportId:string,pack:PackId,detected:boolean}
  *   |{type:'report-complete',reportId:string,report:SiteReport}
  *   |{type:'watch-alert',watchId:string,message:string,lastGood:SiteReport|null,current:SiteReport}
  *   |{type:'watch-recovered',watchId:string,message:string,current:SiteReport}} LiveEvent

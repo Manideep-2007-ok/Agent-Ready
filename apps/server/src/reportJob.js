@@ -1,6 +1,7 @@
 // Starts a site test in the background and turns engine events into dashboard (SSE) events.
 // Shared by POST /api/tests and Race Mode, so both behave the same.
-import { DEFAULT_TASK_ORDER } from '@agentready/engine/goals';
+import { defaultTasksFor, normalisePack, packForTasks } from '@agentready/engine/goals';
+import { config } from './config.js';
 import * as store from './store.js';
 import { logEvent, safeUrl } from './log.js';
 import { httpError } from './validate.js';
@@ -25,6 +26,18 @@ let pendingStarts = 0;
 /** Is this report still being worked on by this process? */
 export const isJobActive = (id) => activeJobs.has(id);
 
+// Tests with pack 'auto' wait for the Instant Scan before any agent starts. No engine cancel switch exists yet at that
+// point, so Stop is handled here: it ends the wait and the test becomes 'cancelled' with nothing spent on agents.
+const detecting = new Map(); // report id -> function that ends the wait
+/** Stop a test that is still detecting its pack. @returns {boolean} true when there was one */
+export function cancelDetection(id) {
+  const stop = detecting.get(id);
+  if (!stop) return false;
+  detecting.delete(id);
+  stop();
+  return true;
+}
+
 const slug = (url) => new URL(url).hostname.replace(/^www\./, '').split('.')[0].replace(/[^\w]/g, '') || 'site';
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -38,7 +51,9 @@ async function newReportId(url) {
 }
 
 /**
- * @param {{url:string, tasks?:string[], customText?:string, source?:string, instantScan?:boolean}} request
+ * `pack`: a pack id, or 'auto' = the Instant Scan decides which pack fits (live mode only; replay mode has shop recordings
+ * only, so auto means shop there). Explicit `tasks` win over everything and name the pack too. Neither: shop.
+ * @param {{url:string, tasks?:string[], pack?:string, customText?:string, source?:string, instantScan?:boolean}} request
  * @param {{engine:any, events:{publish:Function}}} deps
  * @returns {Promise<string>} the new report id (the test keeps running after this returns)
  */
@@ -51,15 +66,19 @@ export async function startReport(request, { engine, events }) {
     throw httpError(429, `${limit} tests are already running. Please wait for one to finish (or stop one) and try again.`);
   }
   pendingStarts++; // held until the report has an id and is in activeJobs
+  const explicitTasks = request.tasks?.filter((t) => t !== 'custom');
+  // Auto-detect needs the scan before the agents start, so it only applies when nothing else names the pack or the tasks.
+  const detectPack = request.pack === 'auto' && !explicitTasks?.length && instantScan && !config.mock;
+  const pack = normalisePack(request.pack) ?? (explicitTasks?.length ? packForTasks(explicitTasks) : 'shop');
   let report;
   try {
-    report = await createRunningReport(request);
+    report = await createRunningReport({ ...request, pack, detectingPack: detectPack });
     activeJobs.add(report.id);
   } finally {
     pendingStarts--;
   }
-  const tasks = request.tasks?.length ? request.tasks : [...DEFAULT_TASK_ORDER];
-  logEvent('test.start', { id: report.id, host: safeUrl(url), source, tasks: tasks.length + (customText ? 1 : 0) });
+  const tasks = explicitTasks?.length ? explicitTasks : detectPack ? null : defaultTasksFor(pack);
+  logEvent('test.start', { id: report.id, host: safeUrl(url), source, pack: detectPack ? 'auto' : pack, tasks: (tasks?.length ?? 4) + (customText ? 1 : 0) });
 
   // Not awaited: the dashboard gets the id now and follows progress over SSE.
   runInBackground(report, { tasks, customText, instantScan }, { engine, events })
@@ -72,14 +91,16 @@ export async function startReport(request, { engine, events }) {
 }
 
 /** Save the "running" report the dashboard opens while the agents work. */
-async function createRunningReport({ url, source = 'web' }) {
+async function createRunningReport({ url, source = 'web', pack = 'shop', customText, detectingPack = false }) {
   /** @type {SiteReport} */
   const report = {
     id: await newReportId(url),
     url,
     source,
     testedAt: new Date().toISOString(),
-    pack: 'shopping',
+    pack,
+    ...(detectingPack ? { detectingPack: true } : {}),
+    ...(customText ? { customText } : {}),
     status: 'running',
     score: 0,
     botWall: 'none',
@@ -94,6 +115,7 @@ async function createRunningReport({ url, source = 'web' }) {
 }
 
 async function runInBackground(report, { tasks, customText, instantScan }, { engine, events }) {
+  // tasks === null: the pack is still to be detected from the Instant Scan (below).
   const reportId = report.id;
   const startedAt = Date.now();
   const save = () => store.saveReport(report).catch((err) => console.error(`[${reportId}] save failed:`, err));
@@ -134,23 +156,53 @@ async function runInBackground(report, { tasks, customText, instantScan }, { eng
     }
   };
 
+  // Price and product-data findings are shop-only, so the scan findings depend on the pack (D40).
+  const applyScanFindings = () => {
+    report.scanFindings = engine.instantScanFindings?.(report.instantScan, report.pack) ?? [];
+    // A stopped test keeps no Top fixes (D29), even when its scan finishes after the stop.
+    if (report.status !== 'cancelled') report.topFixes = rankTopFixes(report, engine);
+  };
   const scan = instantScan
     ? engine
         .instantScan(report.url)
         .then((result) => {
           report.instantScan = result;
-          report.scanFindings = engine.instantScanFindings?.(result) ?? [];
-          // A stopped test keeps no Top fixes (D29), even when its scan finishes after the stop.
-          if (report.status !== 'cancelled') report.topFixes = rankTopFixes(report, engine);
+          applyScanFindings();
           save();
           events.publish({ type: 'instant-scan', reportId, scan: result });
+          return result;
         })
-        .catch((err) => console.error(`[${reportId}] instant scan failed:`, err.message))
-    : Promise.resolve();
+        .catch((err) => { console.error(`[${reportId}] instant scan failed:`, err.message); return null; })
+    : Promise.resolve(null);
+
+  // pack 'auto': wait for the scan, then pick the pack that fits (shop when the scan read nothing), tell the dashboard.
+  if (!tasks) {
+    let stop;
+    const stopped = new Promise((resolve) => { stop = () => resolve('stopped'); });
+    detecting.set(reportId, stop);
+    const scanned = await Promise.race([scan, stopped]).finally(() => detecting.delete(reportId));
+    if (scanned === 'stopped') {
+      delete report.detectingPack;
+      Object.assign(report, { status: 'cancelled', score: 0, topFixes: [], tasks: [] });
+      await save();
+      events.publish({ type: 'report-complete', reportId, report });
+      logEvent('test.cancelled', { id: reportId, status: 'cancelled', score: 0, costRupees: 0, seconds: Math.round((Date.now() - startedAt) / 1000), botWall: 'none' });
+      return;
+    }
+    const { pack, detected } = engine.autoPack(scanned);
+    report.pack = pack;
+    report.packDetected = detected;
+    delete report.detectingPack;
+    tasks = defaultTasksFor(pack);
+    if (report.instantScan) applyScanFindings();
+    await save();
+    events.publish({ type: 'pack-detected', reportId, pack, detected });
+    logEvent('test.pack', { id: reportId, pack, detected });
+  }
 
   let result;
   try {
-    result = await engine.runSiteTest({ id: reportId, url: report.url, tasks, customText, source: report.source }, onEvent);
+    result = await engine.runSiteTest({ id: reportId, url: report.url, tasks, pack: report.pack, customText, source: report.source }, onEvent);
   } catch (err) {
     logEvent('test.error', { id: reportId, message: err.message });
     console.error(`[${reportId}] runSiteTest failed:`, err.message);

@@ -2,12 +2,13 @@
 // Errors are thrown with a status (validate.js) and turned into plain JSON by the error handler in index.js.
 import { Router } from 'express';
 import crypto from 'node:crypto';
-import { DEFAULT_TASK_ORDER } from '@agentready/engine';
+import { defaultTasksFor, packForTasks } from '@agentready/engine/goals';
 import { config } from '../config.js';
 import { subscribe } from '../events.js';
 import { assertReplayable } from '../replay.js';
 import { rateLimit } from '../rateLimit.js';
-import { MAX_WATCHES, assertSafeId, httpError, parseEveryMinutes, parseSiteUrl, parseTasks } from '../validate.js';
+import { MAX_WATCHES, assertSafeId, httpError, parseEveryMinutes, parseSiteUrl, parseTasks, parsePack } from '../validate.js';
+import { assertReplayPack } from '../replay.js';
 import { errorHandler } from '../errors.js';
 import { listWatches, getWatch, createWatch, updateWatch, getHistory, runCheck, isRunning, cancelCheck } from '../watch.js';
 
@@ -34,9 +35,13 @@ router.post('/', rateLimit('watch-create'), handle(async (req, res) => {
   const url = parseSiteUrl(body.url);
   assertReplayable(url);
   const everyMinutes = parseEveryMinutes(body.everyMinutes);
-  const tasks = parseTasks(body.tasks) ?? DEFAULT_TASK_ORDER;
+  // A watch needs a fixed list of tasks, so 'auto' is not an option here: pick a pack or the tasks themselves.
+  const pack = parsePack(body.pack, { allowAuto: false });
+  const given = parseTasks(body.tasks);
+  assertReplayPack(pack, given);
+  const tasks = given ?? defaultTasksFor(pack ?? 'shop');
   if ((await listWatches()).length >= MAX_WATCHES) throw httpError(400, `You can watch up to ${MAX_WATCHES} sites. Pause or remove one first.`);
-  res.status(201).json(await createWatch({ url, everyMinutes, tasks }));
+  res.status(201).json(await createWatch({ url, everyMinutes, tasks, pack: pack ?? packForTasks(tasks) }));
 }));
 
 router.post('/:id/run-now', rateLimit('watch-run'), handle(async (req, res) => {

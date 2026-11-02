@@ -82,3 +82,19 @@ test('replay guards (live mode: no restriction)', async () => {
   assert.equal(replay.hasRecording('https://www.flipkart.com'), false);
   assert.equal(replay.hasRecording('not a url'), false);
 });
+
+test('parsePack: a pack id, auto, or nothing; anything else is a plain 400', () => {
+  assert.equal(v.parsePack(undefined), undefined);
+  assert.equal(v.parsePack(''), undefined);
+  for (const p of ['auto', 'shop', 'saas', 'content', 'local']) assert.equal(v.parsePack(p), p);
+  rejects(() => v.parsePack('blog'), /pack must be one of: auto, shop, saas, content, local/);
+  rejects(() => v.parsePack(['saas']), /pack must be one of/);
+  rejects(() => v.parsePack('auto', { allowAuto: false }), /pack must be one of: shop, saas, content, local/);
+});
+
+test('parseTasks takes ids from any pack, drops duplicates, refuses custom and unknown ids', () => {
+  assert.deepEqual(v.parseTasks(['find_docs', 'find_price', 'find_docs', 'reach_booking']), ['find_docs', 'find_price', 'reach_booking']);
+  rejects(() => v.parseTasks(['custom']), /tasks must be a list of task ids from any pack/);
+  rejects(() => v.parseTasks(['find_docs', 'nope']), /tasks must be a list/);
+  assert.equal(v.SCORED_TASKS.length, 16);
+});

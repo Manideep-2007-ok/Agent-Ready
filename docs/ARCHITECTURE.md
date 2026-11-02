@@ -298,7 +298,7 @@ For each finding:
 | Method + path | Body / query | Returns |
 |---|---|---|
 | `GET /api/health` | | `{ok, version, mock, demoStoreUrl, features:{RACE,WATCH,FIXES_AI,CUSTOM_TASK,LEADERBOARD,CLI_UPLOAD}, queue:{maxParallel,running,queued,bySource,groups}, activeTests}` (`demoStoreUrl` is null when not set; the dashboard hides the Race and Leaderboard tabs when their flag is false) |
-| `POST /api/tests` | `{url, tasks?, customTask?}` | `{reportId}`; starts Instant Scan + test in background |
+| `POST /api/tests` | `{url, pack?, tasks?, customTask?}` | `{reportId}`; starts Instant Scan + test in background. `pack` = `auto`, `shop`, `saas`, `content` or `local` (D40; omitted = shop). `tasks` may be ids from any pack and name the pack themselves. `auto` runs the Instant Scan first, picks the pack (SSE `pack-detected`, report `pack` + `packDetected`; `detectingPack: true` until then) and runs that pack's four tasks. In replay mode only shop tasks are accepted (400 otherwise); `auto` means shop there |
 | `GET /api/tests/:id` | | `SiteReport` (includes `scanFindings` once the Instant Scan is done) |
 | `GET /api/tests/:id/events` | | SSE `LiveEvent` stream; first message replays current report |
 | `POST /api/tests/:id/cancel` | | `{ok, cancelled, status}`; stops a running test or Watch check (idempotent, 404 for unknown ids). Report ends with status `cancelled` |
@@ -306,12 +306,12 @@ For each finding:
 | `POST /api/instant-scan` | `{url}` | `InstantScan` |
 | `GET /api/shot/:runId/:stepId` | | JPEG (cached to `data/shots/`) |
 | `POST /api/reports/:id/fixes` | | enriched `SiteReport` |
-| `POST /api/reports` | `SiteReport` (from the CLI) | `201 {reportId}`; keeps the CLI's id, `409` if a web/watch report uses it; flag `CLI_UPLOAD` |
-| `POST /api/race` | `{taskId, urls}` (max 3) | `{raceId}` |
+| `POST /api/reports` | `SiteReport` (from the CLI; `pack` is checked, older `'shopping'` is stored as `shop`) | `201 {reportId}`; keeps the CLI's id, `409` if a web/watch report uses it; flag `CLI_UPLOAD` |
+| `POST /api/race` | `{taskId, urls}` (max 3) | `{raceId}`; `taskId` is one task id from any pack |
 | `GET /api/race/:id` | | race state: `{id, taskId, lanes:[{url, reportId, report, task}], rank:[{reportId, place}]}`; `rank` = passed sites, fewest steps first, then fastest |
 | `POST /api/race/:id/cancel` | | `{ok, cancelled}`; stops every site of the race (idempotent, 404 unknown id). In replay mode `POST /api/race` refuses sites with no recording (400, plain message) |
 | `GET /api/watch` | | `Watch[]` |
-| `POST /api/watch` | `{url, everyMinutes, tasks}` | `Watch` |
+| `POST /api/watch` | `{url, everyMinutes, pack?, tasks?}` | `Watch`. `pack` (not `auto`) picks the default tasks; `tasks` may come from any pack. The watch stores its `pack` |
 | `POST /api/watch/:id/run-now` | | `{reportId}` (409 if a check is already running) |
 | `POST /api/watch/:id/cancel` | | `{ok, cancelled}`; stop the running check (the watch stays scheduled) |
 | `GET /api/watch/:id/history` | | `SiteReport[]` |
@@ -321,7 +321,7 @@ For each finding:
 | `GET /api/leaderboard` | | reports from `data/cached-demo/leaderboard/` ranked |
 | `POST /api/demo-store/flaws` | `{on:boolean}` | used by "Apply fixes": returns the store URL with `?flaws=on|off` |
 
-**Limits and checks (every endpoint):** web address = http/https only, at most 2048 characters, no spaces/control characters, no user name or password, no localhost/private addresses when live (replay mode allows localhost for tests); tasks = non-empty list of the 4 task ids; custom task <= 300 characters (emoji fine); Watch `everyMinutes` = whole number 5-1440 and at most 20 watches; ids = letters, digits, `_`, `-` (an invalid id is a plain 404). `POST /api/tests`, `/api/watch`, `/api/watch/:id/run-now`, `/api/instant-scan`, `/api/race`, `/api/reports/:id/fixes`: in-memory rate limit per client address and endpoint, 10 per minute (`RATE_LIMIT_PER_MIN`), then `429` with `Retry-After`; at most 6 tests running at once (`MAX_ACTIVE_TESTS`). Requests with a foreign `Origin` header (another website) are refused with `403`, CORS is local-only and the server listens on `127.0.0.1` unless `HOST` says otherwise. The server loads `.env` itself if it exists (`npm start` never needs one), recovers reports left `running` by a restart (they become `cancelled`), cancels in-flight runs on SIGINT/SIGTERM, and logs one JSON line per test/watch start, finish, cancel and error (`LOG_LEVEL=silent` turns them off).
+**Limits and checks (every endpoint):** web address = http/https only, at most 2048 characters, no spaces/control characters, no user name or password, no localhost/private addresses when live (replay mode allows localhost for tests); pack = `auto`/`shop`/`saas`/`content`/`local` (Watch: no `auto`); tasks = non-empty list of task ids from any pack (16 ids; `custom` has its own field); custom task <= 300 characters (emoji fine); Watch `everyMinutes` = whole number 5-1440 and at most 20 watches; ids = letters, digits, `_`, `-` (an invalid id is a plain 404). `POST /api/tests`, `/api/watch`, `/api/watch/:id/run-now`, `/api/instant-scan`, `/api/race`, `/api/reports/:id/fixes`: in-memory rate limit per client address and endpoint, 10 per minute (`RATE_LIMIT_PER_MIN`), then `429` with `Retry-After`; at most 6 tests running at once (`MAX_ACTIVE_TESTS`). Requests with a foreign `Origin` header (another website) are refused with `403`, CORS is local-only and the server listens on `127.0.0.1` unless `HOST` says otherwise. The server loads `.env` itself if it exists (`npm start` never needs one), recovers reports left `running` by a restart (they become `cancelled`), cancels in-flight runs on SIGINT/SIGTERM, and logs one JSON line per test/watch start, finish, cancel and error (`LOG_LEVEL=silent` turns them off).
 
 The server also serves the built dashboard (`apps/web/dist`, from `npm run build -w @agentready/web`) at `/`, so links like `http://localhost:4000/#/test/<id>` from the CLI and Watch alerts open without Vite.
 SSE format: headers `Content-Type: text/event-stream`, `Cache-Control: no-cache`, `Connection: keep-alive`; each message `data: ${JSON.stringify(event)}\n\n`; send `: ping\n\n` every 15 s.
@@ -351,10 +351,10 @@ Store API: `saveReport(r)`, `getReport(id)`, `listReports()`, `saveWatch(w)`, `l
 ## 12. Agent-Ready Watch (`watch.js`, `alerts.js`)
 
 - On server start, load watches; schedule each enabled one with `node-cron` (`*/${everyMinutes} * * * *`).
-- Check = `runSiteTest({url, tasks, source:'watch'})`. Background mode: `startRunAsync` + `webhookUrl = PUBLIC_BASE_URL + '/api/webhooks/tinyfish'` if `PUBLIC_BASE_URL` set (expose :4000 with `cloudflared tunnel --url http://localhost:4000`), otherwise `waitForRun` polling.
+- Check = `runSiteTest({url, tasks, pack, source:'watch'})` (a watch stores its `pack`; older watches have none and count as shop). Background mode: `startRunAsync` + `webhookUrl = PUBLIC_BASE_URL + '/api/webhooks/tinyfish'` if `PUBLIC_BASE_URL` set (expose :4000 with `cloudflared tunnel --url http://localhost:4000`), otherwise `waitForRun` polling.
 - Compare with the last report where all watched tasks passed: alert-worthy if a task went pass -> fail, step band got worse, a new finding of severity high/critical appeared, or `botWall` changed.
 - If alert-worthy: re-run the failing task once immediately; alert only if it fails again (agents vary).
-- Alert text (Discord `{content}`, Slack `{text}`; detect by URL containing `discord.com`):
+- Alert text (Discord `{content}`, Slack `{text}`; detect by URL containing `discord.com`; "AI agents" instead of "AI shoppers" for a watch whose pack is not shop):
   `🔴 AgentReady: AI shoppers can't <task label> on <site> since <time>. Last good: <time> (<n> steps). Now: <blocker>. Report: <dashboard link>`
   Recovery: `🟢 AgentReady: <task label> on <site> works again (<time>).`
 - Priority: a Watch check waits behind a person's test for a free agent slot (D30). Pausing a watch, or `POST /api/tests/:checkId/cancel`, cancels the running check (no history row, no alert; D29).
@@ -420,7 +420,7 @@ With flaws off: normal text price, labelled button, footer Returns link, no popu
 
 ## 17. Mock mode (develop without spending credits)
 
-`TINYFISH_MOCK=1` makes `tinyfish.js` replay real recorded runs from `data/cached-demo/fixtures/` with realistic delays (steps every 2-5 s). Use it for all UI work. Use real calls only against the demo store or `https://example.com`, and for the final pre-runs.
+`TINYFISH_MOCK=1` makes `tinyfish.js` replay real recorded runs from `data/cached-demo/fixtures/` with realistic delays (steps every 2-5 s). The recordings cover the four shop tasks only (D40): a task from another pack is not run in replay mode (task `failed` with a `replayNote`, no steps, no points, no findings, left out of the 100; the server refuses such a test with a 400 before it starts). Use it for all UI work. Use real calls only against the demo store or `https://example.com`, and for the final pre-runs.
 
 ---
 

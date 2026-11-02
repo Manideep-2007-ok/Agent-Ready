@@ -1,4 +1,4 @@
-// /api/race*: the same task on up to 3 sites at once. Each site is a normal report (source 'race'),
+// /api/race*: the same task (any pack's task id) on up to 3 sites at once. Each site is a normal report (source 'race'),
 // so the dashboard follows each lane through /api/tests/:id/events.
 import { Router } from 'express';
 import { TASK_IDS } from '@agentready/engine/types';
@@ -6,7 +6,7 @@ import * as store from '../store.js';
 import { startReport } from '../reportJob.js';
 import { rateLimit } from '../rateLimit.js';
 import { httpError, parseSiteUrl, cancelRunningReport } from './tests.js';
-import { assertReplayable } from '../replay.js';
+import { assertReplayable, assertReplayPack } from '../replay.js';
 import { assertSafeId } from '../validate.js';
 
 const MAX_SITES = 3; // D23: the account runs 3 agents at once.
@@ -23,6 +23,7 @@ export default function raceRoutes({ engine, events }) {
     }
     const parsed = urls.map(parseSiteUrl);
     parsed.forEach(assertReplayable); // replay mode: refuse sites with no recording before anything starts
+    assertReplayPack(undefined, [taskId]); // ... and tasks with no recording (only the shop tasks have one)
 
     const lanes = [];
     for (const url of parsed) {
