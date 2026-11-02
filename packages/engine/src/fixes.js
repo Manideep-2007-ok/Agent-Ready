@@ -144,6 +144,28 @@ export const FIX_TEMPLATES = {
       unknown: '<span class="price">₹499</span>',
     },
   },
+  'wrong-quantity': {
+    likelyCause: 'Add to cart may add more than one unit (a quantity box that starts above 1, or no clear "added" message so a second click looks necessary), so the cart total is for more than the one product asked for.',
+    fix: 'Start the quantity at 1, add exactly one unit per click, and confirm "Added to cart" in text next to the button.',
+    standard: 'WCAG 3.3.1 Error Identification and clear status messages (WCAG 4.1.3)',
+    passCheck: 'One click on Add to cart gives a cart with exactly one unit and the total of one product.',
+    frameworkExamples: {
+      nextjs: '<input type="number" min="1" defaultValue={1} aria-label="Quantity" /> and a <p role="status">Added to cart</p> after the click.',
+      shopify: 'In the product form, keep the quantity input value="1" and show the cart notification after adding.',
+      unknown: '<input type="number" min="1" value="1" aria-label="Quantity"> and <p role="status">Added to cart</p>',
+    },
+  },
+  'currency-mismatch': {
+    likelyCause: 'The page shows prices in more than one currency, or does not say which currency a price is in (for example a hidden dollar price in the page data), so the price an agent reads may not be the one shoppers see.',
+    fix: 'Show one currency per market, write the currency symbol next to every price and set offers.priceCurrency in schema.org markup.',
+    standard: 'schema.org Offer priceCurrency; WCAG 1.3.1 Info and Relationships',
+    passCheck: 'The price an agent reports matches the price shown on the page, in the same currency.',
+    frameworkExamples: {
+      nextjs: '<span itemProp="price" content="499">₹499</span><meta itemProp="priceCurrency" content="INR" />',
+      shopify: 'Use {{ product.price | money_with_currency }} so the currency is always written out.',
+      unknown: '<span class="price">₹499</span> <meta itemprop="priceCurrency" content="INR">',
+    },
+  },
   'no-product-schema': {
     likelyCause: 'The product page has no schema.org Product/Offer markup, so machines must guess the name and price from the layout.',
     fix: 'Add JSON-LD Product markup with name, image, offers.price and offers.priceCurrency.',

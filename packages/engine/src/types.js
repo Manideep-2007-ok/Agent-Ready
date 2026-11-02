@@ -6,7 +6,7 @@
 /** @typedef {'find_price'|'add_to_cart'|'find_returns'|'find_contact'|'custom'} TaskId */
 /** @typedef {'lite'|'stealth'} BrowserMode */
 /** @typedef {'off'|'IN'|'US'} ProxySetting */
-/** @typedef {'queued'|'running'|'passed'|'failed'|'blocked'} TaskStatus */
+/** @typedef {'queued'|'running'|'passed'|'failed'|'blocked'|'cancelled'} TaskStatus   cancelled = the test was stopped (final, never retried) */
 /** @typedef {'none'|'blocks-cloud-agents'|'blocks-automation'|'site-broken'} BotWallVerdict */
 /** @typedef {'web'|'cli'|'watch'|'ci'|'race'} ReportSource */
 /** @typedef {'nextjs'|'shopify'|'unknown'} Framework */
@@ -15,7 +15,7 @@
 /**
  * @typedef {'blocks-cloud-agents'|'blocks-automation'|'site-broken'|'needed-web-search'|'cart-not-found'
  *   |'price-not-found'|'returns-not-found'|'contact-not-found'|'too-many-steps'|'slow'|'popup-blocking'
- *   |'unlabelled-buttons'|'price-in-image'|'no-product-schema'} FindingType
+ *   |'unlabelled-buttons'|'price-in-image'|'no-product-schema'|'wrong-quantity'|'currency-mismatch'} FindingType
  */
 
 /**
@@ -93,6 +93,7 @@
  * @property {Finding[]} findings
  * @property {Attempt[]} [attempts]
  * @property {BotWallVerdict} [verdict]
+ * @property {string} [replayNote]       replay mode only: why this (custom) task has no real answer
  */
 
 /**
@@ -118,7 +119,7 @@
  * @property {ReportSource} source
  * @property {string} testedAt          ISO
  * @property {'shopping'} pack
- * @property {'running'|'complete'} status
+ * @property {'running'|'complete'|'cancelled'} status   cancelled = stopped by the user (no score)
  * @property {number} score             0-100
  * @property {BotWallVerdict} botWall
  * @property {number} costRupees
@@ -156,5 +157,5 @@ export const TASK_IDS = /** @type {const} */ (['find_price', 'add_to_cart', 'fin
 export const FINDING_TYPES = /** @type {const} */ ([
   'blocks-cloud-agents', 'blocks-automation', 'site-broken', 'needed-web-search', 'cart-not-found',
   'price-not-found', 'returns-not-found', 'contact-not-found', 'too-many-steps', 'slow', 'popup-blocking',
-  'unlabelled-buttons', 'price-in-image', 'no-product-schema',
+  'unlabelled-buttons', 'price-in-image', 'no-product-schema', 'wrong-quantity', 'currency-mismatch',
 ]);
