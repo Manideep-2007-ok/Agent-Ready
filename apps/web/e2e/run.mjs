@@ -405,11 +405,13 @@ try {
   await t.step('Watch: Stop check and Pause while a check runs both cancel it', async () => {
     const { page } = watchSlow;
     await page.getByRole('link', { name: 'Watch', exact: true }).click();
+    await page.locator('.watch-card').first().waitFor(); // the watch left over from the earlier step
+    const had = await page.locator('.watch-card').count();
     await page.getByLabel('Website to watch').fill('https://www.nykaa.com');
     await page.getByLabel('What to watch').selectOption('all');
     await page.getByRole('button', { name: 'Start watching' }).click();
+    await page.waitForFunction((n) => document.querySelectorAll('.watch-card').length === n + 1, had);
     const card = page.locator('.watch-card').last();
-    await card.waitFor();
     await card.getByRole('button', { name: 'Run now' }).click();
     await card.locator('.ar-lane-chip', { hasText: 'Running' }).first().waitFor();
     await card.getByRole('button', { name: 'Stop check' }).click();

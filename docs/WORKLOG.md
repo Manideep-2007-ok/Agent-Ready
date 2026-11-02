@@ -163,3 +163,51 @@ Open items (dashboard):
 | F23 | Watch alert links pointed to `localhost:5173` (Vite) | Slack alert text | Default to the server (`localhost:$PORT`, 4000), which now serves the dashboard |
 | F24 | A 2-task CLI run read "50/100, Partly ready" with both tasks passing | Sai, PR #15 | Total scaled to the tasks run |
 
+
+## 2 Nov 2026: production hardening
+
+Branch `manideep/engine`. Goal: make the hackathon build safe to run for real. Everything below was proven by running it: `npm test` (node:test: engine, server, CLI; replay mode, a temp data folder, no credits) and `npm run test:e2e` (real Chromium clicking through the built dashboard). **No real TinyFish call was made** (no key in this environment): failures such as cancelled runs, dropped streams, 5xx, hangs and bot walls were simulated by an in-process fake of the TinyFish API (`packages/engine/test/fake-tinyfish.js`, dummy key, refuses every other host) and by the recordings.
+
+### Bugs found and fixed
+
+| # | Symptom | Cause | Fix | Test that proves it |
+|---|---|---|---|---|
+| H1 | After a cancel, new proxy/stealth runs started and queued tasks kept starting (money) | A CANCELLED run has few steps, so `looksBlocked` said "blocked" and the cascade retried; there was no cancel path at all | D29: `cancelled` is a final status; `RunContext` aborts streams, drops queued tasks, cancels in-flight runs on TinyFish; `POST /api/tests/:id/cancel`; Stop test button; Watch pause cancels the check; CLI Ctrl+C/SIGTERM cancel first | `cascade.test.js` (CANCELLED is final, external cancel stops the test, cancelReport mid-run, stop during the retry pause, failing cancel call), `replay-mock.test.js`, `api.test.js` (Stop test, two tests, Watch pause), `cli.test.js` (SIGINT/SIGTERM), e2e "Stop test" and "Stop check" |
+| H2 | A scheduled Watch check made the Test page wait for minutes on "Waiting for an agent" with no reason | One FIFO queue for tests and Watch checks | D30: priority queue (people before Watch, no pre-emption); `/api/health` shows who holds the slots; lanes say "2 agents busy: a Watch check is running" / "another test is running" | `queue.test.js`, `replay-mock.test.js` (priority end to end), `api.test.js`, `queueReason.test.js`, e2e "a waiting lane says a Watch check is using the agents" |
+| H3 | `npm start` crashed when there was no `.env` | `node --env-file=../../.env` needs the file | D32: `env.js` loader (works on every Node 20+), `--env-file` removed | `lifecycle.test.js` (no .env, no key in live mode) |
+| H4 | A failed port bind (port in use) left a server that did not listen but looked alive | The crash guard swallowed the `EADDRINUSE` error | `server.on('error')` prints "port N is already in use" and exits 1 | `lifecycle.test.js` |
+| H5 | A report left `running` by a restart kept its lanes spinning forever | Nothing closed interrupted reports | On start, `running` reports become `cancelled` ("interrupted because the server restarted"); cancelling an orphan also closes it | `lifecycle.test.js`, exploratory pass (restart mid-run) |
+| H6 | A half-written or hand-edited report file made `GET /api/tests` fail for everyone | `JSON.parse` error was rethrown | Unreadable files are skipped (logged) | `lifecycle.test.js` |
+| H7 | A report id with odd characters gave a 500 | `store.assertId` threw a plain Error | Invalid ids are a plain 404 everywhere | `api.test.js` (404s), `validate.test.js` |
+| H8 | The server kept running (and spending) runs when stopped with Ctrl+C | No shutdown handling | SIGINT/SIGTERM cancel in-flight runs, then exit | `lifecycle.test.js` |
+| H9 | CLI "No fixes needed" for a page full of flaws | The CLI never ran the Instant Scan | Scan runs next to the agents (`--no-scan` skips); scan findings join the Top fixes | `cli.test.js` (flawed page shows popup/price-image fixes) |
+| H10 | `--min-scor 80` (typo) was silently ignored, so a CI gate passed | Hand-rolled argument parsing ignored unknown options | Strict parsing: unknown option, missing value, bad score = exit 2 | `cli.test.js` (exit codes) |
+| H11 | CLI upload failure printed only "fetch failed" / "server answered 404" | Generic error text | Names the address, the likely reason, and says where the saved report is | `cli.test.js` (upload failures) |
+| H12 | An agent "passed" add-to-cart after adding 2 units (₹998) or reported "$499" for a ₹ price | Pass = the agent's own `success:true` | D28: `wrong-quantity` and `currency-mismatch` findings (never fail a task, never change points) | `scoring.test.js` |
+| H13 | A custom task in replay mode showed an unrelated recorded answer as if it were real | The recording of a Nykaa task was replayed for it | D35: `replayNote` on the lane, no answer; the score card says "not run in replay mode" | `replay-mock.test.js`, `api.test.js`, e2e "custom task with emoji" |
+| H14 | `evil-nykaa.com` / `nykaa.evil.example` got Nykaa's recording in replay mode | Substring match on the host name | Exact domain (and subdomain) match | `validate-replay.test.js` |
+| H15 | Bad input got through: `ftp://`, `javascript:`, `https://user:pass@site`, 5000-character addresses, `localhost`/private addresses (live), `everyMinutes: 1` (about ₹3,000 a day), 21+ watches, bodies that were not JSON (parser internals echoed) | Only a minimal URL check existed | D31: shared validators, plain messages, limits | `validate.test.js`, `api.test.js` |
+| H16 | Any website open in the browser could send a body-less POST (cancel, run-now) to `localhost:4000` and start a paid check | CORS only hides answers; the request is still sent | Foreign `Origin` on a state-changing request gets `403` | `api.test.js` (CSRF) |
+| H17 | Nothing stopped a runaway script from starting dozens of tests | No limits | 10 starts per minute per client and endpoint (`429`, `Retry-After`), at most 6 tests running | `ratelimit.test.js` |
+| H18 | A hung TinyFish connection could freeze a poll loop or a cancel | `fetch` without a time limit | 30 s on every non-streaming call, 60 s to open a stream | `cascade.test.js` (waitForRun limits) |
+| H19 | `vite` 5/6 (esbuild dev-server advisory) and `node-cron` 3 (uuid advisory) | Old dependencies | vite 7, node-cron 4: `npm audit` reports 0 vulnerabilities; build and Tailwind plugin unchanged | `npm audit`, `npm run build -w @agentready/web` |
+| H20 | "Apply fixes" before/after card linked to a report that "could not be found" | The link used the report's internal `id` field, which differs from the demo file name | Link uses the route id | e2e "Apply fixes and re-test" |
+| H21 | Watch form turned `ftp://x.com` into `https://ftp://x.com` and showed a confusing message | Blind `https://` prefix | Only prefixes when no scheme was typed | e2e "Watch: bad address" |
+| H22 | (found while building) Rate limit middleware made async route errors hang the request | The async-error wrapper only wrapped a route's first handler | Wrap every handler of a route | `api.test.js` (every validation case answers) |
+| H23 | Watch router answered an HTML error page when mounted alone (smoke scripts) | Error handler lived only in `index.js` | One shared `errorHandler` (`errors.js`) also used by the Watch router | `watch-smoke.js` |
+
+### Not done, and why
+
+- **No real TinyFish run.** There is no key here and none was requested. The real HTTP shapes for cancel (`POST /v1/runs/{id}/cancel`) and `CANCELLED` events follow `docs/RESEARCH.md`; they are covered by the fake, not by the real API. The laptop checklist in the final report confirms them for under ₹20.
+- **cloudflared tunnel** cannot be installed here; the tunnel address and path handling is unit-tested, the tunnel itself is not.
+- **Instant Scan is not cancellable mid-flight**: a stopped test does not wait for it, but the browser session it opened lives until its own 40 s limit.
+- **Rate limit key is the client address.** Behind a tunnel everything arrives from one address, so the limit is shared. No `trust proxy` setting yet.
+- **No delete for a watch** (pause only), and the screenshot cache in `data/shots` is not size-limited.
+- Not tested: Safari/Firefox, a screen reader, slow phones (only a 390 px Chromium viewport).
+- `MongoDB`, the CI workflow (stretch in ARCHITECTURE section 16) and Race/Leaderboard pages are still not built (D24).
+
+### Results (2 Nov 2026)
+
+- `npm test`: **108 passed, 0 failed** (engine 46, server 49, CLI 13; about 1.5 min). `npm run test:e2e`: **30 passed, 0 failed** (real Chromium, 1280 px and 390 px; screenshots are written to `E2E_SHOTS`). `npm audit`: 0 vulnerabilities. All existing scripts pass (score-fixtures, smoke, instant-scan-smoke, fixes-demo, event-count, watch-smoke, watch-confirm-smoke, events-smoke, demo-store test-flaws) and the dashboard builds.
+- **Exploratory pass** (Playwright, by hand, no assertions file): double-click and double Enter start exactly one test; refreshing mid-run resumes the lanes and finishes; going offline for 3 s mid-run and back finishes correctly; two tests in two tabs share the agents and each says "another test is running"; stopping one leaves the other running; killing the server mid-run and restarting turns the page into "Test stopped" (lanes Stopped, report `cancelled`); a 5000-character address, spaces, emoji address, upper case and a 1900-character query are handled with plain messages or start normally; a custom task with `<script>`, quotes and a right-to-left mark is shown as text (nothing executes); no console or page errors.
+- The e2e suite itself caught three product/test bugs (H20, H21 and a test race) and the API tests caught H22.
