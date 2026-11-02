@@ -175,8 +175,8 @@ try {
       }
       dashboard = `${base}/#/test/${report.id}`;
     } catch (e) {
-      const reason = e.cause?.code === 'ECONNREFUSED' ? `nothing is listening at ${base} (is the AgentReady server running?)`
-        : e.name === 'TimeoutError' ? `${base} did not answer within 15 seconds` : e.message;
+      const reason = e.name === 'TimeoutError' ? `${base} did not answer within 15 seconds`
+        : e.message === 'fetch failed' || e.cause?.code ? `could not connect to ${base} (is the AgentReady server running there?)` : e.message;
       console.error(`Could not upload the report to ${base}: ${reason}.\nThe report is still saved on this computer: ${file}`);
     }
   }

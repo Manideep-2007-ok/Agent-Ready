@@ -41,10 +41,11 @@ app.use(express.json({ limit: '1mb' }));
 // Express 4 does not catch errors thrown in async handlers, so wrap every route handler once.
 const safe = (router) => {
   for (const layer of router.stack) {
-    const handler = layer.route?.stack[0];
-    if (!handler) continue;
-    const original = handler.handle;
-    handler.handle = (req, res, next) => Promise.resolve(original(req, res, next)).catch(next);
+    // Every handler of the route (rate limit middleware first, then the real handler), not just the first one.
+    for (const handler of layer.route?.stack ?? []) {
+      const original = handler.handle;
+      handler.handle = (req, res, next) => Promise.resolve(original(req, res, next)).catch(next);
+    }
   }
   return router;
 };

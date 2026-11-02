@@ -2,14 +2,15 @@
 // would show a recording of a different site under the new name, so those are refused with a plain explanation.
 import { config } from './config.js';
 
-const RECORDED = ['nykaa', 'myntra', 'swiggy'];
+// Exact domains (and their subdomains): a look-alike such as nykaa.evil.example or evil-nykaa.com must not get Nykaa's recording.
+const RECORDED = ['nykaa.com', 'myntra.com', 'swiggy.com'];
 
 export function hasRecording(url) {
   let host = '';
   try { host = new URL(url).hostname.toLowerCase(); } catch { return false; }
   let demoHost = '';
   try { demoHost = config.demoStoreUrl ? new URL(config.demoStoreUrl).hostname : ''; } catch { /* none */ }
-  return RECORDED.some((name) => host.includes(name)) || host === demoHost || host === 'agent-ready-demo.vercel.app'
+  return RECORDED.some((d) => host === d || host.endsWith(`.${d}`)) || host === demoHost || host === 'agent-ready-demo.vercel.app'
     || host === 'example.com' || host === 'www.example.com' || host === 'localhost' || host === '127.0.0.1';
 }
 
