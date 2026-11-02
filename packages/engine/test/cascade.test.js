@@ -233,3 +233,44 @@ test('a running task publishes its runId at once, and a bot-wall retry publishes
   assert.ok(runningIds.includes(fake.calls.sse[0].runId), 'attempt 1 runId visible while running');
   assert.ok(runningIds.includes(fake.calls.sse[1].runId), 'attempt 2 runId visible while running');
 });
+
+test('a stopped test costs what TinyFish billed (run record num_of_steps), not the live PROGRESS count', async () => {
+  fake = installFakeTinyFish({ runSse: () => ({
+    events: [{ type: 'STARTED' }, { type: 'PROGRESS', purpose: 'Open the page' }],
+    end: 'hang', run: runRecord({ runId: 'x', status: 'CANCELLED', steps: 0, result: null }),
+  }) });
+  const pending = runSiteTest({ url: URL_, id: 'rep_cost_cancel', tasks: ['find_price'] });
+  await until(() => fake.calls.sse.length === 1);
+  await tick(60); // the live PROGRESS step has arrived
+  await cancelReport('rep_cost_cancel', 'user');
+  const report = await pending;
+  assert.equal(report.status, 'cancelled');
+  assert.equal(report.tasks[0].numSteps, 0, "TinyFish's count (0) replaces the live count (1)");
+  assert.equal(report.tasks[0].attempts[0].numSteps, 0);
+  assert.equal(report.costRupees, 0);
+});
+
+test('if the run record cannot be read after a stop, the live step count is kept', async () => {
+  fake = installFakeTinyFish({ getRunStatuses: () => 500, runSse: () => ({ events: [{ type: 'STARTED' }, { type: 'PROGRESS', purpose: 'Open the page' }], end: 'hang' }) });
+  const pending = runSiteTest({ url: URL_, id: 'rep_cost_fallback', tasks: ['find_price'] });
+  await until(() => fake.calls.sse.length === 1);
+  await tick(60);
+  await cancelReport('rep_cost_fallback', 'user');
+  const report = await pending;
+  assert.equal(report.status, 'cancelled');
+  assert.equal(report.tasks[0].numSteps, 1);
+});
+
+test('STARTED arriving after Stop: that run is still cancelled on TinyFish, the task ends cancelled, no retry', async () => {
+  fake = installFakeTinyFish({ runSse: () => ({ events: [{ type: 'STARTED', delay: 150 }, { type: 'COMPLETE', status: 'COMPLETED', result: ok }] }) });
+  const pending = runSiteTest({ url: URL_, id: 'rep_late_started', tasks: ['find_price'] });
+  await until(() => fake.calls.sse.length === 1);
+  const res = await cancelReport('rep_late_started', 'user'); // no run id is known yet
+  assert.equal(res.cancelledRuns, 0);
+  const report = await pending;
+  await until(() => fake.calls.cancel.length === 1);
+  assert.deepEqual(fake.calls.cancel, [fake.calls.sse[0].runId]);
+  assert.equal(report.status, 'cancelled');
+  assert.equal(report.tasks[0].status, 'cancelled');
+  assert.equal(fake.calls.sse.length, 1, 'no retry');
+});

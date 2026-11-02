@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs, normaliseUrl, findTunnelUrl, buildTestUrl, LOCAL_RE } from '../src/lib.js';
-import { startServer, call, waitFor, sleep } from '../../server/test/helpers.js';
+import { startServer, call, waitFor, sleep, NO_ENV_FILE } from '../../server/test/helpers.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const bin = path.join(root, 'apps/cli/bin/agentready.js');
@@ -17,7 +17,8 @@ function cli(args, { env = {}, signal: killWith, killAfterMs } = {}) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [bin, ...args], {
       cwd, stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, TINYFISH_MOCK: '1', TINYFISH_MOCK_SPEED: '300', LOG_LEVEL: 'silent', ...env },
+      env: { ...process.env, TINYFISH_MOCK: '1', TINYFISH_MOCK_SPEED: '300', LOG_LEVEL: 'silent',
+        AGENTREADY_SERVER: '', AGENTREADY_ENV_FILE: NO_ENV_FILE, ...env },
     });
     let stdout = '', stderr = '';
     child.stdout.on('data', (d) => { stdout += d; });

@@ -246,3 +246,11 @@ A real-key test on 2 Nov exposed a gap. The polling script waited for each task'
 | H25 | `lifecycle.test.js` "no .env" test failed on any checkout with a `.env` | It asserted the repo had no `.env` | Server reads `AGENTREADY_ENV_FILE` instead of the repo `.env` when set; the test points it at a missing file, so it proves the same thing on every checkout | `lifecycle.test.js` |
 
 `replay-mock.test.js` (queue priority) now counts each lane once, since a running lane updates twice. `npm test`: 111 passed, 0 failed. `npm run test:e2e`: 30 passed, 0 failed.
+
+## 2 Nov 2026: cancel cost, late STARTED, CLI test isolation (Manideep)
+
+| # | Symptom | Cause | Fix | Proof |
+|---|---|---|---|---|
+| H26 | A test stopped ~5 s in showed "Agent cost so far ≈ ₹1.41" (1 step) but TinyFish recorded `num_of_steps` 0 for the CANCELLED runs and billed nothing | The cost used our live PROGRESS count | After a stop, `runTask` sends the `cancelled` state first (Stop stays fast), then waits for the cancel calls (`ctx.cancelDone`, max 8 s), reads the run record and uses its `num_of_steps`; a second `task-update` carries the corrected count. Any failure keeps the live count. Not done in replay mode | `cascade.test.js` (cost 0 after stop; live count kept when the record is unreadable) |
+| H27 | STARTED arriving just after Stop left that run going until its time cap | `trackRun` on an already cancelled context only added the id to a list nobody read again | `trackRun` on a cancelled context cancels the run on TinyFish at once (never throws); `runTask` also treats a stream that finishes after a stop as cancelled (no retry, no `running` update). Fake gained a per-event `delay` | `cascade.test.js` (late STARTED: POST /cancel for that run id, task `cancelled`, one run only) |
+| H28 | CLI tests read the developer's repo `.env`; an `AGENTREADY_SERVER` there would receive test reports | The CLI always loaded the repo `.env` | CLI honours `AGENTREADY_ENV_FILE` (like the server); the test helper sets it to a missing file and blanks `AGENTREADY_SERVER` | `npm test` also run with a temporary root `.env` holding `AGENTREADY_SERVER=http://127.0.0.1:9`: 114 passed |

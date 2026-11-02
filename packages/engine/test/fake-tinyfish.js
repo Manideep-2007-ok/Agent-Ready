@@ -51,8 +51,10 @@ export function installFakeTinyFish(handlers = {}) {
         async pull(controller) {
           if (signal?.aborted) return controller.error(Object.assign(new Error('aborted'), { name: 'AbortError' }));
           if (sent < events.length) {
-            await new Promise((r) => setTimeout(r, 5));
-            controller.enqueue(enc.encode(`data: ${JSON.stringify(events[sent++])}\n\n`));
+            const { delay, ...ev } = events[sent]; // `delay` (ms) holds an event back, e.g. a STARTED that arrives late
+            await new Promise((r) => setTimeout(r, delay ?? 5));
+            sent++;
+            controller.enqueue(enc.encode(`data: ${JSON.stringify(ev)}\n\n`));
             return;
           }
           if (spec.end === 'drop') return controller.error(new TypeError('terminated')); // connection broke before COMPLETE

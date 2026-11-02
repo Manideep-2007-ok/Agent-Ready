@@ -103,6 +103,20 @@ export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 
     return task;
   };
 
+  // After a stop, TinyFish's own step count is the billed one (the live PROGRESS count can be higher: a run cancelled
+  // 5 s in showed 1 step but TinyFish recorded 0 and billed nothing). Best effort: any problem keeps the live count.
+  const settleCost = async (runId) => {
+    if (!runId || config.mock) return; // replay has no billing truth
+    try {
+      await Promise.race([ctx?.cancelDone, new Promise((r) => setTimeout(r, 8000).unref?.())]);
+      const run = await tf.getRun(runId);
+      const n = run?.num_of_steps;
+      if (n == null || !Number.isFinite(Number(n)) || Number(n) === task.numSteps) return;
+      task.numSteps = Number(n);
+      if (emitFinal) update('cancelled');
+    } catch { /* keep the live count */ }
+  };
+
   if (ctx?.cancelled) return stopped(); // a cancelled test never starts anything new
 
   try {
@@ -115,7 +129,7 @@ export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 
         try {
           finalEvent = await tf.startRunSSE({ url, goal, mode, proxy, taskId }, {
             signal: ctx?.signal,
-            onStarted: (id) => { runId = task.runId = id; ctx?.trackRun(id); update('running'); }, // publish the runId now, not only when the task ends
+            onStarted: (id) => { runId = task.runId = id; ctx?.trackRun(id); if (!ctx?.cancelled) update('running'); }, // publish the runId now, not only when the task ends
             onStreamingUrl: (u) => { task.streamingUrl = u; emit({ kind: 'streaming-url', taskId, runId: task.runId, url: u }); },
             onProgress: (p) => {
               progress.push(p);
@@ -125,6 +139,7 @@ export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 
             },
           });
           runId = finalEvent.runId || runId;
+          if (ctx?.cancelled) throw Object.assign(new Error('aborted'), { name: 'AbortError' }); // stopped while the stream was finishing
         } catch (err) {
           if (ctx?.cancelled || err.name === 'AbortError') throw err; // stopped on purpose: do not poll, handled below
           if (err.code === 'STREAM_DROPPED' && (err.runId || runId)) {
@@ -172,7 +187,9 @@ export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 
           task.numSteps = progress.length || task.numSteps;
           // Keep what the agent had done so far (live steps have no screenshots yet).
           task.steps = progress.map((p, i) => ({ id: `p${i}`, label: p.purpose, seconds: null, screenshotUrl: '', usedWebSearch: p.usedWebSearch, ...(p.at ? { at: p.at } : {}) }));
-          return stopped();
+          const result = stopped();
+          await settleCost(task.runId); // cost = what TinyFish billed, not our live count (after the stopped state went out)
+          return result;
         }
         task.blocker = /Could not start|did not answer in time/.test(err.message) ? err.message : `Could not run the agent: ${err.message}`;
       } finally {
