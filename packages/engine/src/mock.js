@@ -6,7 +6,16 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const DIR = path.join(ROOT, 'data/cached-demo/fixtures');
 const speed = () => Number(process.env.TINYFISH_MOCK_SPEED) > 0 ? Number(process.env.TINYFISH_MOCK_SPEED) : 1;
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms / speed()));
+const abortError = () => Object.assign(new Error('Aborted'), { name: 'AbortError' });
+// Sleeps ms/speed; an aborted signal ends the sleep at once with an AbortError (like a real cancelled request).
+const sleep = (ms, signal) => new Promise((resolve, reject) => {
+  if (signal?.aborted) return reject(abortError());
+  const t = setTimeout(() => { signal?.removeEventListener('abort', onAbort); resolve(); }, ms / speed());
+  const onAbort = () => { clearTimeout(t); reject(abortError()); };
+  signal?.addEventListener('abort', onAbort, { once: true });
+});
+/** Counters for tests: how many runs started and which were cancelled. */
+export const stats = { started: 0, cancelled: [] };
 const log = (...a) => console.log('[mock]', ...a);
 const cache = new Map(); // fixture name -> parsed fixture
 const runs = new Map(); // mock runId -> fixture name
@@ -52,17 +61,18 @@ export async function startRunSSE(params, h = {}) {
   const fx = loadFixture(name);
   const runId = newRunId(name);
   runs.set(runId, name);
+  stats.started++;
   log(`run ${runId} replays ${name}`);
   for (const e of fx.sseEvents) {
-    if (h.signal?.aborted) throw Object.assign(new Error('Aborted'), { code: 'STREAM_DROPPED', runId });
+    if (h.signal?.aborted) throw abortError();
     if (e.type === 'STARTED') h.onStarted?.(runId);
     // The recorded live-view links died when those runs ended, so mock mode sends none and lanes show screenshots.
     else if (e.type === 'STREAMING_URL') { /* skipped in mock */ }
     else if (e.type === 'PROGRESS') {
-      await sleep(1500 + Math.random() * 2500);
+      await sleep(1500 + Math.random() * 2500, h.signal);
       h.onProgress?.({ purpose: e.purpose, usedWebSearch: e.tinyfish_api === 'search', at: e.timestamp });
     } else if (e.type === 'COMPLETE') {
-      await sleep(300);
+      await sleep(300, h.signal);
       const out = { runId, status: e.status, result: e.result, error: e.error ?? null };
       h.onComplete?.(out);
       return out;
@@ -87,12 +97,12 @@ export async function getRun(runId) {
   return rec;
 }
 
-export async function waitForRun(runId) {
-  await sleep(1000);
+export async function waitForRun(runId, { signal } = {}) {
+  await sleep(1000, signal);
   return getRun(runId);
 }
 
-export async function cancelRun(runId) { log('cancel', runId); return { ok: true }; }
+export async function cancelRun(runId) { log('cancel', runId); stats.cancelled.push(runId); return { ok: true }; }
 
 export async function getStepScreenshot(runId, stepId) {
   const name = fixtureOfRunId(runId);

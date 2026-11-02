@@ -7,6 +7,17 @@ const FETCH_API = 'https://api.fetch.tinyfish.ai';
 const SEARCH_API = 'https://api.search.tinyfish.ai';
 const BROWSER_API = 'https://api.browser.tinyfish.ai';
 
+// Every non-streaming call gets a time limit, so a hung connection can never freeze a poll loop or a cancel.
+const REQUEST_TIMEOUT_MS = 30_000;
+const withTimeout = (signal, ms = REQUEST_TIMEOUT_MS) => (signal ? AbortSignal.any([signal, AbortSignal.timeout(ms)]) : AbortSignal.timeout(ms));
+const abortError = () => Object.assign(new Error('Aborted'), { name: 'AbortError' });
+const sleepAbortable = (ms, signal) => new Promise((resolve, reject) => {
+  if (signal?.aborted) return reject(abortError());
+  const t = setTimeout(() => { signal?.removeEventListener('abort', onAbort); resolve(); }, ms);
+  const onAbort = () => { clearTimeout(t); reject(abortError()); };
+  signal?.addEventListener('abort', onAbort, { once: true });
+});
+
 const headers = (json = false) => ({ 'X-API-Key': requireApiKey(), ...(json ? { 'Content-Type': 'application/json' } : {}) });
 
 /** Throw a plain error for non-2xx answers. The message never contains the API key. */
@@ -40,7 +51,18 @@ export async function startRunSSE(params, handlers = {}) {
   if (config.mock) return mock.startRunSSE(params, handlers);
   const { onStarted, onStreamingUrl, onProgress, onComplete, signal } = handlers;
   let runId = null;
-  const res = await fetch(`${AGENT}/v1/automation/run-sse`, { method: 'POST', headers: headers(true), body: JSON.stringify(runBody(params)), signal });
+  // The start request gets 60 s to be answered; once the stream is open only the caller's `signal` can stop it.
+  const startCtl = new AbortController();
+  const startTimer = setTimeout(() => startCtl.abort(), 60_000);
+  let res;
+  try {
+    res = await fetch(`${AGENT}/v1/automation/run-sse`, { method: 'POST', headers: headers(true), body: JSON.stringify(runBody(params)),
+      signal: signal ? AbortSignal.any([signal, startCtl.signal]) : startCtl.signal });
+  } catch (err) {
+    if (signal?.aborted) throw err; // the caller cancelled
+    if (startCtl.signal.aborted) throw new Error('TinyFish did not answer in time (start run)');
+    throw err;
+  } finally { clearTimeout(startTimer); }
   await check(res, 'start run');
 
   const dropped = (why) => Object.assign(new Error(`Live stream closed before the run finished (${why})`), { code: 'STREAM_DROPPED', runId });
@@ -101,40 +123,42 @@ export async function* parseSSE(body) {
 /** Start a background run. Returns {runId}. */
 export async function startRunAsync(params) {
   if (config.mock) return mock.startRunAsync(params);
-  const res = await fetch(`${AGENT}/v1/automation/run-async`, { method: 'POST', headers: headers(true), body: JSON.stringify(runBody(params)) });
+  const res = await fetch(`${AGENT}/v1/automation/run-async`, { method: 'POST', headers: headers(true), body: JSON.stringify(runBody(params)), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   await check(res, 'start background run');
   const j = await res.json();
   return { runId: j.run_id };
 }
 
 /** Raw run record (status, steps, result...). */
-export async function getRun(runId) {
+export async function getRun(runId, { signal } = {}) {
   if (config.mock) return mock.getRun(runId);
-  const res = await fetch(`${AGENT}/v1/runs/${encodeURIComponent(runId)}`, { headers: headers() });
+  const res = await fetch(`${AGENT}/v1/runs/${encodeURIComponent(runId)}`, { headers: headers(), signal: withTimeout(signal) });
   await check(res, 'read run');
   return res.json();
 }
 
 const FINISHED = new Set(['COMPLETED', 'FAILED', 'CANCELLED']);
 
-/** Poll every 3 s until the run finishes. Returns the final run record. */
-export async function waitForRun(runId, { intervalMs = 3000, timeoutMs = 10 * 60 * 1000 } = {}) {
-  if (config.mock) return mock.waitForRun(runId);
+/** Poll every 3 s until the run finishes. Returns the final run record. An aborted `signal` stops polling (AbortError). */
+export async function waitForRun(runId, { intervalMs = 3000, timeoutMs = 10 * 60 * 1000, signal } = {}) {
+  if (config.mock) return mock.waitForRun(runId, { signal });
   const t0 = Date.now();
   for (;;) {
+    if (signal?.aborted) throw abortError();
     let run = null;
-    try { run = await getRun(runId); } catch (err) {
-      if ([401, 403, 404].includes(err.status)) throw err; // will never succeed; other errors (network blips) retry
+    try { run = await getRun(runId, { signal }); } catch (err) {
+      if (err.name === 'AbortError' && signal?.aborted) throw err;
+      if ([401, 403, 404].includes(err.status)) throw err; // will never succeed; other errors (network blips, 5xx) retry
     }
     if (run && FINISHED.has(run.status)) return run;
     if (Date.now() - t0 > timeoutMs) throw new Error('Timed out waiting for the agent run to finish');
-    await new Promise((r) => setTimeout(r, intervalMs));
+    await sleepAbortable(intervalMs, signal);
   }
 }
 
 export async function cancelRun(runId) {
   if (config.mock) return mock.cancelRun(runId);
-  const res = await fetch(`${AGENT}/v1/runs/${encodeURIComponent(runId)}/cancel`, { method: 'POST', headers: headers() });
+  const res = await fetch(`${AGENT}/v1/runs/${encodeURIComponent(runId)}/cancel`, { method: 'POST', headers: headers(), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   await check(res, 'cancel run');
   return res.json().catch(() => ({ ok: true }));
 }
@@ -142,7 +166,7 @@ export async function cancelRun(runId) {
 /** JPEG bytes of one step (needs the key, so the browser gets it through our /api/shot route). */
 export async function getStepScreenshot(runId, stepId) {
   if (config.mock) return mock.getStepScreenshot(runId, stepId);
-  const res = await fetch(`${AGENT}/v1/runs/${encodeURIComponent(runId)}/steps/${encodeURIComponent(stepId)}/screenshot`, { headers: headers() });
+  const res = await fetch(`${AGENT}/v1/runs/${encodeURIComponent(runId)}/steps/${encodeURIComponent(stepId)}/screenshot`, { headers: headers(), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   await check(res, 'read screenshot');
   return Buffer.from(await res.arrayBuffer());
 }
@@ -150,7 +174,7 @@ export async function getStepScreenshot(runId, stepId) {
 /** TinyFish Fetch (free). Returns [{url, text, error}]. */
 export async function fetchPages(urls) {
   if (config.mock) return mock.fetchPages(urls);
-  const res = await fetch(FETCH_API, { method: 'POST', headers: headers(true), body: JSON.stringify({ urls }) });
+  const res = await fetch(FETCH_API, { method: 'POST', headers: headers(true), body: JSON.stringify({ urls }), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   await check(res, 'fetch pages');
   const j = await res.json();
   // Failed URLs come back in errors[], not results[], so match by URL (ignoring a trailing slash), never by position.
@@ -169,7 +193,7 @@ export async function fetchPages(urls) {
 /** TinyFish Search (free). Returns results[]. */
 export async function search(query) {
   if (config.mock) return mock.search(query);
-  const res = await fetch(`${SEARCH_API}?query=${encodeURIComponent(query)}`, { headers: headers() });
+  const res = await fetch(`${SEARCH_API}?query=${encodeURIComponent(query)}`, { headers: headers(), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   await check(res, 'search');
   const j = await res.json();
   return j.results || [];
@@ -178,7 +202,7 @@ export async function search(query) {
 /** Open a cloud browser. Returns {sessionId, cdpUrl} for playwright connectOverCDP. */
 export async function createBrowserSession({ url, countryCode = 'IN', timeoutSeconds = 60 } = {}) {
   if (config.mock) return mock.createBrowserSession({ url, countryCode, timeoutSeconds });
-  const res = await fetch(BROWSER_API, { method: 'POST', headers: headers(true), body: JSON.stringify({ url, timeout_seconds: timeoutSeconds, proxy_config: { country_code: countryCode } }) });
+  const res = await fetch(BROWSER_API, { method: 'POST', headers: headers(true), body: JSON.stringify({ url, timeout_seconds: timeoutSeconds, proxy_config: { country_code: countryCode } }), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   await check(res, 'open browser');
   const j = await res.json();
   const sessionId = j.session_id || j.sessionId || j.id;
@@ -189,13 +213,13 @@ export async function createBrowserSession({ url, countryCode = 'IN', timeoutSec
 
 export async function closeBrowserSession(sessionId) {
   if (config.mock) return mock.closeBrowserSession(sessionId);
-  const res = await fetch(`${BROWSER_API}/${encodeURIComponent(sessionId)}`, { method: 'DELETE', headers: headers() });
+  const res = await fetch(`${BROWSER_API}/${encodeURIComponent(sessionId)}`, { method: 'DELETE', headers: headers(), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   if (!res.ok && res.status !== 404) await check(res, 'close browser');
 }
 
 export async function getWallet() {
   if (config.mock) return mock.getWallet();
-  const res = await fetch(`${AGENT}/v1/wallet`, { headers: headers() });
+  const res = await fetch(`${AGENT}/v1/wallet`, { headers: headers(), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   await check(res, 'read wallet');
   return res.json();
 }

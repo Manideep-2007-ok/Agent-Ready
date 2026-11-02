@@ -7,7 +7,9 @@
   "exports": {
     ".": "./src/index.js",
     "./types": "./src/types.js",
-    "./goals": "./src/goals.js"
+    "./goals": "./src/goals.js",
+    "./env": "./src/env.js",
+    "./queue": "./src/queue.js"
   },
   "dependencies": {
     "playwright-core": "^1.48.0"
