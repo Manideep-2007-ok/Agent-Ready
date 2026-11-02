@@ -115,7 +115,7 @@ export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 
         try {
           finalEvent = await tf.startRunSSE({ url, goal, mode, proxy, taskId }, {
             signal: ctx?.signal,
-            onStarted: (id) => { runId = task.runId = id; ctx?.trackRun(id); },
+            onStarted: (id) => { runId = task.runId = id; ctx?.trackRun(id); update('running'); }, // publish the runId now, not only when the task ends
             onStreamingUrl: (u) => { task.streamingUrl = u; emit({ kind: 'streaming-url', taskId, runId: task.runId, url: u }); },
             onProgress: (p) => {
               progress.push(p);

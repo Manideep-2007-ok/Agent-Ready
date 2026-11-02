@@ -218,3 +218,18 @@ test('waitForRun does not retry a 404 (the run does not exist)', async () => {
   fake = installFakeTinyFish({ getRunStatuses: () => 404 });
   await assert.rejects(tf.waitForRun('nope', { intervalMs: 10, timeoutMs: 1000 }), (e) => e.status === 404);
 });
+
+test('a running task publishes its runId at once, and a bot-wall retry publishes the new one', async () => {
+  fake = installFakeTinyFish({
+    runSse: ({ index }) => (index === 0
+      ? { events: [{ type: 'STARTED' }, { type: 'PROGRESS', purpose: 'Open' }, { type: 'COMPLETE', status: 'COMPLETED', result: wall() }] }
+      : finished(ok, 3)),
+  });
+  const runningIds = [];
+  await runSiteTest({ url: URL_, tasks: ['find_price'] }, (e) => {
+    if (e.kind === 'task-update' && e.task.status === 'running' && e.task.runId) runningIds.push(e.task.runId);
+  });
+  assert.equal(fake.calls.sse.length, 2);
+  assert.ok(runningIds.includes(fake.calls.sse[0].runId), 'attempt 1 runId visible while running');
+  assert.ok(runningIds.includes(fake.calls.sse[1].runId), 'attempt 2 runId visible while running');
+});

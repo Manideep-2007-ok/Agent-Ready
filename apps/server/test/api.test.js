@@ -375,3 +375,15 @@ test('a user test is ahead of a waiting Watch check, and /api/health says who ho
   await post(slow, `/api/tests/${user}/cancel`);
   await finished(slow, user);
 });
+
+test('a running task shows its runId in GET /api/tests/:id before it finishes', async () => {
+  const { json } = await post(slow, '/api/tests', { url: 'https://www.nykaa.com', tasks: ['find_price'] });
+  const seen = await waitFor(async () => {
+    const r = (await call(slow.base, `/api/tests/${json.reportId}`)).json;
+    const t = r.tasks?.find((x) => x.status === 'running' && x.runId);
+    return t ? { report: r, task: t } : null;
+  }, { what: 'a running task with a runId' });
+  assert.equal(seen.report.status, 'running');
+  assert.ok(seen.task.runId);
+  await post(slow, `/api/tests/${json.reportId}/cancel`);
+});
