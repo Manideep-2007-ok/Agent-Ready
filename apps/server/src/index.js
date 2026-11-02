@@ -14,6 +14,7 @@ import webhooksRouter from './routes/webhooks.js';
 import { startWatches, setPublisher } from './watch.js';
 import * as store from './store.js';
 import { logEvent } from './log.js';
+import { errorHandler } from './errors.js';
 
 const { engine, stubbed: stubbedEngine } = await loadEngine();
 const { events, stubbed: stubbedEvents } = await loadEvents();
@@ -85,16 +86,7 @@ if (existsSync(path.join(webDist, 'index.html'))) app.use(express.static(webDist
 else app.get('/', (_req, res) => res.type('text').send('Dashboard not built yet: run "npm run build -w @agentready/web", or use the dev dashboard on http://localhost:5173.'));
 
 // Plain JSON errors; never echo internals or keys.
-app.use((err, _req, res, _next) => {
-  let status = err.status ?? err.statusCode ?? 500;
-  let message = err.message;
-  // body-parser errors: say it in plain words instead of echoing parser internals.
-  if (err.type === 'entity.parse.failed') message = 'The request body is not valid JSON.';
-  else if (err.type === 'entity.too.large') { status = 413; message = 'That request is too large.'; }
-  if (status >= 500) { console.error(err); logEvent('server.error', { message: err.message }); }
-  if (res.headersSent) return res.end();
-  res.status(status).json({ error: status >= 500 ? 'Something went wrong on our side. Please try again.' : message });
-});
+app.use(errorHandler);
 
 // Safety net: one failed background run (agent, scan, watch) must never take the whole server down mid-demo.
 // Node 15+ exits on an unhandled rejection by default; log it plainly and keep serving instead.

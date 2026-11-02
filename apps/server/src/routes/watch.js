@@ -8,6 +8,7 @@ import { subscribe } from '../events.js';
 import { assertReplayable } from '../replay.js';
 import { rateLimit } from '../rateLimit.js';
 import { MAX_WATCHES, assertSafeId, httpError, parseEveryMinutes, parseSiteUrl, parseTasks } from '../validate.js';
+import { errorHandler } from '../errors.js';
 import { listWatches, getWatch, createWatch, updateWatch, getHistory, runCheck, isRunning, cancelCheck } from '../watch.js';
 
 const router = Router();
@@ -72,5 +73,8 @@ router.patch('/:id', handle(async (req, res) => {
   if (!watch) throw notFound();
   res.json(watch);
 }));
+
+// Answer with JSON even when this router is mounted on its own (the smoke scripts do that).
+router.use(errorHandler);
 
 export default router;
