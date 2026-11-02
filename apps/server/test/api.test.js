@@ -387,3 +387,21 @@ test('a running task shows its runId in GET /api/tests/:id before it finishes', 
   assert.ok(seen.task.runId);
   await post(slow, `/api/tests/${json.reportId}/cancel`);
 });
+
+test('GET /api/badge/:id.svg: SVG with the score, cached 5 min; unknown or bad ids get a grey "unknown" badge', async () => {
+  const created = await post(srv, '/api/tests', { url: 'nykaa.com' });
+  const id = created.json.reportId;
+  const report = await finished(srv, id);
+  const ok = await call(srv.base, `/api/badge/${id}.svg`);
+  assert.equal(ok.status, 200);
+  assert.match(ok.headers.get('content-type'), /^image\/svg\+xml/);
+  assert.equal(ok.headers.get('cache-control'), 'max-age=300');
+  assert.ok(ok.text.includes(`${report.score}/100`), ok.text);
+  for (const bad of ['rep_nope.svg', '..%2Fetc.svg', 'x'.repeat(200) + '.svg', `${id}`]) {
+    const r = await call(srv.base, `/api/badge/${bad}`);
+    assert.equal(r.status, 404, bad);
+    assert.match(r.headers.get('content-type'), /^image\/svg\+xml/);
+    assert.equal(r.headers.get('cache-control'), 'max-age=300');
+    assert.match(r.text, /unknown/);
+  }
+});

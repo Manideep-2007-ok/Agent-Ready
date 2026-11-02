@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Router } from 'express';
 import { TASK_IDS } from '@agentready/engine/types';
+import { badgeForReport } from '@agentready/engine';
 import { config } from '../config.js';
 import * as store from '../store.js';
 import { startReport, isJobActive } from '../reportJob.js';
@@ -62,6 +63,14 @@ export default function testsRoutes({ engine, events }) {
   });
 
   router.get('/tests', async (_req, res) => res.json(await store.listReports()));
+
+  // Agent-Ready badge for a dashboard report (README / LinkedIn). Always an SVG: an unknown or invalid id gets a grey badge.
+  router.get('/badge/:file', async (req, res) => {
+    const m = /^([\w-]{1,80})\.svg$/.exec(req.params.file);
+    let report = null;
+    if (m) { try { report = await store.getReport(m[1]); } catch { report = null; } }
+    res.status(report ? 200 : 404).set({ 'Content-Type': 'image/svg+xml; charset=utf-8', 'Cache-Control': 'max-age=300' }).send(badgeForReport(report));
+  });
 
   router.get('/tests/:id', async (req, res) => {
     assertSafeId(req.params.id);
