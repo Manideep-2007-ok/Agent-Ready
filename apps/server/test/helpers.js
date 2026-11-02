@@ -6,6 +6,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+// A file that never exists: test servers ignore the developer's own repo .env (FEATURE_*, MAX_ACTIVE_TESTS, ALERT_WEBHOOK_URL, ...),
+// so a laptop with a .env runs the same tests as CI. A test can still pass its own AGENTREADY_ENV_FILE.
+export const NO_ENV_FILE = path.join(os.tmpdir(), 'ar-no-such-env-file');
 
 /**
  * @param {{port:number, env?:Record<string,string>, dataDir?:string}} opts
@@ -17,7 +20,7 @@ export async function startServer({ port, env = {}, dataDir } = {}) {
   const child = spawn(process.execPath, [path.join(root, 'apps/server/src/index.js')], {
     cwd: root,
     env: {
-      ...process.env,
+      ...process.env, AGENTREADY_ENV_FILE: NO_ENV_FILE,
       PORT: String(port), HOST: '127.0.0.1', AGENTREADY_DATA_DIR: dataDir,
       TINYFISH_MOCK: '1', TINYFISH_MOCK_SPEED: process.env.TINYFISH_MOCK_SPEED || '300',
       DEMO_STORE_URL: 'https://agent-ready-demo.vercel.app', RATE_LIMIT_PER_MIN: '1000', LOG_LEVEL: 'silent',
