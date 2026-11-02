@@ -211,3 +211,27 @@ Branch `manideep/engine`. Goal: make the hackathon build safe to run for real. E
 - `npm test`: **108 passed, 0 failed** (engine, server, CLI, web helper; about 1.5 min). `npm run test:e2e`: **30 passed, 0 failed** (real Chromium, 1280 px and 390 px; screenshots are written to `E2E_SHOTS`). `npm audit`: 0 vulnerabilities. All existing scripts pass (score-fixtures, smoke, instant-scan-smoke, fixes-demo, event-count, watch-smoke, watch-confirm-smoke, events-smoke, demo-store test-flaws) and the dashboard builds.
 - **Exploratory pass** (Playwright, by hand, no assertions file): double-click and double Enter start exactly one test; refreshing mid-run resumes the lanes and finishes; going offline for 3 s mid-run and back finishes correctly; two tests in two tabs share the agents and each says "another test is running"; stopping one leaves the other running; killing the server mid-run and restarting turns the page into "Test stopped" (lanes Stopped, report `cancelled`); a 5000-character address, spaces, emoji address, upper case and a 1900-character query are handled with plain messages or start normally; a custom task with `<script>`, quotes and a right-to-left mark is shown as text (nothing executes); no console or page errors.
 - The e2e suite itself caught three product/test bugs (H20, H21 and a test race) and the API tests caught H22.
+
+### Review (Opus)
+
+Independent review of `git diff origin/main...manideep/engine` (engine, server, web, CLI, docs), then everything re-run by hand. No real TinyFish call, no key.
+
+**Checked:** cancel during queue wait, live stream, poll fallback after a dropped stream, bot-wall retry pause, double cancel, cancel after completion (engine code and tests); queue priority, slot release on throw/cancel, `/api/health` counts (also live in the browser with two tests); private-host blocking (decimal/hex IPs, IPv6, trailing dot, IPv4-mapped IPv6), that it stays off in replay mode and does not touch the CLI (the CLI calls the engine directly with the tunnel address); origin check with the same-origin dashboard, `localhost:5173`, no Origin (curl/CLI upload) and a foreign Origin (403); rate limit only on start-a-test POSTs (not SSE/GET); node-cron 4 `schedule`/`stop`/`destroy` (ran a real schedule, it fires and stops); `.env`-less start and the EADDRINUSE message; the answer checks against realistic answers.
+
+**Found and fixed:**
+
+| # | Severity | Symptom | Fix |
+|---|---|---|---|
+| R1 | Medium | `wrong-quantity` fired on ordinary answers and step labels: "2 items in stock", "Showing 48 products in Lipstick", "Set of 3 pieces", "Combo of 6 pcs", "Size 50 x 30 cm" (a false finding in the report) | Pack sizes, stock counts, listing pages and sizes are ignored; "items" only count with "added" / "in the cart"; tests for each case (`scoring.test.js`) |
+| R2 | Medium | Stop clicked after the agents finished but while the Instant Scan was still closing: the route thought the test was orphaned, wrote `cancelled` and sent "Test stopped", then the real result overwrote it on disk (page and disk disagreed) | `reportJob.isJobActive(id)`; the cancel route answers `cancelled:false, status:'finishing'` and the Stop button resets |
+| R3 | Low | A stopped test whose Instant Scan finished after the stop got Top fixes again (D29 says none) | The late scan does not rank fixes on a cancelled report |
+| R4 | Low | The 6-test limit was checked before the report existed, so a burst of simultaneous starts could pass it | Starts in flight count toward the limit |
+| R5 | Low | Restart recovery could close a test started in the first moments after boot | Recovery skips reports this process is running |
+| R6 | Low | `localhost.` (trailing dot) and `[::ffff:127.0.0.1]` passed the private-address check in live mode | Both refused; tests added |
+| R7 | Test gap | No test for Stop while polling after a dropped stream | `cascade.test.js`: polling stops, the run is cancelled on TinyFish, no retry |
+
+**Click pass** (Playwright, built dashboard, replay mode, temp data, port 4317, default rate limit): home; demo store, then Apply fixes (91 -> 97, before link opens); Nykaa test with Stop mid-run ("Test stopped", lanes Stopped, report `cancelled`, no Top fixes, survives reload); a second test in another tab says "another test is running" and Stop while queued drops all 4 lanes (health shows 0 queued for it); custom task with HTML in it shows the replay note as text; Watch create, Run now, Pause while checking ("Check stopped", no history row); dark theme; 390 px has no sideways scroll. No page errors. The only console errors are `/api/shot` 404s on the recorded demo-store reports: their screenshots were never saved offline, so replay mode shows the "no screenshot" placeholder (live mode fetches them).
+
+**Remaining risks:** a Stop while the start request is in flight (before TinyFish sends `STARTED`) cannot cancel that run (no run id yet); it ends at its time cap (about ₹20 at most). Watch checks can wait indefinitely behind a steady stream of user tests (by design, D30). Private-address blocking is by name only (a public DNS name pointing at 127.0.0.1 passes), which is fine because the agents and scans run in TinyFish's cloud, not on this server. Only Node 22 was available here; Node 20.19 and 26 were not run.
+
+**Results after the fixes:** `npm test` 109 passed, 0 failed (one new test plus new assertions in existing ones); `npm run test:e2e` 30 passed, 0 failed; every script listed above passes; the dashboard builds.
