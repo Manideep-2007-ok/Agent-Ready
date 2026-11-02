@@ -41,6 +41,7 @@ async function readJson(file, fallback = null) {
     return JSON.parse(await fs.readFile(file, 'utf8'));
   } catch (err) {
     if (err.code === 'ENOENT') return fallback;
+    if (err instanceof SyntaxError) { console.warn(`[store] ignoring unreadable file ${path.basename(file)}`); return fallback; } // half-written or hand-edited
     throw err;
   }
 }
@@ -61,7 +62,7 @@ export const saveReport = (report) => writeJson(path.join(dirs.reports, `${asser
 
 /** Live reports first, then the committed demo backups. @returns {Promise<SiteReport|null>} */
 export async function getReport(id) {
-  assertId(id);
+  if (typeof id !== 'string' || !SAFE_ID.test(id)) return null; // an id that could never exist is simply "not found"
   return (
     (await readJson(path.join(dirs.reports, `${id}.json`))) ??
     (await readJson(path.join(config.cachedDemoDir, 'reports', `${id}.json`)))
@@ -81,6 +82,31 @@ export async function listReports(limit = 50) {
     .sort((a, b) => String(b.testedAt).localeCompare(String(a.testedAt)))
     .slice(0, limit)
     .map(({ id, url, score, testedAt, status, source, botWall }) => ({ id, url, score, testedAt, status, source, botWall }));
+}
+
+/**
+ * Reports still marked 'running' on disk. At server start nothing can really be running, so these were cut off by a
+ * restart or crash; recoverInterruptedReports() closes them so lanes do not spin forever.
+ */
+export async function recoverInterruptedReports() {
+  const names = await listJson(dirs.reports);
+  let fixed = 0;
+  for (const name of names) {
+    const report = await readJson(path.join(dirs.reports, name));
+    if (!report || report.status !== 'running') continue;
+    for (const task of report.tasks ?? []) {
+      if (['queued', 'running'].includes(task.status)) {
+        task.status = 'cancelled';
+        task.blocker = 'The test was interrupted because the server restarted.';
+      }
+    }
+    report.status = 'cancelled';
+    report.score = 0;
+    report.topFixes = [];
+    await saveReport(report);
+    fixed++;
+  }
+  return fixed;
 }
 
 /** Cached reports used by the leaderboard, ranked by score. */

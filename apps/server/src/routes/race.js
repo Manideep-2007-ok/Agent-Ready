@@ -4,6 +4,7 @@ import { Router } from 'express';
 import { TASK_IDS } from '@agentready/engine/types';
 import * as store from '../store.js';
 import { startReport } from '../reportJob.js';
+import { rateLimit } from '../rateLimit.js';
 import { httpError, parseSiteUrl } from './tests.js';
 
 const MAX_SITES = 3; // D23: the account runs 3 agents at once.
@@ -11,8 +12,9 @@ const MAX_SITES = 3; // D23: the account runs 3 agents at once.
 export default function raceRoutes({ engine, events }) {
   const router = Router();
 
-  router.post('/race', async (req, res) => {
+  router.post('/race', rateLimit('race'), async (req, res) => {
     const { taskId, urls } = req.body ?? {};
+    if (Array.isArray(urls) && urls.length > MAX_SITES) throw httpError(400, `Please give between 2 and ${MAX_SITES} websites.`);
     if (!TASK_IDS.includes(taskId) || taskId === 'custom') throw httpError(400, 'Please choose a task to race.');
     if (!Array.isArray(urls) || urls.length < 2 || urls.length > MAX_SITES) {
       throw httpError(400, `Please give between 2 and ${MAX_SITES} websites.`);
