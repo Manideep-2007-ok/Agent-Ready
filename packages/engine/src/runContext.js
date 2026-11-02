@@ -21,9 +21,23 @@ export class RunContext {
     this.runIds = new Set();
     this.cancelled = false;
     this.reason = null;
+    /** Resolves when the cancel calls to TinyFish have been tried (runner waits for it before reading TinyFish's step count). */
+    this.cancelDone = Promise.resolve();
   }
 
-  trackRun(runId) { if (runId) this.runIds.add(runId); }
+  /**
+   * Remember a run that is in flight. If the test was already stopped (STARTED arrived after the Stop click), nothing
+   * would ever cancel this run, so cancel it on TinyFish right now (best effort, never throws).
+   */
+  trackRun(runId) {
+    if (!runId) return;
+    if (this.cancelled) {
+      const late = Promise.resolve().then(() => tf.cancelRun(runId)).catch(() => {});
+      this.cancelDone = Promise.all([this.cancelDone, late]); // the cost read waits for this cancel too
+      return;
+    }
+    this.runIds.add(runId);
+  }
   untrackRun(runId) { this.runIds.delete(runId); }
 
   /**
@@ -40,10 +54,13 @@ export class RunContext {
     this.runIds.clear();
     this.controller.abort();
     // Best effort and bounded: a slow TinyFish must not keep the Stop button waiting (the time cap ends stragglers anyway).
+    let finish;
+    this.cancelDone = new Promise((r) => { finish = r; });
     const results = await Promise.race([
       Promise.allSettled(toCancel.map((r) => tf.cancelRun(r))),
       new Promise((resolve) => setTimeout(() => resolve(toCancel.map(() => ({ status: 'rejected' }))), 8000).unref?.()),
     ]);
+    finish();
     const failed = results.filter((r) => r.status === 'rejected').length;
     if (failed) console.warn(`[engine] ${failed} of ${toCancel.length} run(s) could not be cancelled on TinyFish for ${this.id}; they stop at their time cap`);
     return { cancelledRuns: toCancel.length - failed, droppedFromQueue };

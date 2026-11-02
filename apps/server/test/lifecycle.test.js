@@ -6,12 +6,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { startServer, call, waitFor, sleep } from './helpers.js';
+import { startServer, call, waitFor, sleep, NO_ENV_FILE } from './helpers.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
 test('npm start style launch works with no .env file (and still prints the mock banner)', async () => {
-  assert.equal(fs.existsSync(path.join(root, '.env')), false, 'this test assumes the repo has no .env');
+  // startServer points AGENTREADY_ENV_FILE at a file that does not exist, so a developer's own repo .env cannot change what this proves.
   const srv = await startServer({ port: 4213 });
   try {
     assert.equal((await call(srv.base, '/api/health')).status, 200);
@@ -72,7 +72,7 @@ test('port already in use: a clear message and exit code 1 (no half-running serv
   const a = await startServer({ port: 4217 });
   try {
     const child = spawn(process.execPath, [path.join(root, 'apps/server/src/index.js')], {
-      env: { ...process.env, PORT: '4217', AGENTREADY_DATA_DIR: a.dataDir, TINYFISH_MOCK: '1', LOG_LEVEL: 'silent' }, stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, AGENTREADY_ENV_FILE: NO_ENV_FILE, PORT: '4217', AGENTREADY_DATA_DIR: a.dataDir, TINYFISH_MOCK: '1', LOG_LEVEL: 'silent' }, stdio: ['ignore', 'pipe', 'pipe'],
     });
     let out = '';
     child.stderr.on('data', (d) => { out += d; });

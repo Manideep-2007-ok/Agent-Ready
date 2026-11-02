@@ -11,7 +11,7 @@ import { parseArgs, normaliseUrl, findTunnelUrl, buildTestUrl, LOCAL_RE } from '
 
 // 1. Load .env (repo root, then current folder) before the engine reads its settings. A missing file is fine.
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-loadDotEnv([path.join(repoRoot, '.env'), path.join(process.cwd(), '.env')]);
+loadDotEnv(process.env.AGENTREADY_ENV_FILE ? [process.env.AGENTREADY_ENV_FILE] : [path.join(repoRoot, '.env'), path.join(process.cwd(), '.env')]);
 
 const { runSiteTest, buildFixReport, instantScan, instantScanFindings, scoreReport, rankFixes, cancelAll, TASK_LABELS, DEFAULT_TASK_ORDER, config } =
   await import('@agentready/engine');

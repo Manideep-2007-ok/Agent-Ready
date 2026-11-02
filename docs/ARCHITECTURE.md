@@ -183,7 +183,7 @@ detectFramework(page)                       // Playwright page -> 'nextjs'|'shop
 
 **Queue (`queue.js`):** a promise pool. `enqueue(fn)` runs at most `TINYFISH_MAX_PARALLEL` at once; the rest wait. Waiting runs start by **priority** (a person's test, CLI run or race = 0; a Watch check = 1), then first come first served (D30). Running runs are never pre-empted. `cancelGroup(reportId)` drops a test's waiting tasks. `GET /api/health` exposes `queue` (`running`, `queued`, `bySource`, `groups[reportId]`), and the dashboard turns it into the reason a lane waits ("2 agents busy: a Watch check is running" / "another test is running").
 
-**Cancelling (D29):** `CANCELLED` is final. A TinyFish run that ends `CANCELLED` (or a Stop click, Ctrl+C, a Watch pause) never starts a bot-wall retry and nothing queued for that test ever starts; in-flight runs are cancelled on TinyFish so they stop costing money. Task status `cancelled`; report status `cancelled` (score 0, no findings: half a test says nothing about the site; the cost of the steps taken still counts). Every non-streaming TinyFish call has a 30 s time limit; the start of a live stream 60 s.
+**Cancelling (D29):** `CANCELLED` is final. A TinyFish run that ends `CANCELLED` (or a Stop click, Ctrl+C, a Watch pause) never starts a bot-wall retry and nothing queued for that test ever starts; in-flight runs are cancelled on TinyFish so they stop costing money. After a stop the cost uses TinyFish's own `num_of_steps` from the run record (read right after the `cancelled` state is sent, best effort, falls back to the live count; H26). A run whose `STARTED` arrives after the stop is cancelled on TinyFish as soon as its id is known (H27). Task status `cancelled`; report status `cancelled` (score 0, no findings: half a test says nothing about the site; the cost of the steps taken still counts). Every non-streaming TinyFish call has a 30 s time limit; the start of a live stream 60 s.
 
 ---
 
@@ -408,6 +408,7 @@ On `pull_request`: wait for the preview URL (Vercel deployment status) -> run `n
 | `RATE_LIMIT_PER_MIN`, `MAX_ACTIVE_TESTS` | `10`, `6` | server limits |
 | `LOG_LEVEL` | `silent` | turn the JSON log lines off |
 | `AGENTREADY_DATA_DIR` | temp folder | where reports/watches are stored (tests use a temp folder) |
+| `AGENTREADY_ENV_FILE` | path to a file | server and CLI read this file instead of the repo `.env` (a missing file is fine; tests point it at one) |
 
 ---
 

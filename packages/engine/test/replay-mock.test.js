@@ -59,7 +59,7 @@ test('cancel in replay mode: no bot-wall retry, nothing queued starts, mock runs
 
 test('queue priority end to end: a user test starts before the rest of an older Watch check', async () => {
   const startedOrder = [];
-  const track = (tag) => (e) => { if (e.kind === 'task-update' && e.task.status === 'running') startedOrder.push(`${tag}:${e.task.taskId}`); };
+  const track = (tag) => (e) => { if (e.kind === 'task-update' && e.task.status === 'running' && !startedOrder.includes(`${tag}:${e.task.taskId}`)) startedOrder.push(`${tag}:${e.task.taskId}`); }; // a running lane now updates twice (start, then runId)
   process.env.TINYFISH_MOCK_SPEED = '40';
   const watch = runSiteTest({ url: 'https://www.nykaa.com', id: 'rep_prio_watch', source: 'watch' }, track('watch'));
   await tick(5);
