@@ -408,6 +408,7 @@ On `pull_request`: wait for the preview URL (Vercel deployment status) -> run `n
 | `RATE_LIMIT_PER_MIN`, `MAX_ACTIVE_TESTS` | `10`, `6` | server limits |
 | `LOG_LEVEL` | `silent` | turn the JSON log lines off |
 | `AGENTREADY_DATA_DIR` | temp folder | where reports/watches are stored (tests use a temp folder) |
+| `AGENTREADY_ENV_FILE` | path to a file | server reads this file instead of the repo `.env` (a missing file is fine; tests point it at one) |
 
 ---
 
