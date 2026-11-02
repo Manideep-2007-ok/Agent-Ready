@@ -57,7 +57,9 @@ agent-ready/
     goals.js                    task goal wording (tested)
     config.js                   reads env: key, max parallel, time cap, mock mode      (Manideep)
     tinyfish.js                 every TinyFish HTTP call                                 (Manideep)
-    queue.js                    limits concurrent agent runs to TINYFISH_MAX_PARALLEL  (Manideep)
+    queue.js                    limits concurrent agent runs to TINYFISH_MAX_PARALLEL; user tests ahead of Watch (Manideep)
+    runContext.js               cancel switch per test: abort streams, drop queued tasks, cancel runs on TinyFish (Manideep)
+    env.js                      tiny .env loader (a missing .env is fine)               (Manideep)
     runner.js                   runTask, runSiteTest, SSE -> poll fallback, events     (Manideep)
     botwall.js                  lite -> IN proxy -> stealth cascade                     (Manideep)
     scoring.js                  points, findings, cost meter                           (Manideep)
@@ -70,6 +72,8 @@ agent-ready/
     index.js                    Express app, routes, static, port 4000                  (Sai Shakti)
     config.js                   feature flags                                          (Sai Shakti)
     store.js                    JSON file storage (reports, watches, races)            (Sai Shakti)
+    validate.js                 input checks shared by every route (URLs, tasks, ids)  (Manideep)
+    rateLimit.js, errors.js, log.js, env.js   rate limit, JSON error handler, one-line JSON logs, .env loader (Manideep)
     events.js                   SSE hub: subscribe(reportId, res), publish(event)      (Akhil)
     routes/tests.js             /api/tests*, /api/shot, /api/instant-scan             (Sai Shakti)
     routes/race.js              /api/race*                                             (Sai Shakti)
@@ -145,9 +149,16 @@ getWallet()
 // mode mapping: browser_profile = mode ('lite'|'stealth'); agent_config = {max_duration_seconds: maxSeconds}
 
 // runner.js
-runTask({ url, taskId, customText, mode, proxy }, onEvent)         // -> TaskResult (single attempt)
-runTaskWithBotWall({ url, taskId, customText }, onEvent)           // -> TaskResult with attempts[] (botwall.js)
-runSiteTest({ url, tasks=DEFAULT_TASK_ORDER, customText, source }, onEvent) // -> SiteReport
+runTask({ url, taskId, customText, mode, proxy }, onEvent, ctx?)   // -> TaskResult (single attempt)
+runTaskWithBotWall({ url, taskId, customText }, onEvent, ctx?)     // -> TaskResult with attempts[] (botwall.js)
+runSiteTest({ url, tasks=DEFAULT_TASK_ORDER, customText, source, id, ctx? }, onEvent) // -> SiteReport (status 'cancelled' if stopped)
+
+// runContext.js: stopping a test (D29)
+cancelReport(reportId, reason)   // -> {found, cancelledRuns, droppedFromQueue}; aborts SSE/polling, drops queued tasks, POST /cancel for in-flight runs
+cancelAll(reason)                // every running test (server or CLI shutting down)
+createRunContext({id, source})   // the cancel switch itself; runSiteTest makes one per test, Watch shares one across a check + its confirming re-run
+// queue.js
+enqueue(fn, {priority, group, source}) ; getQueueState()  // -> {maxParallel, running, queued, bySource, groups}
 
 // scoring.js (pure functions, no I/O)
 scoreTask(taskResult)                       // -> {points, findings}
@@ -170,7 +181,9 @@ detectFramework(page)                       // Playwright page -> 'nextjs'|'shop
 
 **Turning a run record into `Step[]`:** for each `run.steps[i]` with an `action`, create `{id, label: action, seconds: parseFloat(duration), screenshotUrl: '/api/shot/'+runId+'/'+id, usedWebSearch}`; `usedWebSearch` comes from the matching PROGRESS event (`tinyfish_api === 'search'`), matched by order/label.
 
-**Queue (`queue.js`):** a simple promise pool. `enqueue(fn)` runs at most `TINYFISH_MAX_PARALLEL` at once; the rest wait. Lanes show "Waiting for an agent" while queued.
+**Queue (`queue.js`):** a promise pool. `enqueue(fn)` runs at most `TINYFISH_MAX_PARALLEL` at once; the rest wait. Waiting runs start by **priority** (a person's test, CLI run or race = 0; a Watch check = 1), then first come first served (D30). Running runs are never pre-empted. `cancelGroup(reportId)` drops a test's waiting tasks. `GET /api/health` exposes `queue` (`running`, `queued`, `bySource`, `groups[reportId]`), and the dashboard turns it into the reason a lane waits ("2 agents busy: a Watch check is running" / "another test is running").
+
+**Cancelling (D29):** `CANCELLED` is final. A TinyFish run that ends `CANCELLED` (or a Stop click, Ctrl+C, a Watch pause) never starts a bot-wall retry and nothing queued for that test ever starts; in-flight runs are cancelled on TinyFish so they stop costing money. Task status `cancelled`; report status `cancelled` (score 0, no findings: half a test says nothing about the site; the cost of the steps taken still counts). Every non-streaming TinyFish call has a 30 s time limit; the start of a live stream 60 s.
 
 ---
 
@@ -181,6 +194,7 @@ detectFramework(page)                       // Playwright page -> 'nextjs'|'shop
 3. If attempt 2 still looks blocked: attempt 3 `stealth` + `IN`. **Except (D26):** if attempt 2 took 5+ steps, the agent clearly used the site from an Indian home address, so the "block" is the site's own error (e.g. a broken cart's "Something went wrong"): stop, verdict `none`, normal failure finding.
 4. Verdict per task: passed on 1 -> `none`; passed on 2 -> `blocks-cloud-agents`; passed on 3 -> `blocks-automation`; never -> `site-broken`. Site verdict = worst task verdict.
 5. A task that failed for a non-blocking reason (could not find returns) does not re-run.
+6. **A `cancelled` task is never "blocked" (D29):** no retry, verdict `none`.
 
 ---
 
@@ -210,6 +224,15 @@ Findings created by scoring (others come from Instant Scan):
 | used web search | `needed-web-search` | medium |
 | >10 steps | `too-many-steps` | medium |
 | >=180 s | `slow` | low |
+
+Answer checks (D28, findings only: they never fail a task or change points; `pointsIfFixed: 0`; wording is "may", cause is a site cause):
+
+| Condition (from the agent's own answer or step labels) | Finding type | Severity |
+|---|---|---|
+| `add_to_cart` passed and the answer or a step label states a quantity above 1 ("quantity: 2", "2 units", "x3") | `wrong-quantity` | medium |
+| `find_price`/`add_to_cart` passed, answer quotes a dollar price with no rupee sign, and the site shows rupees (Instant Scan `priceAsText`, or the agent's own step labels contain ₹/Rs) | `currency-mismatch` | low |
+
+A `cancelled` task scores 0 points and has no findings.
 
 `pointsIfFixed` = points the task would gain if the finding disappeared (e.g. failed -> passed in 5 steps = up to +25).
 `costRupees = totalSteps * 0.016 * 88` (all attempts included).
@@ -250,10 +273,11 @@ For each finding:
 
 | Method + path | Body / query | Returns |
 |---|---|---|
-| `GET /api/health` | | `{ok:true, mock:boolean, demoStoreUrl}` (`demoStoreUrl` is null when not set) |
+| `GET /api/health` | | `{ok, version, mock, demoStoreUrl, queue:{maxParallel,running,queued,bySource,groups}, activeTests}` (`demoStoreUrl` is null when not set) |
 | `POST /api/tests` | `{url, tasks?, customTask?}` | `{reportId}`; starts Instant Scan + test in background |
 | `GET /api/tests/:id` | | `SiteReport` (includes `scanFindings` once the Instant Scan is done) |
 | `GET /api/tests/:id/events` | | SSE `LiveEvent` stream; first message replays current report |
+| `POST /api/tests/:id/cancel` | | `{ok, cancelled, status}`; stops a running test or Watch check (idempotent, 404 for unknown ids). Report ends with status `cancelled` |
 | `GET /api/tests` | | recent reports (id, url, score, testedAt) |
 | `POST /api/instant-scan` | `{url}` | `InstantScan` |
 | `GET /api/shot/:runId/:stepId` | | JPEG (cached to `data/shots/`) |
@@ -263,12 +287,15 @@ For each finding:
 | `GET /api/race/:id` / `.../events` | | race state / SSE |
 | `GET /api/watch` | | `Watch[]` |
 | `POST /api/watch` | `{url, everyMinutes, tasks}` | `Watch` |
-| `POST /api/watch/:id/run-now` | | `{reportId}` |
+| `POST /api/watch/:id/run-now` | | `{reportId}` (409 if a check is already running) |
+| `POST /api/watch/:id/cancel` | | `{ok, cancelled}`; stop the running check (the watch stays scheduled) |
 | `GET /api/watch/:id/history` | | `SiteReport[]` |
-| `PATCH /api/watch/:id` | `{enabled?, everyMinutes?}` | `Watch` |
+| `PATCH /api/watch/:id` | `{enabled?, everyMinutes?}` | `Watch`. `enabled:false` also cancels the check running right now |
 | `POST /api/webhooks/tinyfish` | TinyFish webhook | `200` |
 | `GET /api/leaderboard` | | reports from `data/cached-demo/leaderboard/` ranked |
 | `POST /api/demo-store/flaws` | `{on:boolean}` | used by "Apply fixes": returns the store URL with `?flaws=on|off` |
+
+**Limits and checks (every endpoint):** web address = http/https only, at most 2048 characters, no spaces/control characters, no user name or password, no localhost/private addresses when live (replay mode allows localhost for tests); tasks = non-empty list of the 4 task ids; custom task <= 300 characters (emoji fine); Watch `everyMinutes` = whole number 5-1440 and at most 20 watches; ids = letters, digits, `_`, `-` (an invalid id is a plain 404). `POST /api/tests`, `/api/watch`, `/api/watch/:id/run-now`, `/api/instant-scan`, `/api/race`, `/api/reports/:id/fixes`: in-memory rate limit per client address and endpoint, 10 per minute (`RATE_LIMIT_PER_MIN`), then `429` with `Retry-After`; at most 6 tests running at once (`MAX_ACTIVE_TESTS`). Requests with a foreign `Origin` header (another website) are refused with `403`, CORS is local-only and the server listens on `127.0.0.1` unless `HOST` says otherwise. The server loads `.env` itself if it exists (`npm start` never needs one), recovers reports left `running` by a restart (they become `cancelled`), cancels in-flight runs on SIGINT/SIGTERM, and logs one JSON line per test/watch start, finish, cancel and error (`LOG_LEVEL=silent` turns them off).
 
 The server also serves the built dashboard (`apps/web/dist`, from `npm run build -w @agentready/web`) at `/`, so links like `http://localhost:4000/#/test/<id>` from the CLI and Watch alerts open without Vite.
 SSE format: headers `Content-Type: text/event-stream`, `Cache-Control: no-cache`, `Connection: keep-alive`; each message `data: ${JSON.stringify(event)}\n\n`; send `: ping\n\n` every 15 s.
@@ -304,6 +331,7 @@ Store API: `saveReport(r)`, `getReport(id)`, `listReports()`, `saveWatch(w)`, `l
 - Alert text (Discord `{content}`, Slack `{text}`; detect by URL containing `discord.com`):
   `🔴 AgentReady: AI shoppers can't <task label> on <site> since <time>. Last good: <time> (<n> steps). Now: <blocker>. Report: <dashboard link>`
   Recovery: `🟢 AgentReady: <task label> on <site> works again (<time>).`
+- Priority: a Watch check waits behind a person's test for a free agent slot (D30). Pausing a watch, or `POST /api/tests/:checkId/cancel`, cancels the running check (no history row, no alert; D29).
 - Publish `watch-alert` / `watch-recovered` LiveEvents to dashboard subscribers of `watch:<id>`.
 - Demo: watch the demo store every 20 min from ~14:00.
 
@@ -341,12 +369,12 @@ With flaws off: normal text price, labelled button, footer Returns link, no popu
 
 ## 15. CLI (`apps/cli/bin/agentready.js`)
 
-`npx agentready <localhost-url> [--tasks find_price,add_to_cart] [--json]`
+`npx agentready <localhost-url> [--tasks find_price,add_to_cart] [--json] [--min-score N] [--no-tunnel] [--no-scan]`
 1. Check `cloudflared --version`; if missing print install help (`sudo pacman -S cloudflared` / `brew install cloudflared` / Cloudflare docs).
 2. Spawn `cloudflared tunnel --no-autoupdate --url <localhost-url>`; read stderr until a `https://*.trycloudflare.com` URL appears (timeout 30 s); wait 5 s for it to become reachable.
-3. `runSiteTest({url: tunnelUrl, tasks, source:'cli'})` using `TINYFISH_API_KEY` from env or `.env`.
+3. `runSiteTest({url: tunnelUrl, tasks, source:'cli'})` using `TINYFISH_API_KEY` from env or `.env`; at the same time the **Instant Scan** runs on the same address (skip with `--no-scan`) so pop-ups, unlabelled buttons and prices in images show up as fixes. Ctrl+C / SIGTERM / SIGHUP first cancel the in-flight agent runs (exit 130/143/129), then stop the tunnel; a second Ctrl+C leaves at once.
 4. Print: score, a table (task, result, steps, seconds), top 3 fixes, path of saved report JSON. If `AGENTREADY_SERVER` is set, POST the report to it and print the dashboard link.
-5. Kill the tunnel on exit (also on Ctrl+C). Exit code 1 if score < `--min-score` (for CI).
+5. Kill the tunnel on exit (also on Ctrl+C). Exit code 0 ok, 1 if score < `--min-score` or the test could not finish, 2 for usage/setup problems (unknown option, bad address, no key, no cloudflared). An upload failure prints the reason (server down, 404, ...) and keeps the saved report.
 
 ---
 
@@ -376,6 +404,10 @@ On `pull_request`: wait for the preview URL (Vercel deployment status) -> run `n
 | `DEMO_STORE_URL` | `https://agentready-demo.vercel.app` | server, dashboard |
 | `PORT` | `4000` | server |
 | `FEATURE_RACE` etc. | `true` | server flags |
+| `HOST` | `127.0.0.1` | server listen address (local only by default) |
+| `RATE_LIMIT_PER_MIN`, `MAX_ACTIVE_TESTS` | `10`, `6` | server limits |
+| `LOG_LEVEL` | `silent` | turn the JSON log lines off |
+| `AGENTREADY_DATA_DIR` | temp folder | where reports/watches are stored (tests use a temp folder) |
 
 ---
 
@@ -385,6 +417,9 @@ On `pull_request`: wait for the preview URL (Vercel deployment status) -> run `n
 npm install
 cp .env.example .env            # fill TINYFISH_API_KEY; TINYFISH_MOCK=1 for UI work
 npm run dev                     # server :4000 + dashboard :5173 (concurrently)
+npm start                       # server only (serves the built dashboard); works with no .env
+npm test                        # unit + API + CLI tests (node:test, replay mode, no credits)
+npm run test:e2e                # click tests in real Chromium (builds the dashboard first)
 npm run dev -w @agentready/server
 npm run dev -w @agentready/web
 node apps/cli/bin/agentready.js http://localhost:5500   # CLI against a local site

@@ -35,7 +35,8 @@ function NewWatchForm({ defaultUrl, onCreated }) {
     setBusy(true);
     try {
       const text = url.trim();
-      await createWatch(/^https?:\/\//i.test(text) ? text : `https://${text}`, Number(minutes), WATCH_SCOPES[scope].tasks);
+      // No scheme typed: assume https. Any other scheme is left alone so the server can say it is not allowed.
+      await createWatch(/^[a-z][a-z0-9+.-]*:\/\//i.test(text) ? text : `https://${text}`, Number(minutes), WATCH_SCOPES[scope].tasks);
       setUrl('');
       onCreated();
     } catch (err) {
