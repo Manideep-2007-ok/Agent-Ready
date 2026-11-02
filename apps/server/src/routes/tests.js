@@ -5,47 +5,14 @@ import { Router } from 'express';
 import { TASK_IDS } from '@agentready/engine/types';
 import { config } from '../config.js';
 import * as store from '../store.js';
-import { startReport } from '../reportJob.js';
-import { assertReplayable } from '../replay.js';
+import { startReport, isJobActive } from '../reportJob.js';
+import { logEvent } from '../log.js';
+import { rateLimit } from '../rateLimit.js';
+import { SAFE_ID, SCORED_TASKS, assertSafeId, httpError, parseSiteUrl, parseTasks, parseCustomTask } from '../validate.js';
+import { assertReplayable, recordedDemoReport } from '../replay.js';
 
-// Real TinyFish ids are UUIDs; mock ids look like mock-nykaa_find_price-l39yqq. Both are safe filename characters.
-const RUN_ID = /^[\w-]{1,80}$/;
-const SCORED_TASKS = TASK_IDS.filter((id) => id !== 'custom');
-
-/** An error carrying an HTTP status; the error handler in index.js turns it into JSON. */
-export const httpError = (status, message) => Object.assign(new Error(message), { status });
-
-/** Accepts only http(s) URLs. Cloud browsers cannot reach localhost, so that is refused with the way out. */
-export function parseSiteUrl(input) {
-  const text = String(input ?? '').trim();
-  let url;
-  try {
-    url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
-  } catch {
-    throw httpError(400, 'Please enter a valid website address, for example https://www.nykaa.com');
-  }
-  const host = url.hostname;
-  if (!config.mock && (host === 'localhost' || host.endsWith('.localhost') || /^(127\.|10\.|192\.168\.)/.test(host))) {
-    throw httpError(400, 'AI agents run in the cloud and cannot reach localhost. Use the agentready command-line tool to test a local site.');
-  }
-  return url.toString();
-}
-
-export function parseTasks(tasks) {
-  if (tasks === undefined) return undefined;
-  if (!Array.isArray(tasks) || tasks.some((t) => !SCORED_TASKS.includes(t))) {
-    throw httpError(400, `tasks must be a list of: ${SCORED_TASKS.join(', ')}`);
-  }
-  return tasks;
-}
-
-export function parseCustomTask(text) {
-  if (text === undefined || text === null || String(text).trim() === '') return undefined;
-  if (!config.features.CUSTOM_TASK) throw httpError(404, 'Custom tasks are turned off.');
-  const trimmed = String(text).trim();
-  if (trimmed.length > 300) throw httpError(400, 'Please keep the custom task under 300 characters.');
-  return trimmed;
-}
+const RUN_ID = SAFE_ID;
+export { httpError, parseSiteUrl, parseTasks, parseCustomTask };
 
 /**
  * A finished SiteReport posted by the CLI. The CLI prints <server>/#/test/<id> from its own id, so the id is kept
@@ -71,14 +38,20 @@ export function parseUploadedReport(body) {
   };
 }
 
-const sse =(res, event) => res.write(`data: ${JSON.stringify(event)}\n\n`);
+
 
 export default function testsRoutes({ engine, events }) {
   const router = Router();
 
-  router.post('/tests', async (req, res) => {
+  // Never throws: a browser that closed the page mid-replay must not crash the server.
+  const sse = (res, event) => (events.send ? events.send(res, event) : false);
+
+  router.post('/tests', rateLimit('tests'), async (req, res) => {
     const url = parseSiteUrl(req.body?.url);
     assertReplayable(url);
+    // Replay mode: our demo store opens its real recorded report (91 with flaws, 97 fixed) instead of a sample run.
+    const recorded = req.body?.customTask ? null : recordedDemoReport(url);
+    if (recorded) return res.status(202).json({ reportId: recorded });
     const tasks = parseTasks(req.body?.tasks);
     const customText = parseCustomTask(req.body?.customTask);
     const reportId = await startReport(
@@ -91,6 +64,7 @@ export default function testsRoutes({ engine, events }) {
   router.get('/tests', async (_req, res) => res.json(await store.listReports()));
 
   router.get('/tests/:id', async (req, res) => {
+    assertSafeId(req.params.id);
     const report = await store.getReport(req.params.id);
     if (!report) throw httpError(404, 'We could not find that report.');
     res.json(report);
@@ -98,15 +72,38 @@ export default function testsRoutes({ engine, events }) {
 
   // Live updates. The first messages replay what already happened so a late or refreshed page catches up.
   router.get('/tests/:id/events', async (req, res) => {
+    assertSafeId(req.params.id);
     const report = await store.getReport(req.params.id);
     if (!report) throw httpError(404, 'We could not find that report.');
     events.subscribe(report.id, res);
     if (report.instantScan) sse(res, { type: 'instant-scan', reportId: report.id, scan: report.instantScan });
     for (const task of report.tasks) sse(res, { type: 'task-update', reportId: report.id, task });
-    if (report.status === 'complete') sse(res, { type: 'report-complete', reportId: report.id, report });
+    if (report.status !== 'running') sse(res, { type: 'report-complete', reportId: report.id, report });
   });
 
-  router.post('/instant-scan', async (req, res) => {
+  // Stop a running test (also a Watch check: they are reports too). Idempotent: stopping a finished test is a no-op.
+  router.post('/tests/:id/cancel', async (req, res) => {
+    assertSafeId(req.params.id);
+    const report = await store.getReport(req.params.id);
+    if (!report) throw httpError(404, 'We could not find that report.');
+    if (report.status !== 'running') return res.json({ ok: true, cancelled: false, status: report.status });
+    const result = await engine.cancelReport?.(report.id, 'user');
+    // The agents already finished and only the Instant Scan is still closing: nothing is left to stop (or pay for).
+    if (!result?.found && isJobActive(report.id)) return res.json({ ok: true, cancelled: false, status: 'finishing' });
+    if (!result?.found) {
+      // Marked running on disk, but nothing is running here (the server restarted): close it so the page stops spinning.
+      for (const task of report.tasks ?? []) {
+        if (['queued', 'running'].includes(task.status)) { task.status = 'cancelled'; task.blocker = 'The test was stopped.'; }
+      }
+      Object.assign(report, { status: 'cancelled', score: 0, topFixes: [] });
+      await store.saveReport(report);
+      events.publish({ type: 'report-complete', reportId: report.id, report });
+    }
+    logEvent('test.cancel', { id: report.id, by: 'user', runsCancelled: result?.cancelledRuns ?? 0, droppedFromQueue: result?.droppedFromQueue ?? 0 });
+    res.json({ ok: true, cancelled: true, status: 'cancelling' });
+  });
+
+  router.post('/instant-scan', rateLimit('instant-scan'), async (req, res) => {
     res.json(await engine.instantScan(parseSiteUrl(req.body?.url)));
   });
 
@@ -130,7 +127,8 @@ export default function testsRoutes({ engine, events }) {
     res.type('image/jpeg').set('Cache-Control', 'public, max-age=86400').send(image);
   });
 
-  router.post('/reports/:id/fixes', async (req, res) => {
+  router.post('/reports/:id/fixes', rateLimit('fixes'), async (req, res) => {
+    assertSafeId(req.params.id);
     const report = await store.getReport(req.params.id);
     if (!report) throw httpError(404, 'We could not find that report.');
     const enriched = await engine.buildFixReport(report);

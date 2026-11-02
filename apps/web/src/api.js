@@ -1,5 +1,6 @@
 // Talks to the Express server (/api, proxied by Vite) and keeps live test state from the SSE stream.
-import { useEffect, useReducer } from 'react';
+import { useEffect, useReducer, useState } from 'react';
+import { queueReason } from './queueReason.js';
 
 /** @typedef {import('@agentready/engine/types').SiteReport} SiteReport */
 /** @typedef {import('@agentready/engine/types').TaskResult} TaskResult */
@@ -19,6 +20,8 @@ export async function api(path, { method = 'GET', body } = {}) {
 }
 
 export const getHealth = () => api('/health');
+export const cancelTest = (id) => api(`/tests/${encodeURIComponent(id)}/cancel`, { method: 'POST' });
+export const cancelWatchCheck = (id) => api(`/watch/${encodeURIComponent(id)}/cancel`, { method: 'POST' });
 export const startTest = (url, customTask) => api('/tests', { method: 'POST', body: { url, customTask: customTask || undefined } });
 export const getReport = (id) => api(`/tests/${encodeURIComponent(id)}`);
 export const listReports = () => api('/tests');
@@ -86,6 +89,23 @@ function reduce(state, event) {
     default:
       return state;
   }
+}
+
+/**
+ * While `active`, asks the server every 3 s which runs hold the agent slots, and returns a plain-language reason
+ * ("2 agents busy: a Watch check is running") for lanes that are waiting. '' when there is nothing to say.
+ */
+export function useQueueNote(reportId, active) {
+  const [note, setNote] = useState('');
+  useEffect(() => {
+    if (!active || !reportId) { setNote(''); return undefined; }
+    let stop = false;
+    const poll = () => getHealth().then((h) => { if (!stop) setNote(queueReason(h.queue, reportId)); }).catch(() => {});
+    poll();
+    const timer = setInterval(poll, 3000);
+    return () => { stop = true; clearInterval(timer); };
+  }, [reportId, active]);
+  return note;
 }
 
 /**

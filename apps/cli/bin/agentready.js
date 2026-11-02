@@ -1,48 +1,47 @@
 #!/usr/bin/env node
 // AgentReady CLI: test a website (even one on localhost) with real AI web agents.
-// Usage: agentready <url> [--tasks a,b] [--json] [--min-score N] [--no-tunnel]
+// Usage: agentready <url> [--tasks a,b] [--json] [--min-score N] [--no-tunnel] [--no-scan]
+// Exit codes: 0 ok, 1 score below --min-score or the test could not finish, 2 bad usage / setup.
 import { spawn } from 'node:child_process';
-import { existsSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { loadDotEnv } from '@agentready/engine/env';
+import { parseArgs, normaliseUrl, findTunnelUrl, buildTestUrl, LOCAL_RE } from '../src/lib.js';
 
-// 1. Load .env (repo root, then current folder) without extra dependencies.
+// 1. Load .env (repo root, then current folder) before the engine reads its settings. A missing file is fine.
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-for (const dir of [repoRoot, process.cwd()]) {
-  const file = path.join(dir, '.env');
-  try { if (existsSync(file)) process.loadEnvFile?.(file); } catch { /* ignore a bad .env */ }
-}
+loadDotEnv([path.join(repoRoot, '.env'), path.join(process.cwd(), '.env')]);
 
-const { runSiteTest, buildFixReport, TASK_LABELS, DEFAULT_TASK_ORDER, config } = await import('@agentready/engine');
+const { runSiteTest, buildFixReport, instantScan, instantScanFindings, scoreReport, rankFixes, cancelAll, TASK_LABELS, DEFAULT_TASK_ORDER, config } =
+  await import('@agentready/engine');
 
 // ---- arguments ----
-const args = process.argv.slice(2);
-const flag = (name) => args.includes(`--${name}`);
-const value = (name) => { const i = args.indexOf(`--${name}`); return i >= 0 ? args[i + 1] : undefined; };
-const url = args.find((a, i) => !a.startsWith('--') && !['--tasks', '--min-score'].includes(args[i - 1]));
-const asJson = flag('json');
-const minScore = value('min-score') === undefined ? null : Number(value('min-score'));
-const tasks = value('tasks') ? value('tasks').split(',').map((t) => t.trim()).filter(Boolean) : DEFAULT_TASK_ORDER;
+const opts = parseArgs(process.argv.slice(2));
+const { json: asJson, minScore } = opts;
+const tasks = opts.tasks ?? DEFAULT_TASK_ORDER;
 
 // Engine logs (e.g. "[mock] ...") use console.log; with --json keep stdout clean for the JSON only.
 const printJson = console.log.bind(console);
 if (asJson) console.log = console.error;
 const say = (...m) => (asJson ? console.error(...m) : console.log(...m)); // progress goes to stderr with --json
-const usage = () => {
-  console.error('Usage: agentready <url> [--tasks find_price,add_to_cart] [--json] [--min-score N] [--no-tunnel]\n' +
-    `Tasks: ${Object.keys(TASK_LABELS).filter((t) => t !== 'custom').join(', ')}`);
-  process.exit(2);
+const usage = (why) => {
+  if (why) console.error(why);
+  console.error('Usage: agentready <url> [--tasks find_price,add_to_cart] [--json] [--min-score N] [--no-tunnel] [--no-scan]\n' +
+    `Tasks: ${Object.keys(TASK_LABELS).filter((t) => t !== 'custom').join(', ')}\n` +
+    '  --no-tunnel   test the address as it is (no Cloudflare tunnel); use for sites that are already public\n' +
+    '  --no-scan     skip the Instant Scan (pop-ups, unlabelled buttons, prices in images)\n' +
+    '  --min-score N exit with code 1 if the score is below N (for CI)');
+  process.exit(opts.help && !why ? 0 : 2);
 };
+if (opts.help) usage();
+if (opts.errors.length) usage(opts.errors.join('\n'));
+if (!opts.url) usage('Please give the address of the site to test.');
 let parsed;
-// No scheme: local addresses default to http (dev servers rarely speak https), others to https.
-const LOCAL_RE = /^(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0|\[::1?\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|.*\.local|.*\.localhost)$/i;
-try {
-  const host = String(url || '').split(/[/:]/)[0];
-  parsed = new URL(url?.includes('://') ? url : `${LOCAL_RE.test(host) ? 'http' : 'https'}://${url}`);
-} catch { usage(); }
-if (!url || (minScore !== null && Number.isNaN(minScore))) usage();
+try { parsed = normaliseUrl(opts.url); } catch (e) { usage(`That is not a valid web address (${e.message}).`); }
 const unknown = tasks.filter((t) => !TASK_LABELS[t] || t === 'custom');
-if (unknown.length) { console.error(`Unknown task(s): ${unknown.join(', ')}`); usage(); }
+if (unknown.length) usage(`Unknown task(s): ${unknown.join(', ')}`);
+if (!tasks.length) usage('--tasks needs at least one task.');
 
 // Without a key every task would "fail" and the report would wrongly blame the site.
 if (!config.mock && !config.apiKey) {
@@ -54,9 +53,21 @@ if (!config.mock && !config.apiKey) {
 let tunnel = null;
 const stopTunnel = () => { if (tunnel && !tunnel.killed) tunnel.kill(); };
 const quit = (code) => { stopTunnel(); process.exit(code); };
-process.on('SIGINT', () => quit(130));
-process.on('SIGTERM', () => quit(143));
-process.on('SIGHUP', () => quit(129)); // terminal closed: still kill the tunnel
+
+// Ctrl+C / kill: cancel the agent runs that are already going FIRST (they cost money until they stop), then the tunnel.
+let interrupted = false;
+async function onSignal(name, code) {
+  if (interrupted) quit(code); // second Ctrl+C: leave right now
+  interrupted = true;
+  console.error(`\n${name} received. Stopping: cancelling the agent runs so they stop costing credits...`);
+  const hardStop = setTimeout(() => quit(code), 10_000);
+  try { const r = await cancelAll('cli-interrupt'); console.error(`Stopped ${r.cancelledRuns} agent run(s).`); } catch (e) { console.error(`Could not cancel every run (${e.message}); they end at their time cap.`); }
+  clearTimeout(hardStop);
+  quit(code);
+}
+process.on('SIGINT', () => onSignal('Ctrl+C', 130));
+process.on('SIGTERM', () => onSignal('SIGTERM', 143));
+process.on('SIGHUP', () => onSignal('Terminal closed', 129));
 process.on('exit', stopTunnel);
 
 const isLocal = LOCAL_RE.test(parsed.hostname);
@@ -73,12 +84,12 @@ function startTunnel(localUrl) {
   return new Promise((resolve, reject) => {
     tunnel = spawn('cloudflared', ['tunnel', '--no-autoupdate', '--url', localUrl], { stdio: ['ignore', 'pipe', 'pipe'] });
     const timer = setTimeout(() => reject(new Error('The tunnel did not start within 30 seconds.')), 30000);
-    // Buffer output (the URL can be split across chunks). Skip api.trycloudflare.com, which appears in error lines.
+    // Buffer output (the URL can be split across chunks).
     let out = '';
     const onData = (chunk) => {
       out = (out + chunk.toString()).slice(-8192);
-      const m = [...out.matchAll(/https:\/\/([a-z0-9-]+)\.trycloudflare\.com/g)].find((x) => x[1] !== 'api');
-      if (m) { clearTimeout(timer); resolve(m[0]); }
+      const found = findTunnelUrl(out);
+      if (found) { clearTimeout(timer); resolve(found); }
     };
     tunnel.stdout.on('data', onData);
     tunnel.stderr.on('data', onData);
@@ -98,7 +109,7 @@ async function waitReachable(u) {
 
 try {
   let testUrl = parsed.href;
-  if (isLocal && !flag('no-tunnel')) {
+  if (isLocal && !opts.noTunnel) {
     if (!(await hasCloudflared())) {
       console.error('This site is on your computer, so AgentReady needs "cloudflared" to give the agents a public address.\n' +
         'Install it:\n  Arch:  sudo pacman -S cloudflared\n  macOS: brew install cloudflared\n' +
@@ -106,14 +117,15 @@ try {
       process.exit(2);
     }
     say('Opening a temporary public tunnel to your site...');
-    const tunnelUrl = await startTunnel(parsed.href);
+    // Tunnel the site's origin, then keep the page path and query (e.g. /?flaws=on) on the public address.
+    const tunnelUrl = await startTunnel(parsed.origin);
     await waitReachable(tunnelUrl);
-    testUrl = tunnelUrl;
+    testUrl = buildTestUrl(tunnelUrl, parsed);
     say(`Tunnel ready: ${tunnelUrl}`);
   }
 
   if (config.mock) say('(mock mode: replaying recorded runs, no credits used)');
-  say(`Testing ${testUrl} with ${tasks.length} AI agent task(s)...\n`);
+  say(`Testing ${testUrl} with ${tasks.length} AI agent task(s)${opts.noScan ? '' : ' and an Instant Scan'}...\n`);
 
   // ---- run the test with live progress ----
   const lastStatus = {};
@@ -128,8 +140,25 @@ try {
       say(`  [${TASK_LABELS[e.taskId]}]   step: ${e.step.label}`);
     }
   };
+  // The Instant Scan runs next to the agents (it never throws; a failed scan just has no findings).
+  const scanPromise = opts.noScan ? null : instantScan(testUrl).catch(() => null);
   let report = await runSiteTest({ url: testUrl, tasks, source: 'cli' }, onEvent);
+  if (interrupted) await new Promise(() => {}); // the signal handler is cancelling and will exit; never print a half report
+  if (report.status === 'cancelled') {
+    console.error('The test was stopped before it finished (an agent run was cancelled). No report was written.');
+    quit(1);
+  }
   report.url = parsed.href; // show the address the developer typed, not the tunnel
+
+  if (scanPromise) {
+    const scan = await scanPromise;
+    if (scan) {
+      report.instantScan = scan;
+      report.scanFindings = instantScanFindings(scan);
+      Object.assign(report, scoreReport(report)); // the answer checks use what the scan saw (prices in rupees)
+      report.topFixes = rankFixes([...report.tasks.flatMap((t) => t.findings ?? []), ...report.scanFindings]);
+    } else say('(Instant Scan skipped: it could not finish)');
+  }
   try { report = await buildFixReport(report, { useAI: !!process.env.LLM_API_KEY && !config.mock }); } catch (e) { say(`(Fix details skipped: ${e.message})`); }
 
   // ---- save + optional upload ----
@@ -139,10 +168,17 @@ try {
   if (process.env.AGENTREADY_SERVER) {
     const base = process.env.AGENTREADY_SERVER.replace(/\/$/, '');
     try {
-      const r = await fetch(`${base}/api/reports`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(report) });
-      if (!r.ok) throw new Error(`server answered ${r.status}`);
+      const r = await fetch(`${base}/api/reports`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(report), signal: AbortSignal.timeout(15000) });
+      if (!r.ok) {
+        const detail = (await r.json().catch(() => ({})))?.error;
+        throw new Error(`the server answered ${r.status}${detail ? `: ${detail}` : ''}`);
+      }
       dashboard = `${base}/#/test/${report.id}`;
-    } catch (e) { say(`Could not upload the report to ${base}: ${e.message}`); }
+    } catch (e) {
+      const reason = e.name === 'TimeoutError' ? `${base} did not answer within 15 seconds`
+        : e.message === 'fetch failed' || e.cause?.code ? `could not connect to ${base} (is the AgentReady server running there?)` : e.message;
+      console.error(`Could not upload the report to ${base}: ${reason}.\nThe report is still saved on this computer: ${file}`);
+    }
   }
 
   // ---- print ----

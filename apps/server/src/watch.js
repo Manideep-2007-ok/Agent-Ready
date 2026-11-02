@@ -4,7 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import cron from 'node-cron';
-import { runSiteTest, runTaskWithBotWall, scoreReport, TASK_LABELS, DEFAULT_TASK_ORDER } from '@agentready/engine';
+import { runSiteTest, runTaskWithBotWall, scoreReport, createRunContext, TASK_LABELS, DEFAULT_TASK_ORDER } from '@agentready/engine';
+import { logEvent, safeUrl } from './log.js';
 import { sendAlert } from './alerts.js';
 
 /** @typedef {import('../../../packages/engine/src/types.js').Watch} Watch */
@@ -170,7 +171,10 @@ export async function createWatch({ url, everyMinutes = 20, tasks = DEFAULT_TASK
 export async function updateWatch(id, patch) {
   const watch = await getWatch(id);
   if (!watch) return null;
-  if (typeof patch.enabled === 'boolean') watch.enabled = patch.enabled;
+  if (typeof patch.enabled === 'boolean') {
+    watch.enabled = patch.enabled;
+    if (!watch.enabled) await cancelCheck(id); // pause = stop the check that is running right now (it would keep spending credits)
+  }
   if (patch.everyMinutes != null) watch.everyMinutes = patch.everyMinutes;
   await (await getStore()).saveWatch(watch);
   schedule(watch);
@@ -179,7 +183,7 @@ export async function updateWatch(id, patch) {
 
 // ---------- scheduler ----------
 const jobs = new Map();   // watchId -> cron task
-const running = new Set(); // watchIds with a check in progress
+const running = new Map(); // watchId -> RunContext of the check in progress
 const failingTaskIds = new Map(); // watchId -> taskIds in the last alert (for the recovery text)
 
 export function cronExpression(everyMinutes) {
@@ -190,7 +194,8 @@ export function cronExpression(everyMinutes) {
 }
 
 function schedule(watch) {
-  jobs.get(watch.id)?.stop();
+  const old = jobs.get(watch.id);
+  if (old) { try { old.stop(); old.destroy?.(); } catch { /* already gone */ } }
   jobs.delete(watch.id);
   if (!watch.enabled) return;
   const task = cron.schedule(cronExpression(watch.everyMinutes), async () => {
@@ -198,6 +203,7 @@ function schedule(watch) {
       const fresh = await getWatch(watch.id);
       if (fresh?.enabled) await runCheck(fresh);
     } catch (e) {
+      logEvent('watch.error', { watchId: watch.id, message: e?.message });
       console.warn('[watch] check failed:', e?.message);
     }
   });
@@ -227,6 +233,15 @@ export function resolveWebhook(body) {
 // ---------- the check ----------
 export function isRunning(watchId) { return running.has(watchId); }
 
+/** Stop the check that is running for a watch (if any). Returns true if there was one. */
+export async function cancelCheck(watchId) {
+  const ctx = running.get(watchId);
+  if (!ctx) return false;
+  await ctx.cancel('user');
+  logEvent('watch.cancel', { watchId, reportId: ctx.id });
+  return true;
+}
+
 /**
  * Run one check for a watch. Returns the saved report, or null if one is already running.
  * @param {Watch} watch
@@ -234,11 +249,15 @@ export function isRunning(watchId) { return running.has(watchId); }
  */
 export async function runCheck(watch, { reportId } = {}) {
   if (running.has(watch.id)) return null;
-  running.add(watch.id);
+  const id = reportId || `rep_${new Date().toISOString().replace(/\D/g, '').slice(0, 12)}_w${Math.random().toString(36).slice(2, 6)}`;
+  // One cancel switch for the whole check (first run + confirming re-run). cancelReport(id) and pause both reach it.
+  const ctx = createRunContext({ id, source: 'watch' });
+  running.set(watch.id, ctx);
+  const startedAt = Date.now();
+  logEvent('watch.start', { watchId: watch.id, reportId: id, host: safeUrl(watch.url), tasks: watch.tasks.length });
   try {
     const store = await getStore();
     // Save a "running" report first so the dashboard can open it (and its live lanes) during the check.
-    const id = reportId || `rep_${new Date().toISOString().replace(/\D/g, '').slice(0, 12)}_w${Math.random().toString(36).slice(2, 6)}`;
     const live = { id, url: watch.url, source: 'watch', testedAt: new Date().toISOString(), pack: 'shopping', status: 'running',
       score: 0, botWall: 'none', costRupees: 0, framework: 'unknown', instantScan: null, tasks: [], topFixes: [] };
     await store.saveReport(live);
@@ -248,9 +267,14 @@ export async function runCheck(watch, { reportId } = {}) {
       else if (e.kind === 'step') publish({ type: 'step', reportId: id, taskId: e.taskId, step: e.step });
       else if (e.kind === 'streaming-url') publish({ type: 'streaming-url', reportId: id, taskId: e.taskId, url: e.url });
     };
-    const report = await runSiteTest({ url: watch.url, tasks: watch.tasks, source: 'watch', id }, onEvent);
+    const report = await runSiteTest({ url: watch.url, tasks: watch.tasks, source: 'watch', id, ctx }, onEvent);
     publish({ type: 'report-complete', reportId: id, report });
     await store.saveReport(report);
+    if (report.status === 'cancelled') {
+      // A stopped check says nothing about the site: no history row, no comparison, no alert.
+      logEvent('watch.cancelled', { watchId: watch.id, reportId: id, seconds: Math.round((Date.now() - startedAt) / 1000) });
+      return report;
+    }
     await store.appendWatchHistory(watch.id, report.id);
 
     const lastGood = watch.lastGoodReportId ? await store.getReport(watch.lastGoodReportId) : null;
@@ -261,7 +285,9 @@ export async function runCheck(watch, { reportId } = {}) {
     if (cmp.alertWorthy && !watch.failing) {
       // Agents vary (D15): re-run only the suspect tasks once, alert only if they still look bad.
       for (const id of cmp.failingTasks) {
-        const retry = await runTaskWithBotWall({ url: watch.url, taskId: id }, () => {});
+        if (ctx.cancelled) break; // paused or stopped during the confirming re-run: do not start more
+        const retry = await runTaskWithBotWall({ url: watch.url, taskId: id }, () => {}, ctx);
+        if (retry.status === 'cancelled') break;
         const prev = lastGood?.tasks.find((t) => t.taskId === id);
         const stillBad = !passed(retry) ||
           (passed(prev) && band(retry.numSteps) > band(prev.numSteps)) ||
@@ -275,6 +301,9 @@ export async function runCheck(watch, { reportId } = {}) {
       Object.assign(report, scoreReport(report));
       await store.saveReport(report);
     }
+
+    // Paused or stopped during the confirming re-run: the evidence is incomplete, so say nothing.
+    if (ctx.cancelled) { logEvent('watch.cancelled', { watchId: watch.id, reportId: id, seconds: Math.round((Date.now() - startedAt) / 1000) }); return report; }
 
     const allPassed = report.tasks.every(passed);
     const fresh = (await getWatch(watch.id)) ?? watch;
@@ -298,8 +327,13 @@ export async function runCheck(watch, { reportId } = {}) {
         await publish({ type: 'watch-recovered', watchId: fresh.id, message, current: report });
       }
     }
+    logEvent('watch.finish', { watchId: watch.id, reportId: id, score: report.score, allPassed, seconds: Math.round((Date.now() - startedAt) / 1000) });
     return report;
+  } catch (err) {
+    logEvent('watch.error', { watchId: watch.id, reportId: id, message: err?.message });
+    throw err;
   } finally {
+    ctx.release();
     running.delete(watch.id);
   }
 }

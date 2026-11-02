@@ -2,14 +2,15 @@
 // would show a recording of a different site under the new name, so those are refused with a plain explanation.
 import { config } from './config.js';
 
-const RECORDED = ['nykaa', 'myntra', 'swiggy'];
+// Exact domains (and their subdomains): a look-alike such as nykaa.evil.example or evil-nykaa.com must not get Nykaa's recording.
+const RECORDED = ['nykaa.com', 'myntra.com', 'swiggy.com'];
 
 export function hasRecording(url) {
   let host = '';
   try { host = new URL(url).hostname.toLowerCase(); } catch { return false; }
   let demoHost = '';
   try { demoHost = config.demoStoreUrl ? new URL(config.demoStoreUrl).hostname : ''; } catch { /* none */ }
-  return RECORDED.some((name) => host.includes(name)) || host === demoHost || host === 'agent-ready-demo.vercel.app'
+  return RECORDED.some((d) => host === d || host.endsWith(`.${d}`)) || host === demoHost || host === 'agent-ready-demo.vercel.app'
     || host === 'example.com' || host === 'www.example.com' || host === 'localhost' || host === '127.0.0.1';
 }
 
@@ -20,4 +21,18 @@ export const REPLAY_ONLY_MESSAGE =
 /** Throws a 400 in replay mode for sites with no recording. */
 export function assertReplayable(url) {
   if (config.mock && !hasRecording(url)) throw Object.assign(new Error(REPLAY_ONLY_MESSAGE), { status: 400 });
+}
+
+/**
+ * Replay mode + our demo store: open the REAL recorded reports (flaws on 91, flaws off 97) instead of replaying an
+ * unrelated clean run, which showed the flawed store as 100/100. Returns a cached report id, or null.
+ */
+export function recordedDemoReport(url) {
+  if (!config.mock) return null;
+  let u;
+  try { u = new URL(url); } catch { return null; }
+  let demoHost = 'agent-ready-demo.vercel.app';
+  try { if (config.demoStoreUrl) demoHost = new URL(config.demoStoreUrl).hostname; } catch { /* keep default */ }
+  if (u.hostname !== demoHost && u.hostname !== 'agent-ready-demo.vercel.app') return null;
+  return u.searchParams.get('flaws') === 'off' ? 'rep_demo_flaws_off' : 'rep_demo_flaws_on';
 }

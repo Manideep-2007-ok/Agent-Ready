@@ -60,7 +60,7 @@ export default function DemoStoreCard({ report, beforeId, demoStoreUrl, url, bus
     return (
       <section className="card demo-card">
         <div className="before-after">
-          <a href={`#/test/${encodeURIComponent(before.id)}`} className="ba-box ba-before">
+          <a href={`#/test/${encodeURIComponent(beforeId)}`} className="ba-box ba-before">
             <span className="muted">Before fixes</span>
             <b>{before.score}/100</b>
           </a>

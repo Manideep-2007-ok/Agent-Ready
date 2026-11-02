@@ -62,7 +62,7 @@ export default function ScoreCard({ report, onJump }) {
           </div>
           {custom && (
             <div className="muted">
-              {TASK_LABELS.custom}: {custom.status === 'passed' ? 'passed' : 'not done'} (not part of the 100)
+              {TASK_LABELS.custom}: {custom.replayNote ? 'not run in replay mode (live agents only)' : custom.status === 'passed' ? 'passed' : 'not done'} (not part of the 100)
             </div>
           )}
         </div>

@@ -11,3 +11,6 @@ data/*
 
 # CLI writes its report next to where it runs
 agentready-report-*.json
+
+# CLI demo script (scripts/cli-demo.sh) keeps its own reports here
+data-cli-demo/

@@ -31,6 +31,41 @@ function computePoints({ passed, steps, seconds, webSearch, capped }) {
   return p;
 }
 
+// ---- Answer checks (D28) -------------------------------------------------------------------------------------------
+// A task can "pass" with an answer that is wrong. We only say so when the agent's OWN words (its answer, its step
+// labels) show it, never from a guess. These produce findings only: they never fail a task or change the score.
+
+/** The largest quantity above 1 that the text states ("quantity: 2", "2 units", "x2"), or null. Conservative on purpose. */
+export function detectQuantity(text) {
+  if (!text) return null;
+  const patterns = [
+    /\b(?:quantity|qty)\s*(?:of|is|to|:|=)?\s*(\d{1,3})\b/gi,
+    // "2 units", but not a pack size ("Pack of 2 units"); "pieces"/"pcs" are left out: they are nearly always pack sizes ("Set of 3 pieces").
+    /(?<!\b(?:pack|set|combo|box|tray|bundle|kit|case)\s+of\s+)\b(\d{1,3})\s*units?\b/gi,
+    // "2 items in the cart" / "2 items added", not "2 items in stock" or "48 products in Lipstick" (a listing page).
+    /\b(\d{1,3})\s*(?:items?|products?)\s+(?:added|in\s+(?:the\s+|your\s+|my\s+)?(?:cart|bag|basket))\b/gi,
+    // "Lipstick x2", not a size ("50 x 30 cm") or a model name ("X 64GB").
+    /(?<![\d.]\s*)(?:\bx|×)\s?(\d{1,2})\b(?!\s*(?:\d|cm|mm|m\b|in\b|inch|ml|l\b|g\b|kg|gb|tb))/gi,
+  ];
+  let max = null;
+  for (const re of patterns) {
+    for (const m of String(text).matchAll(re)) {
+      const n = Number(m[1]);
+      if (n > 1 && n < 100 && (max === null || n > max)) max = n;
+    }
+  }
+  return max;
+}
+
+const DOLLAR_RE = /(?:US\s?\$|\$|\bUSD\b)\s?\d|\d\s?(?:USD|dollars?)\b/i;
+const RUPEE_RE = /₹|\bRs\.?\s?\d|\bINR\b|\brupees?\b/i;
+
+/** True when the answer quotes a dollar price while the site's own text uses rupees. */
+export function detectCurrencyMismatch(answer, siteShowsRupees) {
+  if (!answer || !siteShowsRupees) return false;
+  return DOLLAR_RE.test(answer) && !RUPEE_RE.test(answer);
+}
+
 const FAIL_FINDING = {
   add_to_cart: ['cart-not-found', 'high', "Add to cart or the cart total could not be found", 'The Add to cart button or the cart total is hard to find: no clear text label, hidden behind a menu, or covered by another element.', 'Give the Add to cart control a visible text label (or aria-label) and show the cart total as plain text on the cart page.', 'WCAG 4.1.2 Name, Role, Value', 'Add to cart passes in 5 steps or fewer'],
   find_price: ['price-not-found', 'high', 'No product price could be read', 'Prices may be drawn inside images or loaded so late that they are not in the page text.', 'Show prices as plain text next to the product name and add schema.org Product/Offer data.', 'WCAG 1.1.1 Non-text Content; schema.org Product', 'A product price is found in 5 steps or fewer'],
@@ -41,9 +76,12 @@ const FAIL_FINDING = {
 /**
  * Score one task.
  * @param {TaskResult & {verdict?: BotWallVerdict}} task
+ * @param {{siteShowsRupees?: boolean}} [context]  facts about the whole site (from the Instant Scan) for the answer checks
  * @returns {{points:number, findings:Finding[]}}
  */
-export function scoreTask(task) {
+export function scoreTask(task, context = {}) {
+  // A stopped task proves nothing about the site: no points, no findings.
+  if (task.status === 'cancelled') return { points: 0, findings: [] };
   const passed = task.status === 'passed';
   const verdict = task.verdict || 'none';
   const webSearch = (task.steps || []).some((s) => s.usedWebSearch);
@@ -96,6 +134,33 @@ export function scoreTask(task) {
     findings.push({ ...base, type, severity,
       text: `${what}.${blocker}`, likelyCause, fix, ...(standard ? { standard } : {}), passCheck,
       pointsIfFixed: gain({ passed: true, steps: 5, seconds: 60, webSearch: false, capped: false }) });
+  }
+
+  // Answer checks (D28): findings only, never a failed task and never points. Only for the tasks that have a plain answer.
+  if (passed && task.taskId === 'add_to_cart') {
+    const evidence = [task.answer, ...(task.steps || []).map((s) => s.label)].filter(Boolean).join(' | ');
+    const qty = detectQuantity(evidence);
+    if (qty) {
+      findings.push({ ...base, type: 'wrong-quantity', severity: 'medium',
+        text: `The cart answer mentions a quantity of ${qty}, so the total the agent reported may be for ${qty} units instead of one product.`,
+        likelyCause: 'Add to cart may add more than one unit (a quantity box starting above 1, or no clear "added" message so a second click looks needed).',
+        fix: 'Start the quantity at 1, add exactly one unit per click and confirm "Added to cart" in text next to the button.',
+        standard: 'WCAG 4.1.3 Status Messages',
+        passCheck: 'One click on Add to cart gives a cart with exactly one unit',
+        pointsIfFixed: 0 });
+    }
+  }
+  if (passed && (task.taskId === 'find_price' || task.taskId === 'add_to_cart')) {
+    const labelsSayRupees = (task.steps || []).some((s) => RUPEE_RE.test(s.label || ''));
+    if (detectCurrencyMismatch(task.answer, context.siteShowsRupees || labelsSayRupees)) {
+      findings.push({ ...base, type: 'currency-mismatch', severity: 'low',
+        text: 'The agent reported a price in dollars, but this site shows its prices in rupees (₹), so the reported price may not be what shoppers see.',
+        likelyCause: 'The page may show more than one currency, or not say which currency a price is in (for example a hidden dollar price in the page data).',
+        fix: 'Write the currency symbol next to every price and set offers.priceCurrency in schema.org Product markup.',
+        standard: 'schema.org Offer priceCurrency',
+        passCheck: 'The price an agent reports matches the price on the page, in the same currency',
+        pointsIfFixed: 0 });
+    }
   }
 
   // Efficiency findings only make sense for tasks that passed.
@@ -152,8 +217,9 @@ export function scoreReport(report) {
   let score = 0;
   let totalSteps = 0;
   const all = [];
+  const context = { siteShowsRupees: report.instantScan?.priceAsText === true };
   for (const t of report.tasks) {
-    const { points, findings } = scoreTask(t);
+    const { points, findings } = scoreTask(t, context);
     t.points = points;
     t.findings = findings;
     if (t.taskId !== 'custom') score += points;

@@ -8,6 +8,7 @@ const CHIPS = {
   passed: ['Passed', 'passed'],
   failed: ['Failed', 'failed'],
   blocked: ['Blocked', 'blocked'],
+  cancelled: ['Stopped', 'cancelled'],
 };
 const PROXY_NAMES = { off: 'no proxy', IN: 'India proxy', US: 'US proxy' };
 
@@ -15,6 +16,7 @@ function chipOf(task) {
   if (!task) return 'waiting';
   const s = String(task.status || '').toLowerCase();
   const v = task.verdict;
+  if (s === 'cancelled') return 'cancelled';
   const done = ['passed', 'failed', 'blocked', 'complete', 'completed'].includes(s);
   if (s === 'blocked' || (done && s !== 'passed' && (v === 'blocks-cloud-agents' || v === 'blocks-automation'))) return 'blocked';
   if (s === 'passed') return 'passed';
@@ -25,9 +27,10 @@ function chipOf(task) {
 
 /**
  * One task lane.
- * @param {{task?: object, label?: string, onShotClick?: (url:string)=>void, startedAt?: number}} props
+ * @param {{task?: object, label?: string, onShotClick?: (url:string)=>void, startedAt?: number, waitReason?: string}} props
+ * waitReason: why a waiting lane is waiting (e.g. "2 agents busy: a Watch check is running").
  */
-export default function Lane({ task, label, onShotClick, startedAt }) {
+export default function Lane({ task, label, onShotClick, startedAt, waitReason }) {
   const chip = chipOf(task);
   const running = chip === 'running';
   // Timer starts when the lane starts RUNNING (not when it was mounted while still queued).
@@ -111,13 +114,15 @@ export default function Lane({ task, label, onShotClick, startedAt }) {
         ) : shotUrls.length ? (
           <div className="ar-lane-empty">No screenshot for this step</div>
         ) : (
-          <div className="ar-lane-empty">{chip === 'waiting' ? 'Waiting for an agent' : 'No picture yet'}</div>
+          <div className="ar-lane-empty">{chip === 'waiting' ? 'Waiting for an agent' : chip === 'cancelled' ? 'Stopped before a picture was taken' : 'No picture yet'}</div>
         )}
       </div>
+      {chip === 'waiting' && waitReason && <div className="ar-lane-wait" role="status">{waitReason}</div>}
+      {task?.replayNote && <div className="ar-lane-replay" role="note">{task.replayNote}</div>}
       {!running && task?.answer && (
         <div className="ar-lane-result"><strong>Agent&apos;s answer</strong>{task.answer}</div>
       )}
-      {!running && task?.blocker && (
+      {!running && chip !== 'cancelled' && task?.blocker && (
         <div className="ar-lane-result ar-lane-result--bad"><strong>What blocked it</strong>{task.blocker}</div>
       )}
     </section>
