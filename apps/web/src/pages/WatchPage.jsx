@@ -2,7 +2,7 @@
 // can no longer do a task. One card per watch: status, Run now (live lanes), pause/resume, history, live alerts.
 import { useCallback, useEffect, useState } from 'react';
 import { TASK_LABELS } from '@agentready/engine/goals';
-import { createWatch, getHealth, getWatchHistory, listWatches, runWatchNow, updateWatch, useLiveEvents } from '../api.js';
+import { cancelTest, createWatch, getHealth, getWatchHistory, listWatches, runWatchNow, updateWatch, useLiveEvents, useQueueNote } from '../api.js';
 import Lane from '../components/Lane.jsx';
 import ShotViewer from '../components/ShotViewer.jsx';
 
@@ -141,6 +141,8 @@ function WatchCard({ watch, onChange, onShotClick }) {
   });
 
   const checking = Boolean(checkId) && live.connection !== 'done';
+  const waitReason = useQueueNote(checkId, checking && Object.values(live.tasks).some((t) => t.status === 'queued'));
+  const stopCheck = () => act(async () => { await cancelTest(checkId); });
   const status = !watch.enabled
     ? { cls: 'band-warn', text: 'Paused' }
     : watch.failing
@@ -164,6 +166,7 @@ function WatchCard({ watch, onChange, onShotClick }) {
 
       <div className="watch-actions">
         <button type="button" onClick={runNow} disabled={busy || checking}>{checking ? 'Checking…' : 'Run now'}</button>
+        {checking && <button type="button" className="secondary" onClick={stopCheck} disabled={busy}>Stop check</button>}
         <button type="button" className="secondary" onClick={togglePaused} disabled={busy}>{watch.enabled ? 'Pause' : 'Resume'}</button>
       </div>
       {error && <p className="form-error">{error}</p>}
@@ -177,12 +180,12 @@ function WatchCard({ watch, onChange, onShotClick }) {
       {checkId && (
         <>
           <p className="muted">
-            {checking ? 'Checking now…' : live.report ? `Check finished: ${live.report.score}/100.` : ''}{' '}
+            {checking ? 'Checking now…' : live.report?.status === 'cancelled' ? 'Check stopped.' : live.report ? `Check finished: ${live.report.score}/100.` : ''}{' '}
             <a href={`#/test/${encodeURIComponent(checkId)}`}>Open full report</a>
           </p>
           {tasks.length > 0 && (
             <section className="lanes">
-              {tasks.map((task) => <Lane key={task.taskId} task={task} onShotClick={onShotClick} />)}
+              {tasks.map((task) => <Lane key={task.taskId} task={task} onShotClick={onShotClick} waitReason={waitReason} />)}
             </section>
           )}
         </>

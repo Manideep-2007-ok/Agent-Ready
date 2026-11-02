@@ -170,6 +170,8 @@ export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 
         task.seconds = task.seconds || Math.round((Date.now() - t0) / 1000);
         if (ctx?.cancelled || err.name === 'AbortError') {
           task.numSteps = progress.length || task.numSteps;
+          // Keep what the agent had done so far (live steps have no screenshots yet).
+          task.steps = progress.map((p, i) => ({ id: `p${i}`, label: p.purpose, seconds: null, screenshotUrl: '', usedWebSearch: p.usedWebSearch, ...(p.at ? { at: p.at } : {}) }));
           return stopped();
         }
         task.blocker = /Could not start|did not answer in time/.test(err.message) ? err.message : `Could not run the agent: ${err.message}`;

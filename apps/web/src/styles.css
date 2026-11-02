@@ -365,3 +365,7 @@ button.secondary:hover:not(:disabled) { background: var(--line-strong); }
   background: var(--warn-bg); color: var(--warn);
 }
 @media (max-width: 1200px) { .replay-banner { margin: 16px 20px 0; } }
+
+/* Stop test button and the "test stopped" card */
+.stop-test { margin-left: auto; }
+.stopped-card { border-left: 4px solid var(--muted); }

@@ -39,7 +39,11 @@ export class RunContext {
     const toCancel = [...this.runIds].filter((r) => !skipRunIds.includes(r));
     this.runIds.clear();
     this.controller.abort();
-    const results = await Promise.allSettled(toCancel.map((r) => tf.cancelRun(r)));
+    // Best effort and bounded: a slow TinyFish must not keep the Stop button waiting (the time cap ends stragglers anyway).
+    const results = await Promise.race([
+      Promise.allSettled(toCancel.map((r) => tf.cancelRun(r))),
+      new Promise((resolve) => setTimeout(() => resolve(toCancel.map(() => ({ status: 'rejected' }))), 8000).unref?.()),
+    ]);
     const failed = results.filter((r) => r.status === 'rejected').length;
     if (failed) console.warn(`[engine] ${failed} of ${toCancel.length} run(s) could not be cancelled on TinyFish for ${this.id}; they stop at their time cap`);
     return { cancelledRuns: toCancel.length - failed, droppedFromQueue };

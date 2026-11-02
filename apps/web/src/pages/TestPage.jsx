@@ -7,7 +7,7 @@ import { BentoCard, BentoGrid } from '@/components/ui/bento-grid';
 import { IconCloud } from '@/components/ui/icon-cloud';
 import { Confetti } from '@/components/ui/confetti';
 import { ComicText } from '@/components/ui/comic-text';
-import { getHealth, getReport, listReports, setDemoFlaws, startTest, useLiveEvents } from '../api.js';
+import { cancelTest, getHealth, getReport, listReports, setDemoFlaws, startTest, useLiveEvents, useQueueNote } from '../api.js';
 import { navigate } from '../nav.js';
 import Lane from '../components/Lane.jsx';
 import InstantScanCard from '../components/InstantScanCard.jsx';
@@ -227,16 +227,34 @@ function Celebrate({ report }) {
   );
 }
 
-/** Shown while the test runs; ScoreCard takes over once the report is complete. */
-function Progress({ url, tasks, connection }) {
-  const finished = tasks.filter((t) => ['passed', 'failed', 'blocked'].includes(t.status)).length;
+/** Shown while the test runs; ScoreCard takes over once the report is complete. Stop test cancels the agents. */
+function Progress({ url, tasks, connection, onStop, stopping }) {
+  const finished = tasks.filter((t) => ['passed', 'failed', 'blocked', 'cancelled'].includes(t.status)).length;
   return (
     <section className="card">
       <div className="progress">
-        <span className="big">Testing…</span>
+        <span className="big">{stopping ? 'Stopping…' : 'Testing…'}</span>
         <span>{url}</span>
         <span className="muted">{tasks.length ? `${finished} of ${tasks.length} tasks finished` : 'Starting the agents'}</span>
         {connection === 'lost' && <span className="muted">Connection dropped, reconnecting…</span>}
+        <button type="button" className="secondary stop-test" onClick={onStop} disabled={stopping}>
+          {stopping ? 'Stopping…' : 'Stop test'}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/** Shown instead of the score when a test was stopped: half a test says nothing about the site. */
+function StoppedCard({ report }) {
+  const done = report.tasks.filter((t) => ['passed', 'failed', 'blocked'].includes(t.status)).length;
+  return (
+    <section className="card stopped-card" role="status">
+      <div className="progress">
+        <span className="big">Test stopped</span>
+        <span className="muted">
+          {done} of {report.tasks.length} tasks had finished. No score is given for a stopped test. Agent cost so far ≈ ₹{report.costRupees}.
+        </span>
       </div>
     </section>
   );
@@ -281,6 +299,8 @@ function Findings({ report, onShotClick }) {
   );
 }
 
+const hostOf = (url) => { try { return new URL(url).hostname; } catch { return url; } };
+
 function RecentReports() {
   const [reports, setReports] = useState([]);
   useEffect(() => {
@@ -293,7 +313,7 @@ function RecentReports() {
       <div className="recent">
         {reports.slice(0, 8).map((r) => (
           <a key={r.id} href={`#/test/${encodeURIComponent(r.id)}`}>
-            {new URL(r.url).hostname} · {r.status === 'complete' ? `${r.score}/100` : 'running'}
+            {hostOf(r.url)} · {r.status === 'complete' ? `${r.score}/100` : r.status === 'cancelled' ? 'stopped' : 'running'}
           </a>
         ))}
       </div>
@@ -308,12 +328,14 @@ export default function TestPage({ reportId, beforeId }) {
   const [starting, setStarting] = useState(false);
   const [shot, setShot] = useState(null);
   const [demoStoreUrl, setDemoStoreUrl] = useState(null);
+  const [stopping, setStopping] = useState(false);
   const jumpToFix = (rank) => document.getElementById(`top-fix-${rank}`)?.scrollIntoView({ block: 'start' });
 
   // The address being tested, for the progress line (the live stream only carries it at the end).
   useEffect(() => {
     setUrl('');
     setError('');
+    setStopping(false);
     if (reportId) getReport(reportId).then((r) => setUrl(r.url)).catch((e) => setError(e.message));
   }, [reportId]);
 
@@ -341,6 +363,13 @@ export default function TestPage({ reportId, beforeId }) {
 
   const tasks = Object.values(live.tasks);
   const running = Boolean(reportId) && live.connection !== 'done' && !error;
+  const waitReason = useQueueNote(reportId, running && tasks.some((t) => t.status === 'queued'));
+  // Stop test: the server cancels the agent runs and drops queued tasks; the stream then ends with a 'cancelled' report.
+  const onStop = async () => {
+    setStopping(true);
+    try { await cancelTest(reportId); } catch (e) { setError(e.message); setStopping(false); }
+  };
+  const stopped = live.report?.status === 'cancelled';
 
   const form = <TestForm busy={starting || running} onStart={onStart} onDemo={demoStoreUrl ? onDemo : null} />;
 
@@ -359,14 +388,15 @@ export default function TestPage({ reportId, beforeId }) {
             busy={starting}
             onApplyFixes={onApplyFixes}
           />
-          {live.report ? <ScoreCard report={live.report} onJump={jumpToFix} /> : <Progress url={url} tasks={tasks} connection={live.connection} />}
+          {live.report ? (stopped ? <StoppedCard report={live.report} /> : <ScoreCard report={live.report} onJump={jumpToFix} />)
+            : <Progress url={url} tasks={tasks} connection={live.connection} onStop={onStop} stopping={stopping} />}
           {/* While agents run, their lanes come first (side by side); the scan card follows. After, the scan leads. */}
           {live.report && live.scan && <InstantScanCard scan={live.scan} loading={false} />}
           <section className={`lanes${tasks.length >= 4 ? ' lanes-4' : ''}`} aria-label="Agents">
-            {tasks.map((task) => <Lane key={task.taskId} task={task} onShotClick={setShot} />)}
+            {tasks.map((task) => <Lane key={task.taskId} task={task} onShotClick={setShot} waitReason={waitReason} />)}
           </section>
           {!live.report && <InstantScanCard scan={live.scan} loading={!live.scan} />}
-          {live.report && <Findings report={live.report} onShotClick={setShot} />}
+          {live.report && !stopped && <Findings report={live.report} onShotClick={setShot} />}
         </>
       )}
       {!reportId && <Features />}

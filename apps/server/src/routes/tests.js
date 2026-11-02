@@ -78,7 +78,7 @@ export default function testsRoutes({ engine, events }) {
     events.subscribe(report.id, res);
     if (report.instantScan) sse(res, { type: 'instant-scan', reportId: report.id, scan: report.instantScan });
     for (const task of report.tasks) sse(res, { type: 'task-update', reportId: report.id, task });
-    if (report.status === 'complete') sse(res, { type: 'report-complete', reportId: report.id, report });
+    if (report.status !== 'running') sse(res, { type: 'report-complete', reportId: report.id, report });
   });
 
   // Stop a running test (also a Watch check: they are reports too). Idempotent: stopping a finished test is a no-op.

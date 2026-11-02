@@ -1,14 +1,23 @@
 {
   "name": "agentready",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "dev": "concurrently -n server,web \"npm run dev -w @agentready/server\" \"npm run dev -w @agentready/web\"",
-    "build": "npm run build --workspaces --if-present"
+    "start": "npm start -w @agentready/server",
+    "build": "npm run build --workspaces --if-present",
+    "test": "node scripts/run-tests.mjs",
+    "test:e2e": "node apps/web/e2e/run.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }

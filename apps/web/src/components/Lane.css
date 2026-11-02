@@ -16,6 +16,9 @@
 }
 .ar-lane-chip--passed { background: var(--pass-bg); color: var(--pass); }
 .ar-lane-chip--failed, .ar-lane-chip--blocked { background: var(--fail-bg); color: var(--fail); }
+.ar-lane-chip--cancelled { background: var(--wait-bg); color: var(--muted); }
+.ar-lane-wait { font-size: 0.8125rem; line-height: 1.4; color: var(--muted); }
+.ar-lane-replay { font-size: 0.8125rem; line-height: 1.5; padding: 8px 10px; border-radius: 8px; background: var(--wait-bg); color: var(--text); }
 @keyframes ar-pulse { 50% { opacity: 0.25; } }
 .ar-lane-meta { display: flex; gap: 12px; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .ar-lane-step { font-size: 0.8125rem; color: var(--text); min-height: 18px; line-height: 1.4; }
