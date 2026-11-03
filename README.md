@@ -205,7 +205,7 @@ Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 </details>
 
----
+----
 
 <div align="center">
 
