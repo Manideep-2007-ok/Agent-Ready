@@ -1,0 +1,17 @@
+# Store text files with LF line endings, whatever each developer's OS uses.
+* text=auto
+
+# Shell scripts must keep LF to run on Linux and macOS.
+*.sh text eol=lf
+
+# Binary files: never touch their bytes.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webm binary
+*.mp4 binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
