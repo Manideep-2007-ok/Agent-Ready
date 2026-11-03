@@ -3,7 +3,7 @@
 Single source of truth for Team Mavericks (Manideep Thumu, Sai Shakti Nayak, Akhil Daitha) and every coding agent in this repo.
 
 - **Read with:** [`DECISIONS.md`](DECISIONS.md) (why we chose each thing) and [`RESEARCH.md`](RESEARCH.md) (everything we tested and learned, with numbers and screenshots).
-- **Deadline:** submit by **16:30**, feature freeze **15:30**, today 1 Nov 2026 (Swim with TinyFish, Scaler School of Technology).
+- **Origin:** started at Swim with TinyFish (Scaler School of Technology, 1 Nov 2026); now in active development.
 - If you change anything here, update this file and `DECISIONS.md` in the same commit and tell the team.
 
 ---
@@ -12,11 +12,11 @@ Single source of truth for Team Mavericks (Manideep Thumu, Sai Shakti Nayak, Akh
 
 AgentReady tests whether AI agents can actually use a website. Real TinyFish web agents try four everyday tasks on a site in parallel, live on screen. We score each task, show the exact step and screenshot where an agent got stuck, explain why with a fix developers can act on, and detect when a site blocks AI agents entirely. Agent-Ready Watch then re-tests the live site on a schedule and posts an alert when agents can no longer buy. A CLI tests sites still on a developer's laptop. Pitch line: **"Existing tools read the menu. We order the food."**
 
-| Layer | When | Surface | Today |
+| Layer | When | Surface | Status |
 |---|---|---|---|
-| Build | Developer's laptop | CLI `npx agentready http://localhost:3000` via Cloudflare quick tunnel | Build |
-| Release | Every pull request | CI check (GitHub Action) | Stretch |
-| Live | After launch | Agent-Ready Watch + Discord/Slack alert | Small version |
+| Build | Developer's laptop | CLI `npx agentready http://localhost:3000` via Cloudflare quick tunnel | Built (not yet on npm) |
+| Release | Every pull request | CI check (GitHub Action, section 16) | Built |
+| Live | After launch | Agent-Ready Watch + Discord/Slack alert | Built |
 
 ---
 
@@ -443,20 +443,9 @@ npx serve apps/demo-store       # demo store locally (deploy to Vercel for agent
 
 ---
 
-## 20. Timeline, cut-line, git
+## 20. Git, CI and releases
 
-| Time | Goal |
-|---|---|
-| 11:30-12:30 | One task end to end (engine -> server -> dashboard) in mock mode, then one real run on the demo store. Demo store v1 on Vercel. |
-| 12:30-13:30 | 4 tasks, lanes, scoring, screenshots, bot-wall, Instant Scan |
-| 13:30 | **Checkpoint:** full real test of Nykaa works. Merge to `main`. |
-| 13:30-15:00 | Watch (demo store watched from ~14:00), Fix Report + Top 3, one-click fix, CLI, Race, Cost Meter, custom task, step replay |
-| 15:00-15:30 | Pre-run India snapshot (6-8 stores) + 1 race, save to `data/cached-demo/`. CI only if solid. |
-| 15:30 | **Feature freeze** |
-| 15:30-16:30 | Bug fixes, backup video, rehearse twice, **submit by 16:30** |
-
-Must ship: core test, lanes, scoring, bot-wall, Instant Scan, demo store + Watch alert.
-Drop order if late: CI -> Race -> custom task -> India snapshot -> step replay -> AI write-up (keep templates) -> live CLI run.
-Never drop: cached backup runs and the backup video.
-
-Git: `main` always demo-able; branches `manideep/<x>`, `shakti/<x>`, `akhil/<x>`; small PRs; merge at least hourly; rebase on `main` first; never commit `.env` or keys.
+- `main` always runs. The maintainer may commit to it directly; everyone else works on a branch (`manideep/<x>`, `shakti/<x>`, `akhil/<x>`) and opens a pull request.
+- Every push to `main` and every pull request runs `npm test` (`.github/workflows/test.yml`, replay mode, no credits). The paid AgentReady check (section 16) runs only on pull requests labelled `agentready`.
+- Rebase on `main` before asking for review; keep pull requests small; never commit `.env` or keys.
+- Contributor guide: [`CONTRIBUTING.md`](../CONTRIBUTING.md). Changes per version: [`CHANGELOG.md`](../CHANGELOG.md). Publishing the CLI and the Action: [`PUBLISHING.md`](PUBLISHING.md).

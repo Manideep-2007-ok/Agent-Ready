@@ -1,6 +1,26 @@
 {
   "name": "agentready",
   "version": "0.2.0",
+  "description": "Real TinyFish web agents test whether AI shoppers can actually use your website: score, exact stuck step, fixes, and scheduled re-tests.",
+  "keywords": [
+    "ai-agents",
+    "agent-readiness",
+    "tinyfish",
+    "web-agents",
+    "ecommerce",
+    "testing",
+    "accessibility",
+    "monitoring"
+  ],
+  "homepage": "https://github.com/Manideep-2007-ok/Agent-Ready#readme",
+  "bugs": {
+    "url": "https://github.com/Manideep-2007-ok/Agent-Ready/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Manideep-2007-ok/Agent-Ready.git"
+  },
+  "license": "MIT",
   "private": true,
   "type": "module",
   "workspaces": [
