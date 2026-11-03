@@ -58,10 +58,10 @@ try {
     await shot(page, 'home');
   }, { page: home.page });
 
-  await t.step('fact cards open their reports (Myntra, before/after, Watch)', async () => {
+  await t.step('fact cards open their reports (Instant Scan, before/after, Watch)', async () => {
     const { page } = home;
     const facts = [
-      { text: /Blocked/, hash: /#\/test\/rep_20261031_demo_myntra/, expect: async () => page.locator('.score-card .bot-wall').waitFor() },
+      { text: /Caught in seconds/, hash: /#\/test\/rep_demo_flaws_on$/, expect: async () => page.locator('.score-card').waitFor() },
       { text: /35 → 19 steps/, hash: /#\/test\/rep_demo_flaws_off\/rep_demo_flaws_on/, expect: async () => page.locator('.ba-before').waitFor() },
       { text: /Alert in 6 min/, hash: /#\/watch/, expect: async () => page.getByRole('heading', { name: 'Watch a site' }).waitFor() },
     ];

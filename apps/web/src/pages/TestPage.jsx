@@ -39,7 +39,7 @@ function TestForm({ busy, onStart, onDemo }) {
           type="text"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="Website to test, e.g. nykaa.com"
+          placeholder="Website to test, e.g. your-store.com"
           aria-label="Website to test"
           disabled={busy}
         />
@@ -120,13 +120,13 @@ function Hero({ children }) {
   );
 }
 
-/** Real findings from today's runs; each opens its report. */
+/** Real findings from runs on our own demo store; each opens its report. No third-party sites are named here. */
 function Facts() {
   return (
     <section className="hero-facts" aria-label="What our agents found">
-      <a className="fact fact-orange" href="#/test/rep_20261031_demo_myntra">
-        <b>Blocked</b>
-        <span>Myntra turns away AI agents from cloud servers. They only got in through an Indian home address.</span>
+      <a className="fact fact-orange" href="#/test/rep_demo_flaws_on">
+        <b>Caught in seconds</b>
+        <span>The Instant Scan flagged a full-page pop-up and a price drawn as an image on our demo store, before the agents finished.</span>
       </a>
       <a className="fact fact-yellow" href="#/test/rep_demo_flaws_off/rep_demo_flaws_on">
         <b>35 → 19 steps</b>
