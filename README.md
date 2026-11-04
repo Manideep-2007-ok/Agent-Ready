@@ -8,7 +8,7 @@ Real [TinyFish](https://tinyfish.ai) web agents shop your site, live, and show y
 
 ![Node](https://img.shields.io/badge/node-20.19%2B-3c873a?style=flat-square) ![Built on TinyFish](https://img.shields.io/badge/built%20on-TinyFish-2b5fb8?style=flat-square) ![Tests](https://img.shields.io/badge/tests-node%3Atest%20%2B%20Playwright-6b7480?style=flat-square) ![Status](https://img.shields.io/badge/status-in%20development-c8501e?style=flat-square)
 
-[Why](#why-it-exists) · [Results](#what-it-found-on-real-sites) · [How it works](#how-it-works) · [Features](#features) · [Quick start](#quick-start) · [CLI](#from-the-terminal) · [GitHub Action](#in-your-pull-requests)
+[Why](#why-it-exists) · [Results](#what-we-observed-in-testing) · [How it works](#how-it-works) · [Features](#features) · [Quick start](#quick-start) · [CLI](#from-the-terminal) · [GitHub Action](#in-your-pull-requests)
 
 <br>
 
@@ -33,21 +33,21 @@ Static checkers read `robots.txt` and markup; none of them actually tries to buy
 
 ---
 
-## What it found on real sites
+## What we observed in testing
 
-| Site | Score | What happened |
-|:--|:--:|:--|
-| **myntra.com** | **5**&nbsp;/&nbsp;100 | The agent arriving from a cloud server got an error page. The same task passed in 5 steps through an Indian home address: **Myntra blocks cloud AI agents.** |
-| **nykaa.com** | **76**&nbsp;/&nbsp;100 | All four tasks passed, but finding the return policy took 13 steps, over four minutes and a web search. |
-| **swiggy.com** | **0**&nbsp;/&nbsp;100 | The item went into the cart, but the agent never found the cart total. |
+We built a small demo store with four flaws we can switch on and off: a pop-up covering the page, a price drawn as an image, an icon-only cart button and a returns page buried several clicks deep. With the flaws on, the agents still finished every task, but they needed **35 steps instead of 19**, the run cost **₹49 instead of ₹27**, and the agent put **2 units in the cart instead of 1**. A pass/fail checker would see nothing wrong.
 
-On our own demo store, four small flaws (a pop-up, a price drawn as an image, an icon-only cart button, a buried returns page) did not stop the agent, but it needed **35 steps instead of 19**, cost **₹49 instead of ₹27**, and ordered **2 units instead of 1**. A pass/fail checker would see nothing wrong.
+<p align="center"><img src="docs/images/score-card.png" alt="Demo store report: score 91 out of 100 with the top 3 fixes" width="900"><br><sub>Our demo store with its flaws on: the score and the top 3 fixes</sub></p>
 
-<p align="center"><img src="docs/images/myntra-bot-wall.png" alt="Myntra report: blocks AI agents from cloud servers, 5 out of 100, with the top fix" width="900"><br><sub><b>Myntra:</b> blocked from the cloud, let in from an Indian address</sub></p>
+<p align="center"><img src="docs/images/before-after.png" alt="Demo store before and after fixes: 91 to 97, steps 35 to 19, cost Rs 49 to Rs 27" width="900"><br><sub>The same store after the fixes: half the steps and close to half the cost</sub></p>
 
-<p align="center"><img src="docs/images/before-after.png" alt="Demo store before and after fixes: 91 to 97, steps 35 to 19, cost Rs 49 to Rs 27" width="900"><br><sub><b>Demo store:</b> same score band, half the effort after the fixes</sub></p>
+In test runs on large public shopping sites, our agents also ran into:
 
-<sub>Real TinyFish runs on 31 Oct and 1 Nov 2026. Nykaa: all four tasks; Myntra and Swiggy: one task each.</sub>
+- an error page when arriving from a cloud server, while the same task completed from a residential address;
+- a return policy that took 13 steps, over four minutes and a web search to find;
+- an item that went into the cart, with a cart total the agent could not find.
+
+<sub>These are observations from individual automated test runs on 31 Oct and 1 Nov 2026. They describe what our agents encountered on those days, not any site's policies or intentions, and results vary between runs.</sub>
 
 ---
 
@@ -69,11 +69,9 @@ flowchart LR
 |:--|:--|
 | **1. Instant Scan** | Opens the home page and a product page in a real remote browser and measures what gets in an agent's way: pop-ups covering the page, buttons with no label, prices only in images, missing product data. |
 | **2. Four agents** | Try the four tasks at the same time. You watch each one's real browser and every step as it happens. |
-| **3. Bot-wall check** | If an agent looks blocked, the same task runs again through an Indian home address, then with a stealth browser. Where it first passes tells you exactly what kind of wall the site has, and a broken page is never mistaken for a wall. |
+| **3. Bot-wall check** | If an agent looks blocked, the same task runs again through a residential address in India, then with a stealth browser. Where it first succeeds shows whether the site treats cloud-based agents differently, and a broken page is never mistaken for that. |
 | **4. Scoring** | Plain code, never an AI's opinion: 25 points per task for passing, few steps, speed and no web search, capped when it only passed through a workaround. The same run always gets the same score. |
 | **5. Findings** | Each one answers six questions: what happened, where, why it breaks agents, how bad it is, how to fix it, and how to check it's fixed. Always a site cause, never "the agent got confused". |
-
-<p align="center"><img src="docs/images/live-lanes.png" alt="Four live agent lanes" width="900"><br><sub>Four agents working at once, each with its own steps, screenshot and answer</sub></p>
 
 <p align="center"><img src="docs/images/finding-card.png" alt="A finding card answering six questions" width="900"><br><sub>Every finding answers the six questions a store owner or developer asks</sub></p>
 
@@ -85,16 +83,14 @@ flowchart LR
 |:--|:--|
 | **Test** | Four everyday shopping tasks plus your own custom task, live, with a score, Top 3 fixes and a screenshot for every step |
 | **Instant Scan** | Page-level problems in seconds, before the agents finish |
-| **Bot-wall check** | Proves whether a site blocks AI agents from cloud servers or automated browsers |
+| **Bot-wall check** | Shows whether a site responds differently to agents arriving from cloud servers or to automated browsers |
 | **Before / after** | One click to re-test after fixes, with steps and cost saved |
 | **Watch** | Scheduled re-tests of a live site; alerts on Slack or Discord only after a confirming re-run |
 | **Race** | Up to three sites on the same task, ranked by fewest steps, then fastest |
-| **Leaderboard** | Saved real results, ranked |
+| **Leaderboard** | Saved test results, ranked |
 | **CLI** | Test a public site or one still on your laptop (through a Cloudflare tunnel) from the terminal |
 | **GitHub Action** | Score a pull request's preview deployment and comment on the PR |
 | **Badge** | Show your Agent-Ready score in your own README |
-
-<p align="center"><img src="docs/images/leaderboard.png" alt="Leaderboard of tested stores" width="900"></p>
 
 ### Built on TinyFish
 
@@ -117,7 +113,7 @@ Every report shows its cost: about $0.016 per agent step, shown in rupees.
 You need **Node 20.19** or newer.
 
 > [!TIP]
-> **Try it free, no key needed.** Replay mode plays back real recorded runs of Nykaa, Myntra, Swiggy and the demo store.
+> **Try it free, no key needed.** Replay mode plays back real recorded test runs, including our demo store.
 
 ```bash
 git clone https://github.com/Manideep-2007-ok/Agent-Ready.git
