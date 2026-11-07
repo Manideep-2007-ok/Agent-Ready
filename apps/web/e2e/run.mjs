@@ -808,6 +808,62 @@ try {
     expect(await page.evaluate(() => document.activeElement?.textContent) === 'Replay', 'Replay takes focus');
   }, { page: kb.page });
 
+  await t.step('page changes: focus moves to the new page, each page has its own title, the skip link skips without routing', async () => {
+    const { page } = kb;
+    await page.goto(fast.base + '/#/app');
+    await page.getByLabel('Website to test').waitFor();
+    expect(await page.title() === 'Tests · AgentReady', `title (${await page.title()})`);
+    await page.getByRole('navigation', { name: 'Workspace' }).getByRole('link', { name: 'Watch' }).click();
+    await waitHash(page, /^#\/app\/watch$/);
+    await page.waitForFunction(() => document.activeElement?.id === 'main');
+    expect(await page.title() === 'Watch · AgentReady', `title after the change (${await page.title()})`);
+    await page.getByRole('navigation', { name: 'Resources' }).getByRole('link', { name: 'Pricing' }).click();
+    await waitHash(page, /^#\/pricing$/);
+    await page.waitForFunction(() => document.activeElement?.id === 'main' && document.activeElement.closest('.ar-site'));
+    expect(await page.title() === 'Pricing · AgentReady', 'app -> site keeps focus on the new page');
+    await page.reload(); // a fresh visit: the first Tab starts at the top of the page
+    await page.getByRole('heading', { level: 1 }).first().waitFor();
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => document.activeElement?.textContent) === 'Skip to content', 'the first Tab reaches the skip link');
+    await page.keyboard.press('Enter');
+    expect(await page.evaluate(() => document.activeElement?.id) === 'main', 'skip link moves focus to the content');
+    expect(await hash(page) === '#/pricing', `skip link leaves the address alone (${await hash(page)})`);
+  }, { page: kb.page });
+
+  await t.step('the top loading bar runs while a page waits for the server, then goes', async () => {
+    const { page } = kb;
+    await page.route('**/api/tests/rep_20261031_demo_nykaa', async (route) => { await sleep(900); await route.continue(); });
+    await page.goto(fast.base + '/#/app');
+    await page.getByLabel('Website to test').waitFor();
+    await page.evaluate(() => { location.hash = '#/app/test/rep_20261031_demo_nykaa'; });
+    await page.waitForFunction(() => document.querySelector('.ar-progress')?.dataset.state === 'busy', null, { timeout: 2000 });
+    await page.locator('.ar-report-score').waitFor();
+    await page.waitForFunction(() => document.querySelector('.ar-progress')?.dataset.state === 'idle', null, { timeout: 3000 });
+    await page.unroute('**/api/tests/rep_20261031_demo_nykaa');
+  }, { page: kb.page });
+
+  await t.step('the screenshot viewer is a modal: focus goes in, the page stops scrolling, Esc gives focus back', async () => {
+    const { page } = kb;
+    await openTab(page, 'Steps');
+    const task = page.locator('.timeline-task').first();
+    await task.locator('.timeline-steps button').nth(1).click();
+    const opener = page.locator('.timeline-stage-shot').first();
+    await opener.focus();
+    await page.keyboard.press('Enter');
+    const viewer = page.getByRole('dialog', { name: 'Screenshot' });
+    await viewer.waitFor();
+    expect(await viewer.getAttribute('aria-modal') === 'true', 'aria-modal');
+    expect(await page.evaluate(() => document.activeElement?.classList.contains('shot-viewer')), 'focus is in the viewer');
+    expect(await page.evaluate(() => document.body.style.overflow) === 'hidden', 'the page behind does not scroll');
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => document.activeElement?.classList.contains('shot-viewer')), 'Tab stays in the viewer');
+    await page.keyboard.press('Escape');
+    await viewer.waitFor({ state: 'detached' });
+    expect(await page.evaluate(() => document.activeElement?.classList.contains('timeline-stage-shot')), 'focus is back on the screenshot');
+    expect(await page.evaluate(() => document.body.style.overflow) === '', 'scrolling is back');
+    await openTab(page, 'Overview');
+  }, { page: kb.page });
+
   await t.step('a failed Re-run (server busy) keeps the report on screen and says why', async () => {
     const { page } = kb;
     await page.route('**/api/tests', (route) => (route.request().method() === 'POST'

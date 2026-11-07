@@ -1,22 +1,27 @@
 // Talks to the Express server (/api, proxied by Vite) and keeps live test state from the SSE stream.
 import { useEffect, useReducer, useState } from 'react';
 import { queueReason } from './queueReason.js';
+import { progress } from './design/progress.js';
 
 /** @typedef {import('@agentready/engine/types').SiteReport} SiteReport */
 /** @typedef {import('@agentready/engine/types').TaskResult} TaskResult */
 /** @typedef {import('@agentready/engine/types').InstantScan} InstantScan */
 /** @typedef {import('@agentready/engine/types').LiveEvent} LiveEvent */
 
-/** JSON request; throws an Error with the server's plain-language message on failure. */
-export async function api(path, { method = 'GET', body } = {}) {
-  const res = await fetch(`/api${path}`, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `The server answered ${res.status}. Is it running on port 4000?`);
-  return data;
+/** JSON request; throws an Error with the server's plain-language message on failure. The top loading bar runs while
+ * it is open, except for `quiet` background polls. */
+export async function api(path, { method = 'GET', body, quiet = false } = {}) {
+  const end = quiet ? () => {} : progress.begin();
+  try {
+    const res = await fetch(`/api${path}`, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `The server answered ${res.status}. Is it running on port 4000?`);
+    return data;
+  } finally { end(); }
 }
 
 export const getHealth = () => api('/health');
@@ -104,7 +109,7 @@ export function useQueueNote(reportId, active) {
   useEffect(() => {
     if (!active || !reportId) { setNote(''); return undefined; }
     let stop = false;
-    const poll = () => getHealth().then((h) => { if (!stop) setNote(queueReason(h.queue, reportId)); }).catch(() => {});
+    const poll = () => api('/health', { quiet: true }).then((h) => { if (!stop) setNote(queueReason(h.queue, reportId)); }).catch(() => {});
     poll();
     const timer = setInterval(poll, 3000);
     return () => { stop = true; clearInterval(timer); };

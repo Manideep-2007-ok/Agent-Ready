@@ -19,6 +19,7 @@ Notable changes to AgentReady. Dates are in 2026.
 - **404 page:** an unknown address shows a page-not-found page with links onward, in the site or the app, and keeps the address. Recent tests says when the server does not answer (with Try again); a printed report has a heading for each section; inline form fields show their error.
 - **Less clutter:** finding cards show the problem, the fix and how to check it, the rest under More; a finished report's Overview is a table (each task's answer moved to Steps); no empty screenshot boxes; Recent tests shows the last 8 without internal ids; the replay note is said once; a shorter landing page; the findings docs are grouped by kind of site, one row each.
 - **Landing motion:** the hero replays our demo store's two real runs (flaws on, then off): the address types in, agents run two at a time, steps tick up and the score counts up; sections rise in on scroll, results count from before to after. Pauses off screen; still under reduced motion and in print.
+- **Smoother navigation:** a loading bar at the top while a page changes or waits for the server; pages and the light/dark switch crossfade instead of snapping (the sidebar and top bars stay put); focus moves to the new page, each page has its own tab title, and a Skip to content link; the screenshot viewer is a proper dialog (focus in and back, no scrolling behind); toasts, the phone menu, report tabs and opening rows animate in.
 - **Demo store v2:** two flaws that change the outcome (`qtyTwo`, `slowCart`, or `?flaws=all`).
 
 ## 0.2.0 (2 Nov)

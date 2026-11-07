@@ -18,9 +18,9 @@ export default function GettingStarted() {
       <Note>Tick <b>Confirm results</b> to run each task again and keep the majority. It costs about twice as much and makes a score you can share.</Note>
       <H2 id="what-you-get">What a report contains</H2>
       <ul>
-        <li><b>Overview</b>: score, bot-wall result, Top 3 fixes, a ledger of the tasks and the live agent runs.</li>
-        <li><b>Findings</b>: each problem answers what happened, where, why it breaks agents, how bad it is, how to fix it and how to check the fix. The Detailed Fix Report adds the page element and a code example for your framework.</li>
-        <li><b>Steps</b>: every step each agent took, with a screenshot, and a Replay button.</li>
+        <li><b>Overview</b>: score, bot-wall result, Top 3 fixes and a table of the tasks. While the test runs, each agent's live view is here.</li>
+        <li><b>Findings</b>: each problem with its fix and how to check the fix; <b>More</b> shows where it happened, why it breaks agents and how bad it is. The Detailed Fix Report adds the page element and a code example for your framework.</li>
+        <li><b>Steps</b>: each agent's answer, then every step it took with a screenshot, and a Replay button.</li>
         <li><b>History</b>: the score of this site over time and what changed since the last test.</li>
         <li><b>Scan</b>: the Instant Scan: pop-ups, unlabelled buttons, prices drawn as images, product data, robots.txt rules for AI agents.</li>
       </ul>

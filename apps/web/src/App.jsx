@@ -13,11 +13,15 @@ import DocsPage from './pages/docs/DocsPage.jsx';
 import NotFound from './pages/NotFound.jsx';
 import AppShell from './shell/AppShell.jsx';
 import SiteShell from './shell/SiteShell.jsx';
-import { ToastProvider } from './design/index.js';
+import { RouteProgress, ToastProvider, progress, runTransition } from './design/index.js';
 import { parseHash, redirectFor } from './routes.js';
 import { getHealth } from './api.js';
 
 const FLAGGED = { race: 'RACE', leaderboard: 'LEADERBOARD' };
+// Tab titles; docs and the 404 page set their own.
+const TITLES = { tests: 'Tests', test: 'Report', watch: 'Watch', race: 'Race', leaderboard: 'Leaderboard', pricing: 'Pricing' };
+const titleFor = (route) => (route.area === 'docs' || route.page === 'not-found' ? null
+  : TITLES[route.page] ? `${TITLES[route.page]} · AgentReady` : 'AgentReady');
 
 function readRoute() {
   const to = redirectFor(window.location.hash);
@@ -48,14 +52,23 @@ export default function App() {
   const [health, setHealth] = useState(null);
   useEffect(() => { getHealth().then(setHealth).catch(() => setHealth({ features: {} })); }, []);
   useEffect(() => {
-    // The hash is only used for pages, so a new hash is a new page: start it at the top, not at the old scroll depth.
-    const onChange = () => { setRoute(readRoute()); window.scrollTo(0, 0); };
+    // The hash is only used for pages, so a new hash is a new page: the loading bar sweeps, the content crossfades (the
+    // sidebar and top bars stay put), the page starts at the top, and keyboard focus moves to it, not to <body>.
+    const onChange = () => {
+      progress.sweep();
+      runTransition(() => setRoute(readRoute()));
+      window.scrollTo(0, 0);
+      requestAnimationFrame(() => document.getElementById('main')?.focus({ preventScroll: true }));
+    };
     window.addEventListener('hashchange', onChange);
     return () => window.removeEventListener('hashchange', onChange);
   }, []);
 
+  useEffect(() => { const t = titleFor(route); if (t) document.title = t; }, [route]);
+
   return (
     <ToastProvider>
+      <RouteProgress />
       {route.area === 'app' && <AppArea route={route} health={health} />}
       {route.area === 'site' && (
         <SiteShell active={{ pricing: 'pricing', landing: 'product' }[route.page] ?? null}>

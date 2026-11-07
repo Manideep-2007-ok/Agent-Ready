@@ -61,7 +61,7 @@
   .ar-site-bar-inner { padding: 0 16px; gap: 12px; }
   .ar-site-menu { display: inline-flex; }
   .ar-site-nav { display: none; position: absolute; top: 60px; left: 0; right: 0; flex-direction: column; padding: 8px 12px 12px; background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: var(--shadow-pop); }
-  .ar-site-nav.is-open { display: flex; }
+  .ar-site-nav.is-open { display: flex; animation: ar-drop-in 160ms var(--ease); }
   .ar-site-actions .hide-phone { display: none; }
   .ar-site-foot-inner { grid-template-columns: minmax(0, 1fr); padding: 32px 16px 20px; }
   .ar-site-foot-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -73,3 +73,13 @@
   .ar-app { display: block; }
   .ar-content, .ar-pagehead { padding-left: 0; padding-right: 0; max-width: none; }
 }
+
+/* Page changes (viewTransition.js): the bars keep their place, the content crossfades with a small rise */
+.ar-sidebar { view-transition-name: ar-sidebar; }
+.ar-site-bar { view-transition-name: ar-site-bar; }
+.ar-topbar { view-transition-name: ar-topbar; }
+::view-transition-old(root) { animation: 140ms var(--ease) both ar-vt-out; }
+::view-transition-new(root) { animation: 220ms var(--ease) both ar-vt-in; }
+@keyframes ar-vt-out { to { opacity: 0; } }
+@keyframes ar-vt-in { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }

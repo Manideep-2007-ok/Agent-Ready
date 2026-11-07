@@ -403,6 +403,8 @@ Redesign (D44; the spec is in the private repo): one design system for the app, 
 
 Old links (`#/test/<id>`, `#/watch`, `#/race`, `#/leaderboard`) printed by the CLI, Watch alerts and READMEs redirect with `location.replace`.
 
+Navigation: `design/progress.js` + `RouteProgress` (top bar: a sweep on every page change, kept going by any open `api()` request except quiet polls), `design/viewTransition.js` (View Transitions crossfade for page and theme changes; the sidebar and top bars keep their place), focus moves to `<main id="main">` after a page change, a title per page, and a Skip to content link that does not touch the hash.
+
 UI rules: plain language, sentence case; a failed load says so (never an empty state that hides it); status always has a word, never colour alone; at most one primary button per view; every screenshot can be enlarged; WCAG AA contrast for every token pair (`apps/web/test/contrast.test.js`); no sideways scroll at 390 px; Save as PDF prints every report tab, each under its own heading.
 `vite.config.js` proxies `/api` to `http://localhost:4000`.
 

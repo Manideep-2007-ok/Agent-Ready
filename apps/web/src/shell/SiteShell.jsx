@@ -2,6 +2,7 @@
 // and a footer. Under 760 px the links fold into a menu.
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
+import { skipToMain } from './skip.js';
 import { Button, Logo, ThemeToggle } from '../design/index.js';
 import { href } from '../routes.js';
 
@@ -24,6 +25,7 @@ export default function SiteShell({ active, children }) {
   );
   return (
     <div className="ar-site">
+      <a className="ar-skip" href="#main" onClick={skipToMain}>Skip to content</a>
       <header className="ar-site-bar">
         <div className="ar-site-bar-inner">
           <Logo size={24} href={href('site', 'landing')} />
@@ -45,7 +47,7 @@ export default function SiteShell({ active, children }) {
           </div>
         </div>
       </header>
-      <main className="ar-site-main">{children}</main>
+      <main className="ar-site-main" id="main" tabIndex={-1}>{children}</main>
       <footer className="ar-site-foot">
         <div className="ar-site-foot-inner">
           <div className="ar-site-foot-brand">
