@@ -2,6 +2,7 @@
    styles (styles.css, imported into the components layer) stay as they are. Utilities win over app styles. */
 @layer theme, base, components, utilities;
 @import 'tailwindcss/theme.css' layer(theme);
+@import './design/base.css' layer(base);
 @import 'tailwindcss/utilities.css' layer(utilities);
 @import './styles.css' layer(components);
 
