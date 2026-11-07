@@ -15,6 +15,7 @@ Notable changes to AgentReady. Dates are in 2026.
 - **Spending limits:** a cost estimate before every test, a per-test limit (default ₹300) and an optional daily limit.
 - **Instant Scan v2:** robots.txt rules for AI agents, llms.txt, a visible cart link.
 - **Report page:** Detailed Fix Report button, copy link, Save as PDF, score history for the site with what changed, and a step-by-step timeline with replay.
+- **Redesign:** one design system for the app, a new landing page, pricing and a ten-page docs site. Paper-and-ink look with one orange accent, Inter and JetBrains Mono, a sidebar workbench, a tabbed report, a step-path logo. Light and dark, phone width, keyboard and print checked by tests. Old links keep working.
 - **Demo store v2:** two flaws that change the outcome (`qtyTwo`, `slowCart`, or `?flaws=all`).
 
 ## 0.2.0 (2 Nov)

@@ -89,6 +89,8 @@ agent-ready/
     pages/WatchPage.jsx         watches, history, alerts                               (Sai Shakti)
     pages/RacePage.jsx          race lanes                                             (Sai Shakti)
     pages/LeaderboardPage.jsx   ranked cached reports                                  (Sai Shakti)
+    design/, shell/, routes.js  design system, app and site shells, hash routes (D44)  (Manideep)
+    pages/app|site|docs/        app pages, landing and pricing, docs                    (Sai Shakti / Manideep)
     components/Lane.jsx         one task: status, steps, timer, live iframe           (Akhil)
     components/StepTimeline.jsx steps + screenshots + step replay                     (Sai Shakti)
     components/ScoreCard.jsx    score, bot-wall banner, cost                           (Sai Shakti)
@@ -382,21 +384,26 @@ Store API: `saveReport(r)`, `getReport(id)`, `listReports()`, `siteHistory(url)`
 
 ---
 
-## 13. Dashboard (`apps/web`)
+## 13. Dashboard, site and docs (`apps/web`)
 
-Pages (simple tab bar, no auth): **Test**, **Watch**, **Race**, **Leaderboard**. Race and Leaderboard show only when `/api/health` `features.RACE` / `features.LEADERBOARD` is true (hash routes `#/race[/<raceId>]`, `#/leaderboard`).
+Redesign (D44, spec `docs/superpowers/specs/2026-11-07-agentready-redesign-design.md`): one design system for the app, the public site and the docs. Paper-and-ink surfaces, one ember accent for the main action, Inter + JetBrains Mono (self-hosted), 4 px corners, hairlines, ledgers with numbered rows. Light by default, dark with `data-theme="dark"`.
 
-**Race page:** one task + 2-3 sites; in replay mode quick-pick chips for the recorded sites (Nykaa, Myntra, Swiggy, demo store). Each site is a normal report followed live in a shared `Lane`; the page polls `GET /api/race/:id` for the ranking. The winner (fewest steps, then fastest, among passed sites) is shown only after every site has finished. "Stop race" calls `POST /api/race/:id/cancel`. **Leaderboard page:** `/api/leaderboard` rows ranked by score (rank, site, score with a text band, bot-wall status, date, link to `#/test/<id>`); cached reports open through `GET /api/tests/:id`.
+**Files:** `src/design/` (tokens.css is the only place colours are defined; the kit: Button, Badge, Panel, Ledger, Stat, Tabs, Field, Toast, EmptyState, Skeleton, CodeBlock, Logo, ThemeToggle; `status.js` maps task status and score to badge tone and words), `src/shell/` (AppShell: sidebar workbench; SiteShell: top bar and footer), `src/pages/app|site|docs/`, `src/routes.js`.
 
-Test page layout (top to bottom):
-1. URL input + "Test my site" + optional custom task box.
-2. Instant Scan card (appears in ~30 s).
-3. Score card: score /100, bot-wall banner (red if blocked), cost in rupees, "Top 3 fixes".
-4. Four lanes side by side (2x2 on small screens): task name, status chip (Waiting / Running / Passed / Failed / Blocked), timer, latest step label, live iframe (`streamingUrl`) with fallback to the latest screenshot.
-5. Findings: one card per finding answering six questions (What happened? Where exactly? Why does it break agents? How bad? How to fix? How do we know it's fixed?).
-6. Step timeline with screenshots and a "Replay" button (slideshow, 1.5 s per step).
+**Routes** (hash, no router library; `routes.js` `parseHash`, `redirectFor`, `href`):
 
-UI rules: plain language, no jargon; colors red/amber/green plus text labels; every screenshot clickable to enlarge; buttons disabled while running.
+| Route | Page |
+|---|---|
+| `#/` | Landing: URL box that starts a test, live ledger panel, features, CLI/Action, demo-store results, FAQ |
+| `#/pricing` | Free / Watch / Team, no invented prices; cost of a test from `/api/estimate` |
+| `#/docs/<slug>` | Ten docs pages; findings and task packs come from `src/docs/generated.json` (`npm run docs:data`) |
+| `#/app` | Tests home: new test (address, kind of site, own task, Confirm results, cost line), recent tests ledger |
+| `#/app/test/<id>[/<beforeId>]` | Report: header (score, band, cost, steps; Re-run, Copy link, Save as PDF, Stop while running), tabs Overview (bot wall, demo before/after, Top 3, task ledger, live lanes), Findings (fix report button, six-question cards), Steps (timeline + replay), History, Scan |
+| `#/app/watch`, `#/app/race[/<id>]`, `#/app/leaderboard` | Watch, Race (flag RACE), Leaderboard (flag LEADERBOARD) |
+
+Old links (`#/test/<id>`, `#/watch`, `#/race`, `#/leaderboard`) printed by the CLI, Watch alerts and READMEs redirect with `location.replace`.
+
+UI rules: plain language, sentence case; status always has a word, never colour alone; at most one primary button per view; every screenshot can be enlarged; WCAG AA contrast for every token pair (`apps/web/test/contrast.test.js`); no sideways scroll at 390 px; Save as PDF prints every report tab.
 `vite.config.js` proxies `/api` to `http://localhost:4000`.
 
 ---
