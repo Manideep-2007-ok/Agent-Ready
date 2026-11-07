@@ -8,7 +8,7 @@ export const GOAL_SUFFIX =
 
 // Goal wording for the four packs. The shop goals were tested on 31 Oct 2026 against real stores. The saas, content and
 // local goals are UNTESTED ON LIVE AGENTS: they follow the same style (one clear job, what to report, "do NOT submit" where a
-// form is involved) but have not been run yet. docs/PACK-LIVE-TEST.md is the plan to try each once and tune the wording.
+// form is involved) but have not been run yet. docs/PACK-LIVE-TEST.md is how to try each once and tune the wording.
 /** @type {Record<Exclude<TaskId,'custom'>, string>} */
 export const TASK_GOALS = {
   // ---- shop (tested) ----

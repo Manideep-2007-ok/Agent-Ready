@@ -15,3 +15,11 @@ agentready-report-*.json
 
 # CLI demo script (scripts/cli-demo.sh) keeps its own reports here
 data-cli-demo/
+
+# Internal team files live in the private Agent-Ready-internal repo (linked in by its link.sh)
+/AGENTS.md
+/CLAUDE.md
+/docs/RESEARCH.md
+/docs/WORKLOG.md
+/docs/superpowers
+/docs/proofs

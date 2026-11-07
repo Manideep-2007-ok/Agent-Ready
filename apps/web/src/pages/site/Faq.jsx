@@ -1,4 +1,4 @@
-// Questions store owners ask, answered in plain words (from docs/RESEARCH.md section 8, rewritten for the public site).
+// Questions store owners ask, answered in plain words (from the team's research Q&A, rewritten for the public site).
 const QA = [
   ['Will your agents buy things or mess up my store?', 'No. Agents never log in, sign up, pay or place an order. "Add to cart" leaves an abandoned cart in your store reports, so test a cheap product or test at a quiet hour.'],
   ['How is this different from an "agent readiness" checker?', 'Checkers read your files: robots.txt, markup, sitemaps. We do that too in the Instant Scan, and then real agents try real tasks on your site and show where they get stuck.'],

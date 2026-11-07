@@ -30,10 +30,14 @@ Both run in CI on every pull request. A few tests use Unix signals or symlinks a
 3. Rebase on `main` before asking for review.
 4. Fill in the pull request template: what changed, why, and how you tested it.
 5. A maintainer reviews and merges.
+6. `npm test` must pass on the pull request before it can merge into `main`.
+
+Core team: agent instructions (`AGENTS.md`, `CLAUDE.md`), research notes, the work log and design plans live in the private
+`Agent-Ready-internal` repo. Clone it beside this one and run its `link.sh`; this repo ignores those paths.
 
 ## Rules that keep results trustworthy
 
-- **JavaScript (ES modules) and JSX.** The only TypeScript files are the UI kit components in `apps/web/src/components/ui`.
+- **JavaScript (ES modules) and JSX.** No TypeScript; the design system is plain JSX in `apps/web/src/design`.
 - **Every TinyFish call lives in `packages/engine/src/tinyfish.js`.** Nothing else talks to the API.
 - **The shared data shapes are in `packages/engine/src/types.js`.** Changing them affects every part of the app: open an issue first.
 - **Scoring is plain code.** AI may write fix explanations, never decide a score.
