@@ -73,4 +73,3 @@
   .ar-app { display: block; }
   .ar-content, .ar-pagehead { padding-left: 0; padding-right: 0; max-width: none; }
 }
-.ar-site-temp { max-width: 1200px; margin: 0 auto; padding: 24px; display: grid; gap: 20px; }

@@ -85,6 +85,32 @@ try {
     await page.goto(fast.base + '/#/');
   }, { page: home.page });
 
+  await t.step('docs: every page in the nav opens with its heading; an unknown page says so and keeps the nav', async () => {
+    const { page } = home;
+    await page.goto(fast.base + '/#/docs');
+    const nav = page.getByRole('navigation', { name: 'Docs' });
+    await nav.waitFor();
+    const links = await nav.getByRole('link').all();
+    expect(links.length === 10, `ten docs pages, saw ${links.length}`);
+    const names = [];
+    for (let i = 0; i < links.length; i++) {
+      const link = nav.getByRole('link').nth(i);
+      const name = (await link.textContent()).trim();
+      await link.click();
+      await page.getByRole('heading', { level: 1, name, exact: true }).waitFor();
+      expect(await link.getAttribute('aria-current') === 'page', `${name} is marked current`);
+      names.push(name);
+    }
+    expect(names.includes('Findings reference') && names.includes('CLI'), `pages: ${names.join(', ')}`);
+    await page.goto(fast.base + '/#/docs/findings');
+    expect(await page.locator('.ar-doc-finding').count() >= 30, 'findings reference lists every finding type');
+    await page.goto(fast.base + '/#/docs/nope');
+    await page.getByText('This page does not exist').waitFor();
+    await nav.waitFor();
+    await shot(page, 'docs-not-found');
+    await page.goto(fast.base + '/#/');
+  }, { page: home.page });
+
   await t.step('theme toggle switches light and dark and remembers the choice', async () => {
     const { page } = home;
     const toggle = page.locator('.theme-toggle');

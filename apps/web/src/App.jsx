@@ -8,9 +8,10 @@ import RacePage from './pages/app/RacePage.jsx';
 import LeaderboardPage from './pages/app/LeaderboardPage.jsx';
 import Landing from './pages/site/Landing.jsx';
 import Pricing from './pages/site/Pricing.jsx';
+import DocsPage from './pages/docs/DocsPage.jsx';
 import AppShell from './shell/AppShell.jsx';
 import SiteShell from './shell/SiteShell.jsx';
-import { EmptyState, ToastProvider } from './design/index.js';
+import { ToastProvider } from './design/index.js';
 import { parseHash, redirectFor } from './routes.js';
 import { getHealth } from './api.js';
 
@@ -60,7 +61,7 @@ export default function App() {
       )}
       {route.area === 'docs' && (
         <SiteShell active="docs">
-          <div className="ar-site-temp"><EmptyState title="Docs are on their way" body="The documentation pages are being written." /></div>
+          <DocsPage slug={route.page} />
         </SiteShell>
       )}
     </ToastProvider>
