@@ -60,6 +60,8 @@ export function detectQuantity(text) {
   return max;
 }
 
+// "Read cart total price from image", "Get cart total visually from screenshot".
+const PRICE_FROM_IMAGE_RE = /\b(?:price|total|cost)\b[^.]{0,40}\b(?:from|in|inside)\s+(?:the\s+|an?\s+)?(?:image|screenshot|picture)\b|\b(?:price|total)\b[^.]{0,30}\bvisually\b/i;
 const DOLLAR_RE = /(?:US\s?\$|\$|\bUSD\b)\s?\d|\d\s?(?:USD|dollars?)\b/i;
 const RUPEE_RE = /₹|\bRs\.?\s?\d|\bINR\b|\brupees?\b/i;
 
@@ -67,6 +69,13 @@ const RUPEE_RE = /₹|\bRs\.?\s?\d|\bINR\b|\brupees?\b/i;
 export function detectCurrencyMismatch(answer, siteShowsRupees) {
   if (!answer || !siteShowsRupees) return false;
   return DOLLAR_RE.test(answer) && !RUPEE_RE.test(answer);
+}
+
+/** How many of the agent's steps press Add to cart ("Click 'Add to cart'", "Add the product to the bag"). */
+export function countAddToCartPresses(steps) {
+  const press = /\b(?:click(?:ing|ed)?|press(?:ing|ed)?|tap(?:ping|ped)?|add(?:ing)?)\b[^.]{0,40}?\badd(?:\s|-)?to(?:\s|-)?(?:cart|bag|basket)\b|\badd(?:ing)?\s+(?:the\s+|this\s+|it\s+|an?\s+)?(?:\w+\s+){0,3}to\s+(?:the\s+)?(?:cart|bag|basket)\b/i;
+  const check = /\b(?:verify|check|confirm|see|view|open|go to|navigate)\b/i;
+  return (steps || []).filter((s) => press.test(s.label || '') && !check.test(s.label || '')).length;
 }
 
 const FAIL_FINDING = {
@@ -179,6 +188,65 @@ export function scoreTask(task, context = {}) {
     }
   }
 
+  // The agent read the price from a picture (its own step labels or answer say so): the price is likely not text.
+  if (passed && (task.taskId === 'find_price' || task.taskId === 'add_to_cart')) {
+    const said = [task.answer, ...(task.steps || []).map((s) => s.label)].find((t) => PRICE_FROM_IMAGE_RE.test(t || ''));
+    if (said) {
+      findings.push({ ...base, type: 'price-in-image', severity: 'high',
+        text: `The agent had to read the price from a picture of the page ("${String(said).slice(0, 120)}"), so the price is probably not written as text.`,
+        likelyCause: 'The price is drawn inside an image (or a canvas) with no text version, so agents that read the page text cannot find it.',
+        fix: 'Write every price as plain text next to the product name, and add it to schema.org Offer data.',
+        standard: 'WCAG 1.1.1 Non-text Content; schema.org Offer',
+        passCheck: 'The price is found in the page text, without reading a screenshot',
+        pointsIfFixed: 0 });
+    }
+  }
+
+  // No feedback after Add to cart: the agent pressed it more than once (its own step labels say so). Findings only.
+  if (passed && task.taskId === 'add_to_cart') {
+    const presses = countAddToCartPresses(task.steps);
+    if (presses >= 2) {
+      findings.push({ ...base, type: 'no-cart-feedback', severity: 'medium',
+        text: `The agent pressed Add to cart ${presses} times, so the page may not show clearly that the product was added.`,
+        likelyCause: 'After a click on Add to cart nothing visible changes in the page text (no "Added to cart" message, no cart count update), so the click looks like it did nothing.',
+        fix: 'Show a text message such as "Added to cart" next to the button and update the cart count, announced with role="status".',
+        standard: 'WCAG 4.1.3 Status Messages',
+        passCheck: 'Add to cart passes with one press of the button',
+        pointsIfFixed: 0 });
+    }
+  }
+
+  // Repeat runs disagreed (D41). Findings only: the majority already decided the points.
+  if (task.flaky && task.runs?.length) {
+    const counted = task.runs.filter((r) => !r.stopped);
+    const ok = counted.filter((r) => r.passed).length;
+    findings.push({ ...base, type: 'inconsistent-results', severity: 'medium',
+      text: `Agents got different results on repeat runs: the task passed ${ok} of ${counted.length} times.`,
+      likelyCause: 'The page may not behave the same on every visit: a pop-up or banner that shows only sometimes, an A/B test, slow scripts, or a location or stock prompt.',
+      fix: 'Make the path for this task the same on every visit: no randomly timed pop-ups, and the key buttons and text present when the page first loads.',
+      passCheck: 'Three runs in a row give the same result',
+      pointsIfFixed: 0 });
+  }
+
+  // Claim checks (D42): the page the agent named does not show what it reported, or it named another website.
+  if (passed && task.claim?.status === 'not-found') {
+    const missing = task.claim.facts.filter((f) => !f.found).map((f) => f.label).join(', ');
+    findings.push({ ...base, type: 'unconfirmed-claim', severity: 'low',
+      text: `The agent reported ${missing}, but the page it named (${task.claim.url}) does not show that as text.`,
+      likelyCause: 'The information may be drawn inside an image, loaded by a script only after the page opens, or shown only after a click, so a plain read of the page cannot find it.',
+      fix: 'Write the key facts (prices, return days, contact details) as plain text in the page itself.',
+      standard: 'WCAG 1.1.1 Non-text Content',
+      passCheck: 'The page the agent names shows the same facts as text',
+      pointsIfFixed: 0 });
+  } else if (passed && task.claim?.status === 'off-site') {
+    findings.push({ ...base, type: 'unconfirmed-claim', severity: 'low',
+      text: `The agent's answer points to a page on another website (${task.claim.url}) instead of this site.`,
+      likelyCause: "The information may not be on this site's own pages, or it may be easier to find elsewhere than through the site's navigation.",
+      fix: "Publish the information on this site and link it from the header or footer.",
+      passCheck: "The agent's answer names a page on this site",
+      pointsIfFixed: 0 });
+  }
+
   // Efficiency findings only make sense for tasks that passed.
   if (passed) {
     if (webSearch) {
@@ -223,6 +291,34 @@ export function rankFixes(findings) {
   return sorted.filter((f) => !seen.has(f.type) && seen.add(f.type)).slice(0, 3);
 }
 
+/** Every billed step of a task: all bot-wall attempts, plus the repeat runs of a confirmed task (runs[0] is the cascade's own). */
+export function taskSteps(t) {
+  const cascade = t.attempts?.length ? t.attempts.reduce((n, a) => n + (a.numSteps || 0), 0) : t.numSteps || 0;
+  const repeats = (t.runs || []).slice(1).reduce((n, r) => n + (r.numSteps || 0), 0);
+  return cascade + repeats;
+}
+
+export const RUPEES_PER_STEP = USD_PER_STEP * USD_INR;
+// Typical steps per task on a small to large site (31 Oct and 1 Nov runs: 3 to 20, most 4 to 13).
+const TYPICAL_STEPS = { low: 4, high: 15 };
+
+/**
+ * What a test will probably cost, before it starts (P2-8). A bot wall can add up to two more runs per task; confirming
+ * adds one or two runs per task. Rupees, rounded.
+ * @param {{tasks:number, confirm?:boolean}} p
+ * @returns {{lowRupees:number, highRupees:number, worstRupees:number, rupeesPerStep:number}}
+ */
+export function estimateCost({ tasks, confirm = false }) {
+  const n = Math.max(0, Math.floor(tasks || 0));
+  const r = (steps) => Math.round(steps * RUPEES_PER_STEP);
+  return {
+    lowRupees: r(n * TYPICAL_STEPS.low * (confirm ? 2 : 1)),
+    highRupees: r(n * TYPICAL_STEPS.high * (confirm ? 2 : 1)),
+    worstRupees: r(n * TYPICAL_STEPS.high * (confirm ? 5 : 3)), // bot-wall cascade (3 runs) plus, when confirming, two repeats
+    rupeesPerStep: Math.round(RUPEES_PER_STEP * 1000) / 1000,
+  };
+}
+
 /**
  * Score a whole report. NOTE: this also WRITES task.points and task.findings into every task of `report`
  * (mutates it), because the dashboard reads them from there. Custom tasks are scored but excluded from the 100.
@@ -240,7 +336,7 @@ export function scoreReport(report) {
     t.findings = findings;
     if (isScored(t)) score += points;
     all.push(...findings);
-    totalSteps += t.attempts?.length ? t.attempts.reduce((n, a) => n + (a.numSteps || 0), 0) : t.numSteps || 0;
+    totalSteps += taskSteps(t);
   }
   const topFixes = rankFixes(all);
   // Out of 100 for the tasks actually run: 4 tasks x 25 as before; a 2-task CLI or 1-task Watch run scales up,

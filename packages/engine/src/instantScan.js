@@ -52,12 +52,15 @@ export async function auditPage(page) {
     const productSchema = ld.some((t) => /Product|Offer/.test(t));
     // Same reading as schemaTypesFromJsonLd (packs.js), written out here because a page may forbid eval/new Function.
     const schemaTypes = [...new Set(ld.flatMap((t) => [...t.matchAll(/"@type"\s*:\s*(\[[^\]]*\]|"[^"]*")/g)].flatMap((m) => [...m[1].matchAll(/"([^"]+)"/g)].map((n) => n[1].replace(/^.*[/#]/, '')))))];
+    // A visible way to the cart: a link or button whose text, label or address says cart, bag or basket.
+    const cartRe = /\b(?:cart|bag|basket|trolley)\b/i;
+    const cartLink = controls.some((el) => cartRe.test([(el.innerText || ''), el.getAttribute('aria-label') || '', el.getAttribute('title') || '', el.getAttribute('href') || ''].join(' ')));
     const lower = text.toLowerCase();
     const keywordHits = {};
     for (const [key, source] of Object.entries(sources)) keywordHits[key] = Math.min(cap, (lower.match(new RegExp(source, 'g')) || []).length);
     return {
       unlabelledButtons, totalButtonsAndLinks: controls.length, imagesWithoutAlt, totalImages: imgs.length,
-      priceAsText: /₹\s?\d|Rs\.?\s?\d|INR\s?\d/.test(text), overlayCoveringPage, productSchema, schemaTypes, keywordHits,
+      priceAsText: /₹\s?\d|Rs\.?\s?\d|INR\s?\d/.test(text), overlayCoveringPage, productSchema, schemaTypes, keywordHits, cartLink,
     };
   }, { sources: KEYWORD_SOURCES, cap: KEYWORD_CAP });
 }
@@ -66,14 +69,52 @@ export async function auditPage(page) {
 // "error" is kept for when the whole Fetch call failed (see fetchPart's catch).
 const status = (r) => (r && !r.error && (r.text || '').trim() ? 'found' : 'missing');
 
+// AI agents and crawlers by their robots.txt names. The user-triggered ones (a person asked an assistant to visit) matter
+// most for shopping; training crawlers are listed because a site that blocks them often blocks the others by mistake.
+export const AI_AGENTS = ['ChatGPT-User', 'OAI-SearchBot', 'GPTBot', 'Claude-User', 'ClaudeBot', 'PerplexityBot', 'Perplexity-User', 'Google-Extended', 'CCBot', 'Applebot-Extended'];
+
+/**
+ * Which AI agents robots.txt keeps out of the whole site (a "Disallow: /" in the group that applies to them, with no
+ * "Allow: /" beside it). The group for an agent is the one naming it, else "*". Pure; unparseable text blocks nobody.
+ * @returns {string[]}
+ */
+export function aiAgentsBlockedByRobots(text) {
+  const groups = []; // {agents:string[], rules:{allow:boolean, path:string}[]}
+  let current = null, lastWasAgent = false;
+  for (const raw of String(text || '').split(/\r?\n/)) {
+    const line = raw.replace(/#.*/, '').trim();
+    const m = line.match(/^([A-Za-z-]+)\s*:\s*(.*)$/);
+    if (!m) continue;
+    const key = m[1].toLowerCase(), value = m[2].trim();
+    if (key === 'user-agent') {
+      if (!lastWasAgent || !current) { current = { agents: [], rules: [] }; groups.push(current); }
+      current.agents.push(value.toLowerCase());
+      lastWasAgent = true;
+    } else if ((key === 'disallow' || key === 'allow') && current) {
+      current.rules.push({ allow: key === 'allow', path: value });
+      lastWasAgent = false;
+    } else lastWasAgent = false;
+  }
+  const blocksAll = (g) => g.rules.some((r) => !r.allow && r.path === '/') && !g.rules.some((r) => r.allow && (r.path === '/' || r.path === '/*'));
+  const star = groups.filter((g) => g.agents.includes('*'));
+  return AI_AGENTS.filter((name) => {
+    const own = groups.filter((g) => g.agents.includes(name.toLowerCase()));
+    const apply = own.length ? own : star;
+    return apply.some(blocksAll);
+  });
+}
+
 async function fetchPart(url) {
   let origin = url;
   try { origin = new URL(url).origin; } catch { /* keep url */ }
   try {
-    const [page, robots, sitemap] = await fetchPages([url, origin + '/robots.txt', origin + '/sitemap.xml']);
-    return { pageTextChars: (page?.text || '').length, robotsTxt: status(robots), sitemap: status(sitemap) };
+    const [page, robots, sitemap, llms] = await fetchPages([url, origin + '/robots.txt', origin + '/sitemap.xml', origin + '/llms.txt']);
+    return {
+      pageTextChars: (page?.text || '').length, robotsTxt: status(robots), sitemap: status(sitemap), llmsTxt: status(llms),
+      aiBlockedAgents: status(robots) === 'found' ? aiAgentsBlockedByRobots(robots.text) : [],
+    };
   } catch {
-    return { pageTextChars: 0, robotsTxt: 'error', sitemap: 'error' };
+    return { pageTextChars: 0, robotsTxt: 'error', sitemap: 'error', llmsTxt: 'error', aiBlockedAgents: [] };
   }
 }
 
@@ -115,6 +156,7 @@ function mergeAudits(home, product) {
     priceAsText: home.priceAsText || product.priceAsText,
     overlayCoveringPage: home.overlayCoveringPage || product.overlayCoveringPage,
     productSchema: home.productSchema || product.productSchema,
+    cartLink: !!(home.cartLink || product.cartLink),
     schemaTypes: [...new Set([...(home.schemaTypes || []), ...(product.schemaTypes || [])])],
     keywordHits: Object.fromEntries(Object.keys({ ...home.keywordHits, ...product.keywordHits }).map((k) => [k, Math.min(KEYWORD_CAP, (home.keywordHits?.[k] || 0) + (product.keywordHits?.[k] || 0))])),
   };
@@ -131,7 +173,7 @@ export async function auditSite(page, url) {
   return { ...mergeAudits(home, product), framework };
 }
 
-const BROWSER_DEFAULTS = { unlabelledButtons: 0, totalButtonsAndLinks: 0, imagesWithoutAlt: 0, totalImages: 0, priceAsText: false, overlayCoveringPage: false, productSchema: false, framework: 'unknown', schemaTypes: [], keywordHits: {} };
+const BROWSER_DEFAULTS = { unlabelledButtons: 0, totalButtonsAndLinks: 0, imagesWithoutAlt: 0, totalImages: 0, priceAsText: false, overlayCoveringPage: false, productSchema: false, framework: 'unknown', schemaTypes: [], keywordHits: {}, cartLink: false };
 
 async function browserPart(url) {
   let session = null, browser = null, timedOut = false;
@@ -200,12 +242,12 @@ export async function instantScan(url) {
         : host === 'example.com' || host === 'www.example.com' ? MOCKS.example
         : /saas/.test(host) ? MOCKS.saas : /blog/.test(host) ? MOCKS.blog : /clinic/.test(host) ? MOCKS.clinic
         : flawsOn ? MOCKS.demoFlawed : MOCKS.clean;
-      return done({ ...m });
+      return done({ llmsTxt: 'missing', aiBlockedAgents: [], cartLink: m.keywordHits?.cart > 0, ...m });
     }
     const [f, b] = await Promise.all([fetchPart(url), browserPart(url)]);
     return done({ ...BROWSER_DEFAULTS, ...b, ...f });
   } catch {
-    return done({ ...BROWSER_DEFAULTS, pageTextChars: 0, robotsTxt: 'error', sitemap: 'error' });
+    return done({ ...BROWSER_DEFAULTS, pageTextChars: 0, robotsTxt: 'error', sitemap: 'error', llmsTxt: 'error', aiBlockedAgents: [] });
   }
 }
 
@@ -225,6 +267,13 @@ export function instantScanFindings(scan, pack = 'shop') {
     return { type, severity, text, likelyCause: t.likelyCause || '', fix: t.fix || '', standard: t.standard, passCheck: t.passCheck, pointsIfFixed: 0, verified: true };
   };
   const out = [];
+  // robots.txt is read by Fetch, so this finding does not need the browser part.
+  const blocked = scan.aiBlockedAgents || [];
+  if (blocked.length) {
+    const userAgents = blocked.filter((a) => /-User$/.test(a));
+    out.push(mk('robots-blocks-ai-agents', userAgents.length ? 'high' : 'medium',
+      `robots.txt tells ${blocked.length} AI agent${blocked.length === 1 ? '' : 's'} to stay away from the whole site (${blocked.join(', ')})${userAgents.length ? ', including assistants that visit on behalf of a person' : ''}.`));
+  }
   // If the browser part failed, its fields are defaults (0 controls, 0 images): do not report findings from them.
   const browserRan = (scan.totalButtonsAndLinks || 0) > 0 || (scan.totalImages || 0) > 0;
   if (!browserRan) return out;
@@ -235,6 +284,7 @@ export function instantScanFindings(scan, pack = 'shop') {
   }
   // Only when the page has images (a price could be drawn in one); a text-only page like example.com has no price at all.
   if (isShop && !scan.priceAsText && (scan.totalImages || 0) > 0) out.push(mk('price-in-image', 'high', 'No price was found as text on the page; it may be drawn inside an image, which AI shoppers cannot read.'));
+  if (isShop && scan.cartLink === false) out.push(mk('no-cart-link', 'medium', 'No link or button to the cart was found on the home page or a product page, so an AI shopper has to guess where the cart is.'));
   if (isShop && !scan.productSchema) out.push(mk('no-product-schema', 'low', 'The page has no schema.org Product data, so agents must guess product details from the page layout.'));
   return out;
 }

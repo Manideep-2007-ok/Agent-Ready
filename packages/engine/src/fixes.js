@@ -166,6 +166,51 @@ export const FIX_TEMPLATES = {
       unknown: '<span class="price">₹499</span> <meta itemprop="priceCurrency" content="INR">',
     },
   },
+  'no-cart-feedback': {
+    likelyCause: 'After a click on Add to cart nothing visible changes in the page text (no "Added to cart" message, no cart count update), so the click looks like it did nothing and gets repeated.',
+    fix: 'Show "Added to cart" as text next to the button, update the cart count, and announce both with role="status".',
+    standard: 'WCAG 4.1.3 Status Messages',
+    passCheck: 'Add to cart passes with one press of the button.',
+    frameworkExamples: {
+      nextjs: '<p role="status" aria-live="polite">{added ? "Added to cart" : ""}</p> next to the button.',
+      shopify: "Turn on the theme's cart notification (or cart drawer) so adding shows a visible confirmation.",
+      unknown: '<p role="status" aria-live="polite">Added to cart</p>',
+    },
+  },
+  'inconsistent-results': {
+    likelyCause: 'The page does not behave the same on every visit: a pop-up or banner that shows only sometimes, an A/B test, slow scripts, or a location or stock prompt.',
+    fix: 'Make the path for this task the same on every visit: no randomly timed pop-ups, and the key buttons and text present when the page first loads.',
+    standard: 'WCAG 3.2.3 Consistent Navigation',
+    passCheck: 'Three runs in a row give the same result.',
+  },
+  'unconfirmed-claim': {
+    likelyCause: 'The information the agent reported is not in the text of the page it named: it may be drawn in an image, loaded by a script later, or shown only after a click.',
+    fix: 'Write the key facts (prices, return days, contact details) as plain text in the page itself.',
+    standard: 'WCAG 1.1.1 Non-text Content',
+    passCheck: 'The page the agent names shows the same facts as text.',
+  },
+  'robots-blocks-ai-agents': {
+    likelyCause: 'robots.txt has a "Disallow: /" rule that applies to AI agents (by name, or through "User-agent: *"), so well-behaved assistants are told not to open any page.',
+    fix: 'Allow the AI agents you want to serve: give them their own group in robots.txt (for example "User-agent: ChatGPT-User" with "Allow: /") and keep Disallow rules for private paths only.',
+    standard: 'Robots Exclusion Protocol (RFC 9309)',
+    passCheck: 'robots.txt lets the AI assistants you want to serve open the shop pages.',
+    frameworkExamples: {
+      nextjs: 'app/robots.js: export default () => ({ rules: [{ userAgent: "ChatGPT-User", allow: "/" }, { userAgent: "*", disallow: "/account" }] })',
+      shopify: 'Edit robots.txt.liquid and add a group: User-agent: ChatGPT-User / Allow: /',
+      unknown: 'User-agent: ChatGPT-User\nAllow: /\n\nUser-agent: *\nDisallow: /account',
+    },
+  },
+  'no-cart-link': {
+    likelyCause: 'The header has no link to the cart, or the cart is an icon with no text, label or cart address in its link.',
+    fix: 'Add a "Cart" link with visible text (or an aria-label) to the header of every page, pointing to the cart page.',
+    standard: 'WCAG 2.4.4 Link Purpose; WCAG 4.1.2 Name, Role, Value',
+    passCheck: 'A link named "Cart" is found on the home page.',
+    frameworkExamples: {
+      nextjs: '<Link href="/cart" aria-label={`Cart, ${count} items`}><CartIcon aria-hidden="true" /> Cart</Link>',
+      shopify: 'In the header section keep the cart link text: <a href="{{ routes.cart_url }}">{{ "general.cart" | t }}</a>',
+      unknown: '<a href="/cart">Cart (2)</a>',
+    },
+  },
   'no-product-schema': {
     likelyCause: 'The product page has no schema.org Product/Offer markup, so machines must guess the name and price from the layout.',
     fix: 'Add JSON-LD Product markup with name, image, offers.price and offers.priceCurrency.',
@@ -342,6 +387,8 @@ const KEYWORDS = {
   'booking-not-found': ['book', 'reserve', 'appointment'],
   'unlabelled-buttons': ['cart', 'add'],
   'popup-blocking': ['close', 'dismiss', 'accept'],
+  'no-cart-feedback': ['add to cart', 'cart'],
+  'no-cart-link': ['cart', 'bag', 'basket'],
 };
 
 /**

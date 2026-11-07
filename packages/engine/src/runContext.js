@@ -23,6 +23,15 @@ export class RunContext {
     this.reason = null;
     /** Resolves when the cancel calls to TinyFish have been tried (runner waits for it before reading TinyFish's step count). */
     this.cancelDone = Promise.resolve();
+    /** Live agent steps spent by this test, and the most it may spend (D43; null = no limit). */
+    this.stepsSpent = 0;
+    this.maxSteps = null;
+  }
+
+  /** Count live steps; once the test's step limit is passed, stop it (reason 'budget'). */
+  spend(steps = 1) {
+    this.stepsSpent += steps;
+    if (this.maxSteps != null && !this.cancelled && this.stepsSpent >= this.maxSteps) this.cancel('budget').catch(() => {});
   }
 
   /**

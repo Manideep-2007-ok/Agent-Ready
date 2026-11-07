@@ -5,7 +5,9 @@ import { createRunContext } from './runContext.js';
 import { config } from './config.js';
 import * as tf from './tinyfish.js';
 import { runTaskWithBotWall } from './botwall.js';
-import { scoreReport } from './scoring.js';
+import { scoreReport, RUPEES_PER_STEP } from './scoring.js';
+import { confirmTask } from './confirm.js';
+import { checkClaims } from './claims.js';
 
 /** @typedef {import('./types.js').TaskResult} TaskResult */
 /** @typedef {import('./types.js').SiteReport} SiteReport */
@@ -81,6 +83,8 @@ export const REPLAY_CUSTOM_NOTE = 'Replay: this answer is from a recorded run, n
 /** Written on a pack task in replay mode: recordings exist only for the four shop tasks. Nothing is run and nothing is scored. */
 export const REPLAY_PACK_NOTE = 'Replay: there is no recording for this task, so it was not run. Tasks for SaaS, blog and local sites need live agents.';
 const STOPPED_TEXT = 'The test was stopped before this task finished.';
+const BUDGET_TEXT = 'The test reached its cost limit and was stopped before this task finished.';
+const stopText = (ctx) => (ctx?.reason === 'run-cancelled' ? 'The agent run was cancelled.' : ctx?.reason === 'budget' ? BUDGET_TEXT : STOPPED_TEXT);
 
 /**
  * One agent attempt for one task. Goes through the queue. `emitFinal:false` suppresses the closing task-update (the caller emits it).
@@ -99,7 +103,7 @@ export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 
   const update = (status) => { task.status = status; emit({ kind: 'task-update', task: { ...task, steps: [...task.steps] } }); };
   const stopped = () => {
     task.status = 'cancelled';
-    task.blocker = ctx?.reason === 'run-cancelled' ? 'The agent run was cancelled.' : STOPPED_TEXT;
+    task.blocker = stopText(ctx);
     task.answer = null;
     if (emitFinal) update('cancelled');
     return task;
@@ -149,6 +153,7 @@ export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 
               progress.push(p);
               const step = { id: `p${progress.length - 1}`, label: p.purpose, seconds: null, screenshotUrl: '', usedWebSearch: p.usedWebSearch, ...(p.at ? { at: p.at } : {}) };
               task.numSteps = progress.length;
+              ctx?.spend?.(1);
               emit({ kind: 'step', taskId, step });
             },
           });
@@ -252,7 +257,7 @@ function makeReportId(url) {
  * Test a whole site: all tasks at once (the queue limits real parallelism), then score.
  * @returns {Promise<SiteReport>}
  */
-export async function runSiteTest({ url, tasks, pack, customText, source = 'web', id, ctx: givenCtx } = {}, onEvent) {
+export async function runSiteTest({ url, tasks, pack, customText, source = 'web', id, ctx: givenCtx, confirm = false, budgetRupees } = {}, onEvent) {
   // `pack` names the kind of site (shop, saas, content, local); `tasks` may come from any pack. No tasks: the pack's four.
   // No pack: the pack the tasks belong to. Neither: shop, as before packs existed.
   const packId = normalisePack(pack) ?? (tasks?.length ? packForTasks(tasks) : 'shop');
@@ -261,21 +266,24 @@ export async function runSiteTest({ url, tasks, pack, customText, source = 'web'
   // runs of its own (Watch's confirming re-run) passes `ctx` and releases it itself.
   const reportId = id || givenCtx?.id || makeReportId(url);
   const ctx = givenCtx ?? createRunContext({ id: reportId, source });
+  // Cost limit (D43): rupees -> agent steps. 0 or none = no limit.
+  const budget = budgetRupees ?? config.budgetPerTestRupees;
+  if (budget > 0 && ctx.maxSteps == null) ctx.maxSteps = Math.max(1, Math.floor(budget / RUPEES_PER_STEP));
   try {
-    return await runSiteTestInner({ url, tasks, customText, source, reportId, ctx, packId }, onEvent);
+    return await runSiteTestInner({ url, tasks, customText, source, reportId, ctx, packId, confirm: !!confirm, budget }, onEvent);
   } finally {
     if (!givenCtx) ctx.release();
   }
 }
 
-async function runSiteTestInner({ url, tasks, customText, source, reportId, ctx, packId }, onEvent) {
+async function runSiteTestInner({ url, tasks, customText, source, reportId, ctx, packId, confirm, budget }, onEvent) {
   // Drop a task-update that exactly repeats the previous one of the same lane (e.g. the initial 'queued' and the queue's own
   // 'queued'). The key covers more than status, so an update whose content changed (new run, steps, attempts, verdict) still goes out.
   const lastKey = new Map();
   const emit = (e) => {
     if (e.kind === 'task-update') {
       const t = e.task;
-      const key = [t.status, t.runId, t.streamingUrl, t.numSteps, t.steps?.length, t.attempts?.length, t.mode, t.proxy, t.verdict, t.blocker].join('|');
+      const key = [t.status, t.runId, t.streamingUrl, t.numSteps, t.steps?.length, t.attempts?.length, t.mode, t.proxy, t.verdict, t.blocker, t.confirming?.run, t.runs?.length].join('|');
       if (lastKey.get(t.taskId) === key) return;
       lastKey.set(t.taskId, key);
     }
@@ -292,7 +300,8 @@ async function runSiteTestInner({ url, tasks, customText, source, reportId, ctx,
 
   const results = await Promise.all(ids.map(async (taskId) => {
     try {
-      return await runTaskWithBotWall({ url, taskId, customText }, emit, ctx);
+      const first = await runTaskWithBotWall({ url, taskId, customText }, emit, ctx);
+      return confirm ? await confirmTask(first, { url, customText }, emit, ctx) : first;
     } catch (err) { // one task must never kill the report
       return { taskId, goal: buildGoal(taskId, customText), mode: 'lite', proxy: 'off', runId: null, status: 'failed', answer: null,
         blocker: `Could not run the agent: ${err.message}`, stuckUrl: null, streamingUrl: null, steps: [], numSteps: 0, seconds: 0,
@@ -300,10 +309,16 @@ async function runSiteTestInner({ url, tasks, customText, source, reportId, ctx,
     }
   }));
 
+  // Claim checks read the pages the agents named (free Fetch); a stopped test is not checked.
+  if (!ctx.cancelled) await checkClaims(results, url).catch(() => {});
+
   /** @type {SiteReport} */
   const report = { id: reportId, url, source, testedAt: new Date().toISOString(), pack: packId, status: ctx.cancelled ? 'cancelled' : 'complete',
     score: 0, botWall: 'none', costRupees: 0, framework: 'unknown', instantScan: null, tasks: results, topFixes: [],
-    ...(customText?.trim() ? { customText: customText.trim() } : {}) };
+    ...(customText?.trim() ? { customText: customText.trim() } : {}),
+    ...(confirm ? { confirm: true } : {}),
+    ...(budget > 0 ? { budgetRupees: budget } : {}),
+    ...(ctx.cancelled ? { stopReason: ctx.reason === 'budget' ? 'budget' : 'user' } : {}) };
   Object.assign(report, scoreReport(report));
   // A stopped test has no score: half a test says nothing about the site. The cost of the steps already taken still counts.
   if (ctx.cancelled) { report.score = 0; report.botWall = 'none'; report.topFixes = []; }
