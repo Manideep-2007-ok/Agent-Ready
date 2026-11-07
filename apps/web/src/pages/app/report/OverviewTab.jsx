@@ -1,5 +1,6 @@
-// Overview: bot-wall banner, demo-store before/after, Top 3 fixes, the task ledger (T1-T4 + your task) and the live
-// agent lanes. While a test runs this is where the lanes are. Redesign spec 5.3.
+// Overview: bot-wall banner, demo-store before/after, Top 3 fixes and the task ledger (T1-T4 + your task). While a test
+// runs (or after it was stopped) the live agent lanes are here instead; once it is done the table is enough, and each
+// task's steps, answer and checks are in the Steps tab.
 import { TASK_LABELS } from '@agentready/engine/goals';
 import { Badge, Ledger, Panel, StatusBadge } from '../../../design/index.js';
 import Lane from '../../../components/Lane.jsx';
@@ -27,7 +28,7 @@ export function TaskLedger({ tasks }) {
   const ordered = [...tasks.filter((t) => t.taskId !== 'custom'), ...tasks.filter((t) => t.taskId === 'custom')];
   let n = 0;
   return (
-    <Panel label="Tasks" className="ar-task-ledger">
+    <Panel label="Tasks" className="ar-task-ledger ar-panel--plain">
       <Ledger
         caption="Tasks the agents tried"
         columns={[
@@ -76,12 +77,14 @@ export default function OverviewTab({ report, tasks, fixes, onJump, onShotClick,
       {demo}
       {finished && <TopFixes fixes={fixes} onJump={onJump} />}
       {finished && <TaskLedger tasks={report.tasks} />}
-      <section aria-label="Agents">
-        <div className="ar-section-head"><span className="ar-label">Agent runs</span></div>
-        <div className={`lanes${tasks.length >= 4 ? ' lanes-4' : ''}`}>
-          {tasks.map((task) => <Lane key={task.taskId} task={task} onShotClick={onShotClick} waitReason={waitReason} />)}
-        </div>
-      </section>
+      {!finished && (
+        <section aria-label="Agents">
+          <div className="ar-section-head"><span className="ar-label">Agent runs</span></div>
+          <div className={`lanes${tasks.length >= 4 ? ' lanes-4' : ''}`}>
+            {tasks.map((task) => <Lane key={task.taskId} task={task} onShotClick={onShotClick} waitReason={waitReason} />)}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

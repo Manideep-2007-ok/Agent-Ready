@@ -25,12 +25,27 @@
 .ar-doc-table code { font-size: 12px; }
 .ar-doc-note { padding: 12px 14px; background: var(--accent-soft); border-radius: var(--radius); color: var(--text); font-size: 14px; }
 .ar-doc-type { font-size: 12px; color: var(--text-muted); font-weight: 400; }
-.ar-doc-finding dl { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 6px 16px; margin: 0; }
+.ar-doc-count { font: 500 13px/1 var(--font-mono); margin-left: 6px; }
+.ar-doc-findings { border-top: 1px solid var(--border); margin: 12px 0 8px; }
+.ar-doc-finding { border-bottom: 1px solid var(--border); }
+.ar-doc-finding summary { display: grid; grid-template-columns: 14px minmax(0, 200px) minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 10px 0; cursor: pointer; list-style: none; }
+.ar-doc-finding summary::-webkit-details-marker { display: none; }
+.ar-doc-finding summary::before { content: '+'; font: 500 13px/1 var(--font-mono); color: var(--text-faint); }
+.ar-doc-finding[open] summary::before { content: '−'; }
+.ar-doc-finding summary:hover .ar-doc-finding-name { color: var(--accent); }
+.ar-doc-finding-name { font-weight: 500; }
+.ar-doc-finding-fix { color: var(--text-muted); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ar-doc-finding[open] .ar-doc-finding-fix { color: var(--text); white-space: normal; }
+.ar-doc-finding dl { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 6px 16px; margin: 0 0 14px 26px; }
+.ar-doc-finding .ar-snippet { margin: 0 0 14px 26px; }
 .ar-doc-finding dt { font: 500 11px/1.9 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 .ar-doc-finding dd { margin: 0; }
 @media (max-width: 1100px) { .ar-docs { grid-template-columns: 200px minmax(0, 1fr); } .ar-doc-toc { display: none; } }
 @media (max-width: 760px) {
   .ar-docs { grid-template-columns: minmax(0, 1fr); gap: 24px; padding: 20px 16px 56px; }
   .ar-doc-nav { position: static; max-height: none; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
-  .ar-doc-finding dl { grid-template-columns: minmax(0, 1fr); }
+  .ar-doc-finding dl { grid-template-columns: minmax(0, 1fr); margin-left: 0; }
+  .ar-doc-finding summary { grid-template-columns: 14px minmax(0, 1fr); }
+  .ar-doc-finding-fix { grid-column: 2; }
+  .ar-doc-finding .ar-snippet { margin-left: 0; }
 }

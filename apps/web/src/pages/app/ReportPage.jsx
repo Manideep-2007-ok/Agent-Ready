@@ -56,6 +56,15 @@ export default function ReportPage({ id, beforeId }) {
     getReport(id).then((r) => setUrl(r.url)).catch((e) => setError(e.message));
   }, [id]);
   useEffect(() => { getHealth().then((h) => setDemoStoreUrl(h.demoStoreUrl ?? null)).catch(() => {}); }, []);
+  useEffect(() => {
+    // Save as PDF prints every finding in full: open each "More" for the print, then close the ones that were closed.
+    let opened = [];
+    const before = () => { opened = [...document.querySelectorAll('.ar-finding-more:not([open])')]; opened.forEach((d) => { d.open = true; }); };
+    const after = () => { opened.forEach((d) => { d.open = false; }); opened = []; };
+    window.addEventListener('beforeprint', before);
+    window.addEventListener('afterprint', after);
+    return () => { window.removeEventListener('beforeprint', before); window.removeEventListener('afterprint', after); };
+  }, []);
   // A Top fix opens the Findings tab, then scrolls to its card once that tab is shown.
   useEffect(() => {
     if (!jump || tab !== 'findings') return;

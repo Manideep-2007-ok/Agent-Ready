@@ -1,5 +1,6 @@
-// One finding, answering the six questions in plain words (What happened? Where? Why? How bad? How to fix? How do we
-// know?). Causes are inferred, so they are shown as "Likely cause" and always name a site cause (D22).
+// One finding: the problem (its title), the fix and how to know it is fixed; where, why, how bad and the standard are
+// behind "More" (they open for print). Causes are inferred, so they are shown as "Likely cause" and always name a site
+// cause (D22).
 import { useState } from 'react';
 import { TASK_LABELS } from '@agentready/engine/goals';
 import { Badge } from '../design/index.js';
@@ -37,31 +38,32 @@ export default function FindingCard({ finding, n, taskIds = finding.taskId ? [fi
         </span>
       </header>
       <dl className="ar-finding-qa">
-        <dt>What happened?</dt>
-        <dd>{finding.text}</dd>
-        <dt>Where exactly?</dt>
-        <dd>
-          {whereText(finding, taskIds, totalTasks)}
-          {finding.element?.htmlSnippet && <pre className="ar-snippet">{finding.element.htmlSnippet}</pre>}
-          {finding.screenshotUrl && !shotFailed && (
-            <button type="button" className="ar-finding-shot" onClick={() => onShotClick?.(finding.screenshotUrl)}>
-              <img src={finding.screenshotUrl} alt="Screen where the agent got stuck" onError={() => setShotFailed(true)} loading="lazy" />
-            </button>
-          )}
-        </dd>
-        <dt>Why does it break AI agents?</dt>
-        <dd>{finding.likelyCause ? <><b>Likely cause:</b> {finding.likelyCause}</> : 'No cause recorded.'}</dd>
-        <dt>How bad is it?</dt>
-        <dd>{impact}</dd>
-        <dt>How to fix it?</dt>
-        <dd>
-          {finding.fix || 'Get the detailed fix report for the steps.'}
-          {finding.standard && <div className="ar-faint ar-small">Standard: {finding.standard}</div>}
-          {finding.frameworkExample && <pre className="ar-snippet">{finding.frameworkExample}</pre>}
-        </dd>
-        <dt>How do we know it&apos;s fixed?</dt>
+        <dt>Fix</dt>
+        <dd>{finding.fix || 'Get the detailed fix report for the steps.'}</dd>
+        <dt>Fixed when</dt>
         <dd>{finding.passCheck || 'Run the test again: this finding should be gone.'}</dd>
       </dl>
+      <details className="ar-finding-more">
+        <summary>More</summary>
+        <dl className="ar-finding-qa">
+          <dt>Where</dt>
+          <dd>
+            {whereText(finding, taskIds, totalTasks)}
+            {finding.element?.htmlSnippet && <pre className="ar-snippet">{finding.element.htmlSnippet}</pre>}
+            {finding.screenshotUrl && !shotFailed && (
+              <button type="button" className="ar-finding-shot" onClick={() => onShotClick?.(finding.screenshotUrl)}>
+                <img src={finding.screenshotUrl} alt="Screen where the agent got stuck" onError={() => setShotFailed(true)} loading="lazy" />
+              </button>
+            )}
+          </dd>
+          <dt>Why</dt>
+          <dd>{finding.likelyCause ? <><b>Likely cause:</b> {finding.likelyCause}</> : 'No cause recorded.'}</dd>
+          <dt>How bad</dt>
+          <dd>{impact}</dd>
+          {finding.standard && <><dt>Standard</dt><dd>{finding.standard}</dd></>}
+          {finding.frameworkExample && <><dt>Example</dt><dd><pre className="ar-snippet">{finding.frameworkExample}</pre></dd></>}
+        </dl>
+      </details>
     </article>
   );
 }

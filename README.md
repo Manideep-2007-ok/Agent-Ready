@@ -71,9 +71,9 @@ flowchart LR
 | **2. Four agents** | Try the four tasks at the same time. You watch each one's real browser and every step as it happens. |
 | **3. Bot-wall check** | If an agent looks blocked, the same task runs again through a residential address in India, then with a stealth browser. Where it first succeeds shows whether the site treats cloud-based agents differently, and a broken page is never mistaken for that. |
 | **4. Scoring** | Plain code, never an AI's opinion: 25 points per task for passing, few steps, speed and no web search, capped when it only passed through a workaround. The same run always gets the same score. |
-| **5. Findings** | Each one answers six questions: what happened, where, why it breaks agents, how bad it is, how to fix it, and how to check it's fixed. Always a site cause, never "the agent got confused". |
+| **5. Findings** | Each one shows the problem, the fix and how to check it's fixed; where it happened, why it breaks agents and how bad it is open under **More**. Always a site cause, never "the agent got confused". |
 
-<p align="center"><img src="docs/images/findings.png" alt="Findings, each answering six questions" width="900"><br><sub>Every finding answers the six questions a store owner or developer asks</sub></p>
+<p align="center"><img src="docs/images/findings.png" alt="Findings: each shows the problem, the fix and how to check it is fixed" width="900"><br><sub>Every finding: the problem, the fix, and how to know it worked</sub></p>
 
 ---
 

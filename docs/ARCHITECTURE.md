@@ -93,7 +93,7 @@ agent-ready/
     components/Lane.jsx         one task: status, steps, timer, live iframe           (Akhil)
     components/StepTimeline.jsx steps + screenshots + step replay                     (Sai Shakti)
     components/ScoreCard.jsx    score, bot-wall banner, cost                           (Sai Shakti)
-    components/FindingCard.jsx  one finding, six questions                              (Sai Shakti)
+    components/FindingCard.jsx  one finding: problem, fix, pass check; the rest under More (Sai Shakti)
     components/TopFixes.jsx     top 3 fixes                                            (Sai Shakti)
     components/InstantScanCard.jsx                                                      (Akhil)
   apps/cli/bin/agentready.js    CLI                                                     (Akhil)
@@ -395,9 +395,9 @@ Redesign (D44; the spec is in the private repo): one design system for the app, 
 |---|---|
 | `#/` | Landing: URL box that starts a test, live ledger panel, features, CLI/Action, demo-store results, FAQ |
 | `#/pricing` | Free / Watch / Team, no invented prices; cost of a test from `/api/estimate` |
-| `#/docs/<slug>` | Ten docs pages; findings and task packs come from `src/docs/generated.json` (`npm run docs:data`) |
-| `#/app` | Tests home: new test (address, kind of site, own task, Confirm results, cost line), recent tests ledger |
-| `#/app/test/<id>[/<beforeId>]` | Report: header (score, band, cost, steps; Re-run, Copy link, Save as PDF, Stop while running), tabs Overview (bot wall, demo before/after, Top 3, task ledger, live lanes), Findings (fix report button, six-question cards), Steps (timeline + replay), History, Scan |
+| `#/docs/<slug>` | Ten docs pages; findings (grouped by kind of site, one row each) and task packs come from `src/docs/generated.json` (`npm run docs:data`) |
+| `#/app` | Tests home: new test (address, kind of site, own task, Confirm results, cost line), the last 8 tests (Show all for the rest) |
+| `#/app/test/<id>[/<beforeId>]` | Report: header (score, band, cost, steps; Re-run, Copy link, Save as PDF, Stop while running), tabs Overview (bot wall, demo before/after, Top 3, task ledger; live lanes only while the test runs or after a stop), Findings (fix report button, cards: problem, fix, pass check, the rest under More), Steps (each task's answer and checks, timeline + replay), History, Scan |
 | `#/app/watch`, `#/app/race[/<id>]`, `#/app/leaderboard` | Watch, Race (flag RACE), Leaderboard (flag LEADERBOARD) |
 | anything else | 404 page in its area (site top bar, or the app sidebar for `#/app/...`); the address stays as typed. An unknown docs slug says so inside the docs layout |
 

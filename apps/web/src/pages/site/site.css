@@ -30,14 +30,13 @@
 .ar-hero-cost { margin-left: auto; }
 
 /* Strip */
-.ar-strip { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 16px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); color: var(--text-muted); }
-.ar-strip .ar-label { color: var(--text-muted); margin-right: 8px; }
-.ar-strip-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
 
 /* Features */
 .ar-features { display: grid; gap: 88px; padding: 88px 0; }
 .ar-feature { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 56px; align-items: center; }
 .ar-feature.is-flip .ar-feature-copy { order: 2; }
+.ar-feature.is-solo { grid-template-columns: minmax(0, 1fr); }
+.ar-feature.is-solo .ar-feature-copy { max-width: 720px; }
 .ar-feature-copy ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; color: var(--text-muted); font-size: 15px; }
 .ar-feature-copy li { padding-left: 18px; position: relative; }
 .ar-feature-copy li::before { content: ''; position: absolute; left: 0; top: 9px; width: 6px; height: 6px; border-radius: 1px; background: var(--accent); }

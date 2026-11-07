@@ -10,7 +10,6 @@ const QA = [
 export default function Faq() {
   return (
     <section className="ar-faq" aria-labelledby="faq-title">
-      <span className="ar-label ar-eyebrow">Questions</span>
       <h2 id="faq-title">Things store owners ask</h2>
       <div className="ar-faq-list">
         {QA.map(([q, a]) => (

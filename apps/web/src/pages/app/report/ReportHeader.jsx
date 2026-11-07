@@ -27,7 +27,7 @@ export default function ReportHeader({ report, url, tasks, running, stopping, on
   return (
     <header className="ar-report-head">
       <div className="ar-report-id">
-        <div className="ar-crumbs"><a href={href('app', 'tests')}>Tests</a> / {report?.id ?? '…'}</div>
+        <div className="ar-crumbs"><a href={href('app', 'tests')}>Tests</a> / Report</div>
         <h1 className="ar-report-host">{hostOf(report?.url || url) || 'Loading…'}</h1>
         <div className="ar-report-meta">
           {pack && <Badge tone="neutral">{packSiteLabel(pack)}</Badge>}

@@ -18,6 +18,21 @@ test('every finding type has an entry with a likely cause and a fix', () => {
   assert.ok(data.findings.every((f) => f.fix && f.likelyCause), 'every finding has a fix and a likely cause');
 });
 
+test('every finding has a group: access, any site, or the pack whose task or page it is about', () => {
+  const data = read();
+  const groups = ['access', 'any', ...PACK_ID_LIST];
+  for (const f of data.findings) assert.ok(groups.includes(f.group), `${f.type}: ${f.group}`);
+  const g = Object.fromEntries(data.findings.map((f) => [f.type, f.group]));
+  assert.equal(g['blocks-cloud-agents'], 'access');
+  assert.equal(g['robots-blocks-ai-agents'], 'access');
+  assert.equal(g['cart-not-found'], 'shop');
+  assert.equal(g['price-in-image'], 'shop');
+  assert.equal(g['pricing-not-found'], 'saas');
+  assert.equal(g['article-not-readable'], 'content');
+  assert.equal(g['booking-not-found'], 'local');
+  assert.equal(g['popup-blocking'], 'any');
+});
+
 test('every pack is listed in order with its four tasks, labels and goals', () => {
   const data = read();
   assert.deepEqual(data.packs.map((p) => p.id), [...PACK_ID_LIST]);

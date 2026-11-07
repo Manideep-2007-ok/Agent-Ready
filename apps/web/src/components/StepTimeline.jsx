@@ -1,8 +1,10 @@
 // Step timeline with replay (P3-1): every task's steps as screenshots, the step where a failed task stopped
-// highlighted, and a Replay button that plays the screenshots as a slideshow (1.5 s per step).
+// highlighted, and a Replay button that plays the screenshots as a slideshow (1.5 s per step). Each task also shows the
+// agent's answer and its checks, so Overview can stay a table once the test is done.
 import { useEffect, useMemo, useState } from 'react';
-import { TASK_LABELS } from '@agentready/engine/goals';
+import { GOAL_SUFFIX, TASK_LABELS } from '@agentready/engine/goals';
 import { Button, EmptyState, Panel } from '../design/index.js';
+import { TaskOutcome } from './taskNotes.jsx';
 
 const STEP_MS = 1500;
 const prefersCalm = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -24,20 +26,24 @@ function TaskSteps({ task, onShotClick }) {
     return () => clearTimeout(t);
   }, [playing, at, steps.length]);
 
-  if (!steps.length) return null;
   const play = () => { setAt(0); setPlaying(true); };
   const current = steps[at];
-  const label = TASK_LABELS[task.taskId] ?? task.taskId;
+  // A custom task is titled with the user's own words, as on its lane.
+  const custom = task.taskId === 'custom' && typeof task.goal === 'string' ? task.goal.replace(GOAL_SUFFIX, '').trim() : '';
+  const label = task.taskId === 'custom' ? (custom ? `Your task: ${custom}` : 'Your task') : TASK_LABELS[task.taskId] ?? task.taskId;
 
   return (
     <article className="timeline-task">
       <header className="timeline-head">
         <h3>{label}</h3>
         <span className="ar-mono ar-faint">{steps.length} steps · {Math.round(task.seconds || 0)}s</span>
-        <Button size="sm" className="no-print" onClick={playing ? () => setPlaying(false) : play} aria-pressed={playing}>
-          {playing ? 'Pause' : 'Replay'}
-        </Button>
+        {steps.length > 0 && (
+          <Button size="sm" className="no-print" onClick={playing ? () => setPlaying(false) : play} aria-pressed={playing}>
+            {playing ? 'Pause' : 'Replay'}
+          </Button>
+        )}
       </header>
+      <TaskOutcome task={task} />
       {(playing || at > 0) && current && (
         <figure className="timeline-stage">
           <button type="button" className="timeline-stage-shot" onClick={() => onShotClick?.(current.screenshotUrl)} aria-label={`Enlarge step ${at + 1}`}>
@@ -50,12 +56,12 @@ function TaskSteps({ task, onShotClick }) {
           </figcaption>
         </figure>
       )}
-      <ol className="timeline-steps">
+      {steps.length > 0 && <ol className="timeline-steps">
         {steps.map((s, i) => (
           <li key={s.id} className={`${i === stuck ? 'is-stuck' : ''}${i === at && (playing || at > 0) ? ' is-current' : ''}`}>
             <button type="button" onClick={() => { setPlaying(false); setAt(i); }} aria-label={`Step ${i + 1}: ${s.label}`}>
-              {bad.has(s.screenshotUrl) ? <span className="timeline-noshot" aria-hidden="true">{i + 1}</span>
-                : <img src={s.screenshotUrl} alt="" loading="lazy" onError={() => setBad((b) => new Set(b).add(s.screenshotUrl))} />}
+              {/* a step whose picture cannot load shows its label only, not an empty box */}
+              {!bad.has(s.screenshotUrl) && <img src={s.screenshotUrl} alt="" loading="lazy" onError={() => setBad((b) => new Set(b).add(s.screenshotUrl))} />}
               <span className="timeline-label">
                 <b>{i + 1}.</b> {s.label}
                 {s.usedWebSearch && <em> (web search)</em>}
@@ -64,18 +70,19 @@ function TaskSteps({ task, onShotClick }) {
             </button>
           </li>
         ))}
-      </ol>
+      </ol>}
     </article>
   );
 }
 
 /** @param {{report: import('@agentready/engine/types').SiteReport, onShotClick?: (url:string)=>void}} props */
 export default function StepTimeline({ report, onShotClick }) {
-  const tasks = report.tasks.filter((t) => (t.steps ?? []).some((s) => s.screenshotUrl));
+  const said = (t) => t.answer || t.blocker || t.replayNote;
+  const tasks = report.tasks.filter((t) => (t.steps ?? []).some((s) => s.screenshotUrl) || said(t));
   if (!tasks.length) return <Panel><EmptyState title="No steps yet" body="Screenshots of every step appear here once an agent finishes a task." /></Panel>;
   return (
-    <Panel label="Step by step" className="timeline">
-      <p className="ar-panel-body ar-muted ar-tight">Every step each agent took, with its screenshot. Press Replay to watch a task again.</p>
+    <Panel className="timeline ar-panel--plain">
+      <p className="ar-muted ar-tight">Every step each agent took, with its screenshot and the agent&apos;s answer. Press Replay to watch a task again.</p>
       {tasks.map((t) => <TaskSteps key={t.taskId} task={t} onShotClick={onShotClick} />)}
     </Panel>
   );
