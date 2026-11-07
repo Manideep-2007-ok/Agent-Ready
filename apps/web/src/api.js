@@ -22,7 +22,10 @@ export async function api(path, { method = 'GET', body } = {}) {
 export const getHealth = () => api('/health');
 export const cancelTest = (id) => api(`/tests/${encodeURIComponent(id)}/cancel`, { method: 'POST' });
 export const cancelWatchCheck = (id) => api(`/watch/${encodeURIComponent(id)}/cancel`, { method: 'POST' });
-export const startTest = (url, customTask) => api('/tests', { method: 'POST', body: { url, customTask: customTask || undefined } });
+export const startTest = (url, customTask, { confirm = false } = {}) =>
+  api('/tests', { method: 'POST', body: { url, customTask: customTask || undefined, ...(confirm ? { confirm: true } : {}) } });
+export const getEstimate = (tasks, confirm) => api(`/estimate?tasks=${tasks}${confirm ? '&confirm=1' : ''}`);
+export const getSiteHistory = (url) => api(`/sites/history?url=${encodeURIComponent(url)}`);
 export const getReport = (id) => api(`/tests/${encodeURIComponent(id)}`);
 export const listReports = () => api('/tests');
 export const buildFixes = (id) => api(`/reports/${encodeURIComponent(id)}/fixes`, { method: 'POST' });
@@ -56,7 +59,8 @@ const FINISHED = new Set(['passed', 'failed', 'blocked']);
 function mergeTask(previous, next) {
   if (!previous) return next;
   const steps = FINISHED.has(next.status) || next.steps?.length >= previous.steps.length ? next.steps : previous.steps;
-  return { ...previous, ...next, steps, streamingUrl: next.streamingUrl ?? previous.streamingUrl };
+  // `confirming` is only on the updates sent while a repeat run goes; the closing update has none.
+  return { ...previous, ...next, steps, streamingUrl: next.streamingUrl ?? previous.streamingUrl, confirming: next.confirming };
 }
 
 /** @param {LiveState} state @param {LiveEvent | {type:'connecting'|'open'|'lost'}} event */

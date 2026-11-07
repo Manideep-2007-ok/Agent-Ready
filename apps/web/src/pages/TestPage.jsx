@@ -7,7 +7,7 @@ import { BentoCard, BentoGrid } from '@/components/ui/bento-grid';
 import { IconCloud } from '@/components/ui/icon-cloud';
 import { Confetti } from '@/components/ui/confetti';
 import { ComicText } from '@/components/ui/comic-text';
-import { cancelTest, getHealth, getReport, listReports, setDemoFlaws, startTest, useLiveEvents, useQueueNote } from '../api.js';
+import { cancelTest, getEstimate, getHealth, getReport, listReports, setDemoFlaws, startTest, useLiveEvents, useQueueNote } from '../api.js';
 import { navigate } from '../nav.js';
 import Lane from '../components/Lane.jsx';
 import InstantScanCard from '../components/InstantScanCard.jsx';
@@ -15,6 +15,9 @@ import FindingCard from '../components/FindingCard.jsx';
 import ShotViewer from '../components/ShotViewer.jsx';
 import ScoreCard from '../components/ScoreCard.jsx';
 import DemoStoreCard from '../components/DemoStoreCard.jsx';
+import StepTimeline from '../components/StepTimeline.jsx';
+import SiteHistory from '../components/SiteHistory.jsx';
+import ReportActions from '../components/ReportActions.jsx';
 
 // The globe (WebGL) loads lazily so the dashboard opens fast.
 const Globe = lazy(() => import('@/components/ui/globe').then((m) => ({ default: m.Globe })));
@@ -22,14 +25,35 @@ const Globe = lazy(() => import('@/components/ui/globe').then((m) => ({ default:
 const SEVERITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 const findingKey = (f) => `${f.type}|${f.taskId ?? ''}`;
 
+/** "About ₹23 to ₹84" before a test starts (P2-8); replay mode costs nothing. */
+function useEstimate(tasks, confirm) {
+  const [estimate, setEstimate] = useState(null);
+  useEffect(() => {
+    let live = true;
+    getEstimate(tasks, confirm).then((e) => live && setEstimate(e)).catch(() => live && setEstimate(null));
+    return () => { live = false; };
+  }, [tasks, confirm]);
+  return estimate;
+}
+
+function costLine(e) {
+  if (!e) return '';
+  if (e.mock) return 'Replay mode: recorded runs, no agent cost.';
+  const limit = e.budget?.perTestRupees ? ` The test stops at ₹${e.budget.perTestRupees}.` : '';
+  const today = e.budget?.perDayRupees ? ` Left today: ₹${e.budget.leftTodayRupees} of ₹${e.budget.perDayRupees}.` : '';
+  return `Agent cost: usually ₹${e.lowRupees} to ₹${e.highRupees}, up to ₹${e.worstRupees} if the site blocks agents.${limit}${today}`;
+}
+
 function TestForm({ busy, onStart, onDemo }) {
   const [url, setUrl] = useState('');
   const [customTask, setCustomTask] = useState('');
   const [showCustom, setShowCustom] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+  const estimate = useEstimate(showCustom && customTask.trim() ? 5 : 4, confirm);
 
   const submit = (e) => {
     e.preventDefault();
-    if (url.trim()) onStart(url.trim(), showCustom ? customTask.trim() : '');
+    if (url.trim()) onStart(url.trim(), showCustom ? customTask.trim() : '', { confirm });
   };
 
   return (
@@ -56,6 +80,11 @@ function TestForm({ busy, onStart, onDemo }) {
           disabled={busy}
         />
       )}
+      <label className="confirm-toggle">
+        <input type="checkbox" checked={confirm} onChange={(e) => setConfirm(e.target.checked)} disabled={busy} />
+        <span><b>Confirm results</b>: run each task twice (three times if they disagree) and keep the majority. About twice the cost.</span>
+      </label>
+      {estimate && <p className="muted cost-line">{costLine(estimate)}</p>}
       <div className="form-links">
         {!showCustom && (
           <button type="button" className="link-button" onClick={() => setShowCustom(true)} disabled={busy}>
@@ -251,8 +280,9 @@ function StoppedCard({ report }) {
   return (
     <section className="card stopped-card" role="status">
       <div className="progress">
-        <span className="big">Test stopped</span>
+        <span className="big">{report.stopReason === 'budget' ? 'Cost limit reached' : 'Test stopped'}</span>
         <span className="muted">
+          {report.stopReason === 'budget' && `The agents reached this test's cost limit of ₹${report.budgetRupees}, so the test was stopped. `}
           {done} of {report.tasks.length} tasks had finished. No score is given for a stopped test. Agent cost so far ≈ ₹{report.costRupees}.
         </span>
       </div>
@@ -329,6 +359,7 @@ export default function TestPage({ reportId, beforeId }) {
   const [shot, setShot] = useState(null);
   const [demoStoreUrl, setDemoStoreUrl] = useState(null);
   const [stopping, setStopping] = useState(false);
+  const [enriched, setEnriched] = useState(null); // the report after "Get detailed fix report"
   const jumpToFix = (rank) => document.getElementById(`top-fix-${rank}`)?.scrollIntoView({ block: 'start' });
 
   // The address being tested, for the progress line (the live stream only carries it at the end).
@@ -336,6 +367,7 @@ export default function TestPage({ reportId, beforeId }) {
     setUrl('');
     setError('');
     setStopping(false);
+    setEnriched(null);
     if (reportId) getReport(reportId).then((r) => setUrl(r.url)).catch((e) => setError(e.message));
   }, [reportId]);
 
@@ -344,11 +376,11 @@ export default function TestPage({ reportId, beforeId }) {
   }, []);
 
   /** Starts a test and opens it; `getUrl` may first ask the server for the address (demo store). */
-  const begin = async (getUrl, customTask, from) => {
+  const begin = async (getUrl, customTask, from, options) => {
     setError('');
     setStarting(true);
     try {
-      const { reportId: id } = await startTest(await getUrl(), customTask);
+      const { reportId: id } = await startTest(await getUrl(), customTask, options);
       navigate('test', id, from);
     } catch (e) {
       setError(e.message);
@@ -356,7 +388,7 @@ export default function TestPage({ reportId, beforeId }) {
       setStarting(false);
     }
   };
-  const onStart = (siteUrl, customTask) => begin(() => siteUrl, customTask);
+  const onStart = (siteUrl, customTask, options) => begin(() => siteUrl, customTask, undefined, options);
   const onDemo = () => begin(async () => (await setDemoFlaws(true)).url);
   // Re-test the same store with its flaws off, remembering this report to show the before/after.
   const onApplyFixes = () => begin(async () => (await setDemoFlaws(false)).url, '', reportId);
@@ -373,6 +405,7 @@ export default function TestPage({ reportId, beforeId }) {
     } catch (e) { setError(e.message); setStopping(false); }
   };
   const stopped = live.report?.status === 'cancelled';
+  const report = enriched?.id === live.report?.id ? enriched : live.report;
 
   const form = <TestForm busy={starting || running} onStart={onStart} onDemo={demoStoreUrl ? onDemo : null} />;
 
@@ -399,7 +432,10 @@ export default function TestPage({ reportId, beforeId }) {
             {tasks.map((task) => <Lane key={task.taskId} task={task} onShotClick={setShot} waitReason={waitReason} />)}
           </section>
           {!live.report && <InstantScanCard scan={live.scan} loading={!live.scan} />}
-          {live.report && !stopped && <Findings report={live.report} onShotClick={setShot} />}
+          {report && !stopped && <ReportActions report={report} onEnriched={setEnriched} />}
+          {report && !stopped && <Findings report={report} onShotClick={setShot} />}
+          {report && !stopped && <SiteHistory report={report} />}
+          {report && !stopped && <StepTimeline report={report} onShotClick={setShot} />}
         </>
       )}
       {!reportId && <Features />}

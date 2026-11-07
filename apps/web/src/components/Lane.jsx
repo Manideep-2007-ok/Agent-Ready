@@ -25,6 +25,25 @@ function chipOf(task) {
   return 'waiting';
 }
 
+/** After a confirmed test: how many runs agreed (D41). */
+function confirmNote(task) {
+  const runs = (task?.runs ?? []).filter((r) => !r.stopped);
+  if (runs.length < 2) return null;
+  const passed = runs.filter((r) => r.passed).length;
+  return task.flaky
+    ? <div className="ar-lane-note ar-lane-note--warn" role="note">Runs disagreed: passed {passed} of {runs.length}. The result shown is the majority.</div>
+    : <div className="ar-lane-note" role="note">Confirmed: {runs.length} of {runs.length} runs agree</div>;
+}
+
+/** Claim check (D42): did the page the agent named show what it reported? */
+function claimNote(task) {
+  const c = task?.claim;
+  if (!c) return null;
+  if (c.status === 'confirmed') return <div className="ar-lane-note" role="note">Checked: the page it named shows {c.facts.map((f) => f.label).join(', ')}</div>;
+  if (c.status === 'off-site') return <div className="ar-lane-note ar-lane-note--warn" role="note">The answer points to another website</div>;
+  return <div className="ar-lane-note ar-lane-note--warn" role="note">Not confirmed: the page it named does not show {c.facts.filter((f) => !f.found).map((f) => f.label).join(', ')}</div>;
+}
+
 /**
  * One task lane.
  * @param {{task?: object, label?: string, onShotClick?: (url:string)=>void, startedAt?: number, waitReason?: string}} props
@@ -118,6 +137,14 @@ export default function Lane({ task, label, onShotClick, startedAt, waitReason }
         )}
       </div>
       {chip === 'waiting' && waitReason && <div className="ar-lane-wait" role="status">{waitReason}</div>}
+      {task?.confirming && (
+        <div className="ar-lane-attempt ar-lane-attempt--retry" role="status">
+          <strong>Confirming: run {task.confirming.run} of {task.confirming.of}</strong>
+          <span>{task.confirming.run === 3 ? 'The first two runs disagreed, so a third run decides' : 'Running the task again to check the result holds'}</span>
+        </div>
+      )}
+      {!task?.confirming && confirmNote(task)}
+      {!running && claimNote(task)}
       {task?.replayNote && <div className="ar-lane-replay" role="note">{task.replayNote}</div>}
       {!running && task?.answer && (
         <div className="ar-lane-result"><strong>Agent&apos;s answer</strong>{task.answer}</div>

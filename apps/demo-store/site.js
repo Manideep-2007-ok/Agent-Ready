@@ -33,7 +33,9 @@
   if (page === 'product') {
     const p = PRODUCTS.find((x) => x.id === Number(new URLSearchParams(location.search).get('id'))) || PRODUCTS[0];
     document.title = p.name + ' | Chai & Co.';
-    main.innerHTML = '<h1>' + p.name + '</h1><p>' + p.description + '</p><p class="big">' + price(p.price) + '</p>' + addBtn(p.id) + '<p id="added" class="note" role="status"></p>';
+    // qtyTwo flaw: a quantity box that starts at 2 (shown only with the flaw, so the clean page is unchanged).
+    const qty = F.qtyTwo ? '<label class="qty">Quantity <input id="qty" type="number" min="1" value="2"></label> ' : '';
+    main.innerHTML = '<h1>' + p.name + '</h1><p>' + p.description + '</p><p class="big">' + price(p.price) + '</p>' + qty + addBtn(p.id) + '<p id="added" class="note" role="status"></p>';
     if (window.flawsAllOff()) {
       const s = document.createElement('script');
       s.type = 'application/ld+json';
@@ -47,9 +49,14 @@
         document.getElementById('added').textContent = 'Something went wrong. Please try again later.';
         return;
       }
-      Cart.add(p.id, 1);
-      document.getElementById('cart-count').textContent = Cart.count();
-      document.getElementById('added').textContent = F.iconCart ? '' : 'Added to cart.';
+      const n = F.qtyTwo ? Math.max(1, Number(document.getElementById('qty').value) || 1) : 1;
+      const done = () => {
+        Cart.add(p.id, n);
+        document.getElementById('cart-count').textContent = Cart.count();
+        document.getElementById('added').textContent = F.iconCart || F.slowCart ? '' : 'Added to cart.';
+      };
+      // slowCart flaw: a slow cart service and no message, so the click looks like it did nothing.
+      if (F.slowCart) setTimeout(done, 4000); else done();
     });
   }
 
