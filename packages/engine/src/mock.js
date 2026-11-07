@@ -123,4 +123,7 @@ export async function fetchPages(urls) {
 export async function search(query) { log('search', query); return [{ title: 'Mock result', url: 'https://example.com', snippet: query }]; }
 export async function createBrowserSession({ url }) { log('browser session for', url); return { sessionId: 'mock-session', cdpUrl: 'ws://127.0.0.1:0/mock' }; }
 export async function closeBrowserSession(id) { log('close session', id); }
+export async function createPageMonitor({ url }) { log('monitor create', url); return { monitorId: `mon-mock-${Math.random().toString(36).slice(2, 8)}` }; }
+export async function setMonitorStatus(monitorId, status) { log('monitor', monitorId, status); return { ok: true }; }
+export async function deleteMonitor(monitorId) { log('monitor delete', monitorId); return { ok: true }; }
 export async function getWallet() { return { balance_usd: 14.24, mock: true }; }

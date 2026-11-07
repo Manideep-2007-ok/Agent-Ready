@@ -1,5 +1,5 @@
 // Bot-wall cascade: no proxy -> India proxy -> stealth + India proxy (docs/ARCHITECTURE.md section 6).
-import { runTask, looksBlocked } from './runner.js';
+import { runTask, looksBlocked, saysRefused, REFUSED_RE } from './runner.js';
 import { config } from './config.js';
 export { siteVerdict } from './scoring.js';
 
@@ -23,6 +23,7 @@ export const SITE_FAILURE_MIN_STEPS = 5;
 
 /** After the India-proxy attempt (index 1): failed, still looks blocked, but the agent clearly used the site. */
 export function isSiteFailure(result, attemptIndex) {
+  if (REFUSED_RE.test(result.blocker || '')) return false; // a 403 is a wall, however many pages the agent tried
   return attemptIndex === 1 && result.status !== 'passed' && looksBlocked(result) && (result.numSteps || 0) >= SITE_FAILURE_MIN_STEPS;
 }
 
@@ -42,6 +43,12 @@ export async function runTaskWithBotWall({ url, taskId, customText }, onEvent, c
     const { mode, proxy } = PLAN[i];
     if (i > 0) onEvent?.({ kind: 'attempt', taskId, attempt: i + 1, mode, proxy });
     result = await runTask({ url, taskId, customText, mode, proxy, emitFinal: false, attempts }, onEvent, ctx);
+    // Refused but "passed": the site said 403/forbidden and the agent answered from elsewhere. Not a pass on this site,
+    // and the answer is not step-backed (D13): drop it and treat the attempt as blocked, so the cascade tries again.
+    if (saysRefused(result)) {
+      result = { ...result, status: 'failed', answer: null,
+        blocker: `The site refused the agent (${(result.answer.match(REFUSED_RE) || ['403'])[0]}); its answer came from somewhere else, not the site.` };
+    }
     // numSteps feeds the cost meter; blocker + screenshotUrl keep the evidence of the wall after a later attempt passes.
     const lastStep = result.steps[result.steps.length - 1];
     attempts.push({ mode, proxy, runId: result.runId, passed: result.status === 'passed', numSteps: result.numSteps,

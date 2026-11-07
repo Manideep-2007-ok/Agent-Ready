@@ -294,3 +294,72 @@ test('after Stop the lane says cancelled at once and the agent slot is free whil
   assert.equal(report.tasks[0].numSteps, 0);
   assert.equal(report.costRupees, 0);
 });
+
+// P2-7 (live runs, 7 Nov): a site that refused cloud agents with "403 Forbidden" was not seen as a wall, and two tasks
+// "passed" with answers the agent took from web search after the site refused it. Neither is a pass on the site.
+const refused = (answer) => ({ success: true, answer, blocker: null, stuck_url: URL_ });
+
+test('a "403 Forbidden" failure counts as a wall: the India-proxy attempt runs', async () => {
+  let n = 0;
+  fake = installFakeTinyFish({ runSse: () => (++n === 1 ? finished(wall('The site returned 403 Forbidden on every page'), 6) : finished(ok, 3)) });
+  const r = await runTaskWithBotWall({ url: URL_, taskId: 'find_price' });
+  assert.equal(fake.calls.sse.length, 2);
+  assert.equal(fake.calls.sse[1].body.proxy_config.country_code, 'IN');
+  assert.equal(r.status, 'passed');
+  assert.equal(r.verdict, 'blocks-cloud-agents');
+});
+
+test('a "pass" whose answer says the site refused the agent is not a pass: retried, and the borrowed answer is dropped', async () => {
+  let n = 0;
+  fake = installFakeTinyFish({ runSse: () => (++n === 1
+    ? finished(refused('The website returned a 403 Forbidden error. From search results: open 10am to 8pm.'), 11)
+    : finished(ok, 4)) });
+  const r = await runTaskWithBotWall({ url: URL_, taskId: 'find_price' });
+  assert.equal(fake.calls.sse.length, 2, 'the India-proxy attempt ran');
+  assert.equal(r.status, 'passed');
+  assert.equal(r.verdict, 'blocks-cloud-agents');
+  assert.equal(r.attempts[0].passed, false, 'the first attempt is recorded as refused, not passed');
+  assert.match(r.attempts[0].blocker, /refused/i);
+});
+
+test('refused on every attempt: failed, verdict site-broken, no answer kept (D13), and D26 does not stop a 403 early', async () => {
+  fake = installFakeTinyFish({ runSse: () => finished(refused('Access denied (403 Forbidden) on clinic pages; the hours below are from web search.'), 9) });
+  const r = await runTaskWithBotWall({ url: URL_, taskId: 'find_hours' });
+  assert.equal(fake.calls.sse.length, 3, 'all three attempts');
+  assert.equal(r.status, 'failed');
+  assert.equal(r.verdict, 'site-broken');
+  assert.equal(r.answer, null);
+  assert.match(r.blocker, /refused/i);
+});
+
+// P2-4: structured answers. Every run asks TinyFish for the answer shape GOAL_SUFFIX describes (output_schema), using
+// only keywords TinyFish accepts. An account that refuses the field still gets its runs: the run is sent again
+// without it, and later runs skip it. (Keep these two tests last: the refusal is remembered for the process.)
+test('every run asks for the answer shape as output_schema (TinyFish-allowed keywords only)', async () => {
+  fake = installFakeTinyFish({ runSse: () => finished(ok, 2) });
+  await runTaskWithBotWall({ url: URL_, taskId: 'find_price' });
+  const schema = fake.calls.sse[0].body.output_schema;
+  assert.deepEqual(Object.keys(schema.properties), ['success', 'answer', 'blocker', 'stuck_url']);
+  assert.equal(schema.type, 'object');
+  assert.equal(schema.properties.success.type, 'boolean');
+  assert.deepEqual(schema.required, ['success']);
+  for (const k of ['answer', 'blocker', 'stuck_url']) assert.deepEqual(schema.properties[k], { type: 'string', nullable: true });
+  const allowed = new Set(['type', 'properties', 'required', 'propertyOrdering', 'nullable', 'items', 'enum', 'format', 'minimum', 'maximum', 'minItems', 'maxItems', 'anyOf']);
+  const walk = (node) => { for (const [k, v] of Object.entries(node)) { if (k === 'properties') Object.values(v).forEach(walk); else assert.ok(allowed.has(k), `keyword ${k}`); } };
+  walk(schema);
+});
+
+test('if TinyFish refuses output_schema, the run is sent again without it and later runs skip it', async () => {
+  fake = installFakeTinyFish({
+    runSse: ({ body }) => (body.output_schema
+      ? { end: 'http', status: 400, body: { error: { code: 'INVALID_INPUT', message: 'output_schema is not enabled for this account' } } }
+      : finished(ok, 2)),
+  });
+  const r = await runTaskWithBotWall({ url: URL_, taskId: 'find_price' });
+  assert.equal(r.status, 'passed');
+  assert.equal(fake.calls.sse.length, 2);
+  assert.ok(fake.calls.sse[0].body.output_schema && !fake.calls.sse[1].body.output_schema);
+  await runTaskWithBotWall({ url: URL_, taskId: 'find_contact' });
+  assert.equal(fake.calls.sse.length, 3);
+  assert.ok(!fake.calls.sse[2].body.output_schema, 'remembered: no second refusal');
+});

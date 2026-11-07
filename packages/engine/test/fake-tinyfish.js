@@ -17,7 +17,7 @@ export function runRecord({ runId, status = 'COMPLETED', steps = 5, result = { s
 
 /**
  * @param {{
- *   runSse?: (call:{index:number, body:any, runId:string}) => {events?:object[], end?:'complete'|'hang'|'drop'|'http', status?:number, run?:object},
+ *   runSse?: (call:{index:number, body:any, runId:string}) => {events?:object[], end?:'complete'|'hang'|'drop'|'http', status?:number, body?:object, run?:object},
  *   cancelStatus?: number,
  *   getRunStatuses?: (runId:string, n:number) => object|number,
  *   pages?: Record<string,string>,
@@ -50,7 +50,7 @@ export function installFakeTinyFish(handlers = {}) {
       const body = JSON.parse(init.body);
       const spec = handlers.runSse?.({ index, body, runId }) ?? {};
       calls.sse.push({ index, body, runId, spec });
-      if (spec.end === 'http') return new Response(JSON.stringify({ error: 'boom' }), { status: spec.status ?? 503 });
+      if (spec.end === 'http') return new Response(JSON.stringify(spec.body ?? { error: 'boom' }), { status: spec.status ?? 503 });
       if (spec.run) runs.set(runId, { ...spec.run, run_id: runId });
       const events = (spec.events ?? [{ type: 'STARTED', run_id: runId }, { type: 'PROGRESS', purpose: 'Open the page' },
         { type: 'COMPLETE', run_id: runId, status: 'COMPLETED', result: { success: true, answer: 'ok', blocker: null, stuck_url: null } }]).map((e) => ({ run_id: runId, ...e }));

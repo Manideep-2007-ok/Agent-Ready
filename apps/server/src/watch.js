@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import cron from 'node-cron';
-import { runSiteTest, runTaskWithBotWall, scoreReport, createRunContext, TASK_LABELS, DEFAULT_TASK_ORDER, normalisePack, packForTasks } from '@agentready/engine';
+import { runSiteTest, runTaskWithBotWall, scoreReport, createRunContext, TASK_LABELS, DEFAULT_TASK_ORDER, normalisePack, packForTasks, config as engineConfig, createPageMonitor, setMonitorStatus, deleteMonitor } from '@agentready/engine';
 import { logEvent, safeUrl } from './log.js';
 import { sendAlert } from './alerts.js';
 
@@ -166,6 +166,7 @@ export async function createWatch({ url, everyMinutes = 20, tasks = DEFAULT_TASK
   };
   await (await getStore()).saveWatch(watch);
   schedule(watch);
+  await syncMonitor(watch);
   return watch;
 }
 
@@ -179,7 +180,62 @@ export async function updateWatch(id, patch) {
   if (patch.everyMinutes != null) watch.everyMinutes = patch.everyMinutes;
   await (await getStore()).saveWatch(watch);
   schedule(watch);
+  await syncMonitor(watch);
   return watch;
+}
+
+// ---------- page monitor (P2-5) ----------
+// A watch that checks every 2 hours or less often also gets a TinyFish Page Monitor on its page, hourly ($0.005 a run,
+// about $3.65 a month). A relevant change starts the check at once. Needs PUBLIC_BASE_URL for the webhook; never in replay.
+export const MONITOR_MIN_EVERY = 120;
+const MONITOR_CRON = '0 * * * *';
+const MONITOR_PURPOSE = 'Anything that could change how a visitor shops or finds information: a new pop-up or banner, the cart, prices, the main menu or footer links, or an error page.';
+const TRIGGER_GAP_MS = 60 * 60_000;
+const lastTrigger = new Map(); // watchId -> ms of the last check a monitor started
+
+/** @param {{enabled:boolean, everyMinutes:number}} watch */
+export function wantsMonitor(watch, { publicBaseUrl = engineConfig.publicBaseUrl, mock = engineConfig.mock } = {}) {
+  return Boolean(watch.enabled && watch.everyMinutes >= MONITOR_MIN_EVERY && publicBaseUrl && !mock);
+}
+
+/** Should this monitor webhook start a check? Only a relevant change, on an enabled watch, at most once an hour. */
+export function monitorTrigger(watch, body, { now = Date.now(), lastAt = 0 } = {}) {
+  if (!watch?.enabled || body?.outcome !== 'changed') return false;
+  if (body.judgment && body.judgment.is_relevant === false) return false;
+  return now - lastAt >= TRIGGER_GAP_MS;
+}
+
+/** Create, resume, pause or delete the watch's monitor so it matches wantsMonitor. Best effort: never fails the watch. */
+async function syncMonitor(watch) {
+  const store = await getStore();
+  try {
+    if (wantsMonitor(watch)) {
+      if (!watch.monitorId) {
+        const { monitorId } = await createPageMonitor({ url: watch.url, cron: MONITOR_CRON, webhookUrl: `${engineConfig.publicBaseUrl.replace(/\/$/, '')}/api/webhooks/tinyfish`,
+          name: `AgentReady watch ${watch.id}`, purpose: MONITOR_PURPOSE });
+        watch.monitorId = monitorId;
+        await store.saveWatch(watch);
+      } else await setMonitorStatus(watch.monitorId, 'active');
+    } else if (watch.monitorId) {
+      if (!watch.enabled) await setMonitorStatus(watch.monitorId, 'paused');
+      else { await deleteMonitor(watch.monitorId); watch.monitorId = null; await store.saveWatch(watch); }
+    }
+  } catch (e) {
+    logEvent('watch.monitor-error', { watchId: watch.id, message: e?.message });
+  }
+}
+
+/** A TinyFish Monitor webhook. Returns true when it belonged to a watch (whether or not it started a check). */
+export async function handleMonitorWebhook(body) {
+  const id = body?.fetch_monitor_id;
+  if (!id) return false;
+  const watch = (await listWatches()).find((w) => w.monitorId && w.monitorId === id);
+  if (!watch) return false;
+  if (!monitorTrigger(watch, body, { lastAt: lastTrigger.get(watch.id) ?? 0 }) || running.has(watch.id)) return true;
+  lastTrigger.set(watch.id, Date.now());
+  logEvent('watch.page-changed', { watchId: watch.id, host: safeUrl(watch.url) });
+  runCheck(watch).catch((e) => logEvent('watch.error', { watchId: watch.id, message: e?.message }));
+  return true;
 }
 
 // ---------- scheduler ----------

@@ -13,7 +13,14 @@ import { checkClaims } from './claims.js';
 /** @typedef {import('./types.js').SiteReport} SiteReport */
 /** @typedef {import('./types.js').Step} Step */
 
-const BLOCK_RE = /access denied|denied|error page|blocked|captcha|something went wrong|blank|empty page|could not load|not available|\(null\)/i;
+const BLOCK_RE = /access denied|denied|error page|blocked|captcha|something went wrong|blank|empty page|could not load|not available|\(null\)|\b403\b|forbidden/i;
+/** The agent's own words say the site refused it (P2-7, live runs 7 Nov). */
+export const REFUSED_RE = /\b403\b|forbidden|access denied/i;
+
+/** A "pass" whose answer says the site refused the agent: the answer came from somewhere else (web search), not the site (D13). */
+export function saysRefused(task) {
+  return task.status === 'passed' && REFUSED_RE.test(task.answer || '');
+}
 
 /** Did this failed task fail because the site blocked the agent? (not just "could not find the page") */
 export function looksBlocked(task) {

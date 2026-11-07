@@ -169,7 +169,7 @@ async function runInBackground(report, { tasks, customText, instantScan, confirm
   };
   const scan = instantScan
     ? engine
-        .instantScan(report.url)
+        .instantScan(report.url, { pack: report.detectingPack ? 'auto' : report.pack })
         .then((result) => {
           report.instantScan = result;
           applyScanFindings();

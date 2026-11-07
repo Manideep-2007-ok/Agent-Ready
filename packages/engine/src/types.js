@@ -31,7 +31,7 @@
  *   |'pricing-not-found'|'signup-not-found'|'docs-not-found'|'sales-contact-not-found'
  *   |'search-not-found'|'article-not-readable'|'newsletter-not-found'|'author-contact-not-found'
  *   |'hours-not-found'|'location-not-found'|'menu-not-found'|'booking-not-found'
- *   |'no-cart-feedback'|'inconsistent-results'|'unconfirmed-claim'|'robots-blocks-ai-agents'|'no-cart-link'} FindingType
+ *   |'no-cart-feedback'|'inconsistent-results'|'unconfirmed-claim'|'robots-blocks-ai-agents'|'no-cart-link'|'not-in-search'} FindingType
  */
 
 /**
@@ -157,6 +157,8 @@
  * @property {string[]} [aiBlockedAgents]  AI agents that robots.txt tells to stay away from the whole site (Scan v2)
  * @property {'found'|'missing'|'error'} [llmsTxt]  /llms.txt (Scan v2)
  * @property {boolean} [cartLink]       a visible link or button to the cart on the home or product page (Scan v2)
+ * @property {{topic:string, found:boolean, url:string|null}[]} [searchFindable]  P2-5: whether TinyFish Search, restricted to
+ *   this site, finds the two key pages for its pack (absent when the search did not run)
  */
 
 /**
@@ -206,6 +208,7 @@
  * @property {string} createdAt
  * @property {string|null} lastGoodReportId
  * @property {boolean} failing
+ * @property {string|null} [monitorId]  TinyFish Page Monitor on the watched page (P2-5; watches of 2 hours or more, with PUBLIC_BASE_URL)
  */
 
 export const TASK_IDS = /** @type {const} */ ([
@@ -222,6 +225,6 @@ export const FINDING_TYPES = /** @type {const} */ ([
   'pricing-not-found', 'signup-not-found', 'docs-not-found', 'sales-contact-not-found',
   'search-not-found', 'article-not-readable', 'newsletter-not-found', 'author-contact-not-found',
   'hours-not-found', 'location-not-found', 'menu-not-found', 'booking-not-found',
-  'no-cart-feedback', 'inconsistent-results', 'unconfirmed-claim', 'robots-blocks-ai-agents', 'no-cart-link',
+  'no-cart-feedback', 'inconsistent-results', 'unconfirmed-claim', 'robots-blocks-ai-agents', 'no-cart-link', 'not-in-search',
 ]);
 export const PACK_ID_LIST = /** @type {const} */ (['shop', 'saas', 'content', 'local']);

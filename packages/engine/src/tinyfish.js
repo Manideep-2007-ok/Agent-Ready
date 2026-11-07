@@ -1,6 +1,7 @@
 // Every TinyFish HTTP call lives here (plain fetch, header X-API-Key). Mock mode delegates to mock.js.
 import { config, requireApiKey } from './config.js';
 import * as mock from './mock.js';
+import { ANSWER_SCHEMA } from './goals.js';
 
 const AGENT = 'https://agent.tinyfish.ai';
 const FETCH_API = 'https://api.fetch.tinyfish.ai';
@@ -31,6 +32,11 @@ async function check(res, what) {
 
 const proxyConfig = (proxy) => (proxy === 'IN' || proxy === 'US' ? { enabled: true, type: 'tinyfish', country_code: proxy } : { enabled: false });
 
+// Structured answers (P2-4): every run asks for ANSWER_SCHEMA. If the account refuses the field (HTTP 400 naming it),
+// the run is sent again without it and the refusal is remembered, so a run is never lost to it.
+let schemaRefused = false;
+const refusesSchema = (err) => err?.status === 400 && /output_schema/i.test(err.message);
+
 function runBody({ url, goal, mode = 'lite', proxy = 'off', maxSeconds, webhookUrl }) {
   const body = {
     url, goal,
@@ -38,8 +44,20 @@ function runBody({ url, goal, mode = 'lite', proxy = 'off', maxSeconds, webhookU
     proxy_config: proxyConfig(proxy),
     agent_config: { max_duration_seconds: maxSeconds || config.maxDurationSeconds }, // never max_steps / capture_config
   };
+  if (!schemaRefused) body.output_schema = ANSWER_SCHEMA;
   if (webhookUrl) body.webhook_url = webhookUrl;
   return body;
+}
+
+/** POST a run; on an output_schema refusal, remember it and POST once more without the field. */
+async function postRun(path, params, what, init = {}) {
+  const send = () => fetch(`${AGENT}${path}`, { method: 'POST', headers: headers(true), body: JSON.stringify(runBody(params)), ...init });
+  const res = await send();
+  try { return await check(res, what); } catch (err) {
+    if (schemaRefused || !refusesSchema(err)) throw err;
+    schemaRefused = true;
+    return check(await send(), what);
+  }
 }
 
 /**
@@ -56,14 +74,12 @@ export async function startRunSSE(params, handlers = {}) {
   const startTimer = setTimeout(() => startCtl.abort(), 60_000);
   let res;
   try {
-    res = await fetch(`${AGENT}/v1/automation/run-sse`, { method: 'POST', headers: headers(true), body: JSON.stringify(runBody(params)),
-      signal: signal ? AbortSignal.any([signal, startCtl.signal]) : startCtl.signal });
+    res = await postRun('/v1/automation/run-sse', params, 'start run', { signal: signal ? AbortSignal.any([signal, startCtl.signal]) : startCtl.signal });
   } catch (err) {
     if (signal?.aborted) throw err; // the caller cancelled
     if (startCtl.signal.aborted) throw new Error('TinyFish did not answer in time (start run)');
     throw err;
   } finally { clearTimeout(startTimer); }
-  await check(res, 'start run');
 
   const dropped = (why) => Object.assign(new Error(`Live stream closed before the run finished (${why})`), { code: 'STREAM_DROPPED', runId });
   const handle = (e) => {
@@ -123,8 +139,7 @@ export async function* parseSSE(body) {
 /** Start a background run. Returns {runId}. */
 export async function startRunAsync(params) {
   if (config.mock) return mock.startRunAsync(params);
-  const res = await fetch(`${AGENT}/v1/automation/run-async`, { method: 'POST', headers: headers(true), body: JSON.stringify(runBody(params)), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
-  await check(res, 'start background run');
+  const res = await postRun('/v1/automation/run-async', params, 'start background run', { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   const j = await res.json();
   return { runId: j.run_id };
 }
@@ -190,10 +205,13 @@ export async function fetchPages(urls) {
   });
 }
 
-/** TinyFish Search (free). Returns results[]. */
-export async function search(query) {
+/** TinyFish Search (free). Returns results[]. includeDomains limits results to those sites (comma-separated). */
+export async function search(query, { includeDomains, location } = {}) {
   if (config.mock) return mock.search(query);
-  const res = await fetch(`${SEARCH_API}?query=${encodeURIComponent(query)}`, { headers: headers(), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  const qs = new URLSearchParams({ query });
+  if (includeDomains) qs.set('include_domains', includeDomains);
+  if (location) qs.set('location', location);
+  const res = await fetch(`${SEARCH_API}?${qs}`, { headers: headers(), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   await check(res, 'search');
   const j = await res.json();
   return j.results || [];
@@ -215,6 +233,35 @@ export async function closeBrowserSession(sessionId) {
   if (config.mock) return mock.closeBrowserSession(sessionId);
   const res = await fetch(`${BROWSER_API}/${encodeURIComponent(sessionId)}`, { method: 'DELETE', headers: headers(), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   if (!res.ok && res.status !== 404) await check(res, 'close browser');
+}
+
+// ---- Monitor (P2-5): a Page Monitor re-reads one page on a schedule ($0.005 a run) and posts each run to webhookUrl ----
+/** Create a Page Monitor. Returns {monitorId}. TinyFish captures a baseline straight away. */
+export async function createPageMonitor({ url, cron, webhookUrl, name, purpose }) {
+  if (config.mock) return mock.createPageMonitor({ url, cron, webhookUrl, name, purpose });
+  const body = { type: 'fetch', config: { url, format: 'markdown' }, schedule_cron: cron, webhook_url: webhookUrl };
+  if (name) body.name = String(name).slice(0, 100);
+  if (purpose) body.purpose = String(purpose).slice(0, 2000);
+  const res = await fetch(`${AGENT}/v1/monitors`, { method: 'POST', headers: headers(true), body: JSON.stringify(body), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  await check(res, 'create monitor');
+  const j = await res.json();
+  return { monitorId: j.monitor?.id ?? j.id };
+}
+
+/** Pause or resume a Monitor ('paused' | 'active'). A status update is sent alone, as the API asks. */
+export async function setMonitorStatus(monitorId, status) {
+  if (config.mock) return mock.setMonitorStatus(monitorId, status);
+  const res = await fetch(`${AGENT}/v1/monitors/${encodeURIComponent(monitorId)}`, { method: 'PATCH', headers: headers(true), body: JSON.stringify({ status }), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  await check(res, 'update monitor');
+  return { ok: true };
+}
+
+/** Delete a Monitor and its schedule. A Monitor that is already gone (404) counts as deleted. */
+export async function deleteMonitor(monitorId) {
+  if (config.mock) return mock.deleteMonitor(monitorId);
+  const res = await fetch(`${AGENT}/v1/monitors/${encodeURIComponent(monitorId)}`, { method: 'DELETE', headers: headers(), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  if (!res.ok && res.status !== 404) await check(res, 'delete monitor');
+  return { ok: true };
 }
 
 export async function getWallet() {

@@ -49,7 +49,7 @@ Every `package.json` has `"type": "module"`.
 agent-ready/
   docs/ARCHITECTURE.md          this file
   docs/DECISIONS.md             decision log
-  docs/PACK-LIVE-TEST.md        how to try the untested pack goals on live agents
+  docs/PACK-LIVE-TEST.md        how to try the pack goals on live agents, and the 7 Nov results
   (private, linked in)          AGENTS.md, CLAUDE.md, docs/RESEARCH.md, docs/WORKLOG.md, docs/superpowers/, docs/proofs/
   packages/engine/src/
     types.js                    THE CONTRACT (JSDoc). Team agreement to change
@@ -152,6 +152,8 @@ getWallet()
 
 // proxy mapping used by startRun*: 'off' -> {enabled:false}; 'IN'|'US' -> {enabled:true,type:'tinyfish',country_code}
 // mode mapping: browser_profile = mode ('lite'|'stealth'); agent_config = {max_duration_seconds: maxSeconds}
+// output_schema = ANSWER_SCHEMA (goals.js, P2-4): the result is always {success, answer, blocker, stuck_url}. An HTTP 400 naming
+// output_schema sends the run again without it, and later runs skip it (D45).
 
 // runner.js
 runTask({ url, taskId, customText, mode, proxy }, onEvent, ctx?)   // -> TaskResult (single attempt)
@@ -202,8 +204,9 @@ detectFramework(page)                       // Playwright page -> 'nextjs'|'shop
 ## 6. Bot-wall cascade (`botwall.js`)
 
 1. Attempt 1: `mode 'lite'`, `proxy 'off'` (how cloud AI agents arrive).
-2. If not `success` AND looks blocked (blocker matches `/access denied|denied|error page|blocked|captcha|something went wrong|blank|empty page|could not load|not available|\(null\)/i`, or fewer than 2 steps): attempt 2 `lite` + `IN`.
+2. If not `success` AND looks blocked (blocker matches `/access denied|denied|error page|blocked|captcha|something went wrong|blank|empty page|could not load|not available|\(null\)|\b403\b|forbidden/i`, or fewer than 2 steps): attempt 2 `lite` + `IN`.
 3. If attempt 2 still looks blocked: attempt 3 `stealth` + `IN`. **Except (D26):** if attempt 2 took 5+ steps, the agent clearly used the site from an Indian home address, so the "block" is the site's own error (e.g. a broken cart's "Something went wrong"): stop, verdict `none`, normal failure finding.
+**Refusals (D47):** a `403`/`Forbidden` answer counts as blocked (step 2). A task that "passed" while its answer says the site refused it (`saysRefused`: `403`, forbidden, access denied) is treated as blocked, its borrowed answer is dropped, and the cascade goes on; such a refusal is never a site failure under D26.
 4. Verdict per task: passed on 1 -> `none`; passed on 2 -> `blocks-cloud-agents`; passed on 3 -> `blocks-automation`; never -> `site-broken`. Site verdict = worst task verdict.
 5. A task that failed for a non-blocking reason (could not find returns) does not re-run.
 6. **A `cancelled` task is never "blocked" (D29):** no retry, verdict `none`.
@@ -212,7 +215,7 @@ detectFramework(page)                       // Playwright page -> 'nextjs'|'shop
 
 ## 7. Scoring (`scoring.js`)
 
-Each task max 25, total 100 for any pack (custom task scored separately, not in the 100; a replay placeholder task, see section 17, is not counted either). When fewer than 4 tasks run (CLI `--tasks`, a 1-task Watch), the total is scaled to 100: `round(sum * 4 / tasksRun)`. The point rules are the same for every task in every pack. The 12 new fail findings (D40) use the same shape as the shop ones: a site cause, a fix, a standard and a pass check, never "the agent got confused" (D22). Their goal wording is **untested on live agents** until `docs/PACK-LIVE-TEST.md` has been run.
+Each task max 25, total 100 for any pack (custom task scored separately, not in the 100; a replay placeholder task, see section 17, is not counted either). When fewer than 4 tasks run (CLI `--tasks`, a 1-task Watch), the total is scaled to 100: `round(sum * 4 / tasksRun)`. The point rules are the same for every task in every pack. The 12 new fail findings (D40) use the same shape as the shop ones: a site cause, a fix, a standard and a pass check, never "the agent got confused" (D22). The `saas` and `content` wording passed on live agents (7 Nov, `docs/PACK-LIVE-TEST.md`); the `local` wording is still **untested on live agents** (its test site refused cloud agents). Step and time bands stay the same for every task after the 10-store calibration (D48).
 
 | Rule | Points |
 |---|---|
@@ -293,6 +296,7 @@ Run in parallel:
   - `schemaTypes` and `keywordHits` (D40): the schema.org `@type` names in the JSON-LD, and how often words for cart, pricing, sign-up, docs, article, newsletter, hours, booking and menu appear in the page text (each count capped at 20). Same page evaluate, no extra cost. `detectPack(scan)` (`packs.js`, pure) turns them into a pack: product schema, Add to cart or price text score for `shop`; software schema, pricing/sign-up/docs words for `saas`; article schema, blog/newsletter words for `content`; LocalBusiness schema, opening hours, reserve/appointment/menu words for `local`. Highest score wins; no signal or a tie goes to `content`, then `saas`, `local`, `shop` (shop wins only through product signals). A scan that read nothing means "auto" falls back to `shop`.
 - Then open one same-origin product link from the home page (`/product`, `/products/`, `/p/`, `/dp/`, 12 s cap) and run the same audit there; counts add up, a problem on either page counts. Many flaws (icon-only Add to cart, price images) live on product pages.
 - robots.txt / sitemap that Fetch could not read are reported as `missing`; `error` only when the whole Fetch call failed.
+- **Search check (P2-5, D46):** after the page audit, TinyFish Search (free) restricted to the site's own domain looks for the two key pages of its pack (`SEARCH_TOPICS`: shop = return policy, contact page; saas = pricing, docs; content = newsletter, about/contact; local = opening hours, address). `instantScan(url, {pack})` uses the pack it is given, else `detectPack` on the scan. Result `searchFindable: [{topic, found, url}]`; a topic not found is one `not-in-search` finding (low). A failed search says nothing.
 - Always `closeBrowserSession` in `finally`. Instant Scan findings: `popup-blocking`, `unlabelled-buttons`, `price-in-image` (no price text but price expected), `no-product-schema` (low severity), and from Scan v2 `robots-blocks-ai-agents` (high when an assistant that visits for a person, `*-User`, is blocked, else medium; needs only Fetch) and `no-cart-link` (medium, shop only; only when the scan measured `cartLink`). Price, product-data and cart findings are shop-only: `instantScanFindings(scan, pack)` never flags a blog, SaaS or local site for "no price" (D40).
 - The server stores them as `SiteReport.scanFindings` (`instantScanFindings(scan, pack)`) as soon as the scan finishes. They are not part of the 100-point score (`pointsIfFixed: 0`), are shown in the findings list next to task findings, and can enter the Top 3 (D25).
 
@@ -333,7 +337,7 @@ For each finding:
 | `POST /api/watch/:id/cancel` | | `{ok, cancelled}`; stop the running check (the watch stays scheduled) |
 | `GET /api/watch/:id/history` | | `SiteReport[]` |
 | `PATCH /api/watch/:id` | `{enabled?, everyMinutes?}` | `Watch`. `enabled:false` also cancels the check running right now |
-| `POST /api/webhooks/tinyfish` | TinyFish webhook | `200` |
+| `POST /api/webhooks/tinyfish` | TinyFish webhook: a finished run, or a Page Monitor run (`fetch_monitor_id`) | `200` |
 | `GET /api/estimate` | `?tasks=1-5&confirm=1` | `{tasks, confirm, lowRupees, highRupees, worstRupees, rupeesPerStep, mock, budget}` before a test starts (D43) |
 | `GET /api/sites/history` | `?url=` | every finished report of that host (www. ignored, live + cached), oldest first: `{id, url, testedAt, score, botWall, costRupees, source, pack, confirm, tasks:[{taskId,status,numSteps,seconds,points,flaky}], findingTypes}` |
 | `GET /api/badge/:id.svg` | | flat SVG badge with the report's score (`image/svg+xml`, `Cache-Control: max-age=300`); a missing or invalid id returns a grey "unknown" badge with status 404 |
@@ -379,6 +383,7 @@ Store API: `saveReport(r)`, `getReport(id)`, `listReports()`, `siteHistory(url)`
   Recovery: `🟢 AgentReady: <task label> on <site> works again (<time>).`
 - Priority: a Watch check waits behind a person's test for a free agent slot (D30). Pausing a watch, or `POST /api/tests/:checkId/cancel`, cancels the running check (no history row, no alert; D29).
 - Publish `watch-alert` / `watch-recovered` LiveEvents to dashboard subscribers of `watch:<id>`.
+- **Page Monitor (P2-5, D46):** a watch that checks every 120 minutes or less often gets a TinyFish Page Monitor on its URL (hourly, $0.005 a run, `watch.monitorId`) when `PUBLIC_BASE_URL` is set (never in replay). The monitor's webhook (`POST /api/webhooks/tinyfish` with `fetch_monitor_id`) starts the check at once when `outcome` is `changed` and the purpose check does not say it is irrelevant, at most once an hour per watch. Pausing the watch pauses the monitor; a shorter interval deletes it.
 - Demo: watch the demo store every 20 min from ~14:00.
 
 ---
