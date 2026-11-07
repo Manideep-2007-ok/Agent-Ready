@@ -23,7 +23,7 @@
 .ar-pagehead-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 .ar-crumbs { font: 500 12px/1.4 var(--font-mono); color: var(--text-muted); letter-spacing: 0.02em; overflow-wrap: anywhere; }
 .ar-crumbs a { color: var(--text-muted); }
-.ar-content { padding: 20px 28px 48px; max-width: 1240px; width: 100%; display: grid; gap: 20px; align-content: start; }
+.ar-content { padding: 20px 28px 48px; max-width: 1240px; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-content: start; }
 .ar-scrim { display: none; }
 
 @media (max-width: 900px) {

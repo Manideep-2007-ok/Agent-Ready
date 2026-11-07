@@ -15,9 +15,10 @@ let shotNo = 0;
 const shot = (page, name) => page.screenshot({ path: path.join(shotsDir, `${String(++shotNo).padStart(2, '0')}-${name}.png`), fullPage: true });
 
 /** New browser page with error watching. Every page must end with zero problems. */
-async function newPage(base, { width = 1280, height = 900, label = 'page' } = {}) {
-  const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce' });
+async function newPage(base, { width = 1280, height = 900, label = 'page', colorScheme = 'light', init = null } = {}) {
+  const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce', colorScheme });
   const page = await context.newPage();
+  if (init) await page.addInitScript(init);
   await page.addInitScript(() => {
     // Remember every lane chip text ever shown, to prove lanes go waiting -> running -> done.
     window.__chips = new Set();
@@ -569,22 +570,28 @@ try {
 
   console.log('Phone width (390 px)');
   const phone = await newPage(fast.base, { width: 390, height: 800, label: 'phone' });
-  await t.step('no sideways scrolling on home, report, stopped report, Watch', async () => {
+  await t.step('no sideways scrolling on every page and every report tab at 390 px', async () => {
     const { page } = phone;
     await page.getByRole('heading', { level: 1 }).waitFor();
     expect(await noHScroll(page), 'home fits');
     await shot(page, 'phone-home');
-    for (const h of ['#/test/rep_20261031_demo_nykaa', '#/test/rep_20261031_demo_myntra', '#/test/rep_demo_flaws_off/rep_demo_flaws_on', '#/watch', '#/race', '#/leaderboard']) {
+    for (const h of ['#/pricing', '#/docs/cli', '#/docs/findings', '#/app', '#/app/watch', '#/app/race', '#/app/leaderboard',
+      '#/app/test/rep_20261031_demo_myntra', '#/app/test/rep_demo_flaws_off/rep_demo_flaws_on']) {
       await page.goto(fast.base + '/' + h);
-      await page.locator('.ar-report-score, .ar-panel, .watch-card, .card').first().waitFor();
+      await page.getByRole('heading', { level: 1 }).first().waitFor();
       await sleep(300);
       expect(await noHScroll(page), `${h} fits (scrollWidth ${await page.evaluate(() => document.documentElement.scrollWidth)})`);
     }
-    await page.goto(fast.base + '/#/test/rep_20261031_demo_nykaa');
+    await page.goto(fast.base + '/#/app/test/rep_20261031_demo_nykaa');
     await page.locator('.ar-report-score').waitFor();
+    for (const tab of ['Findings', 'Steps', 'History', 'Scan', 'Overview']) {
+      await openTab(page, tab);
+      await sleep(200);
+      expect(await noHScroll(page), `report tab ${tab} fits`);
+    }
     await shot(page, 'phone-report');
     // a live run on a phone
-    await page.goto(fast.base + '/#/test');
+    await page.goto(fast.base + '/#/app');
     await typeUrl(page, 'nykaa.com');
     await clickTest(page);
     await page.locator('.ar-lane').first().waitFor();
@@ -593,7 +600,91 @@ try {
     expect(await noHScroll(page), 'finished page fits');
     await shot(page, 'phone-finished');
   }, { page: phone.page });
+
+  await t.step('phone menu: opens the sidebar, Escape closes it and gives focus back to the menu button', async () => {
+    const { page } = phone;
+    await page.goto(fast.base + '/#/app');
+    const menu = page.getByRole('button', { name: 'Open menu' });
+    await menu.click();
+    await page.getByRole('navigation', { name: 'Workspace' }).getByRole('link', { name: 'Watch' }).waitFor();
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Open menu' }).waitFor();
+    expect(await page.evaluate(() => document.activeElement?.getAttribute('aria-label')) === 'Open menu', 'focus is back on the menu button');
+    await menu.click();
+    await page.getByRole('navigation', { name: 'Workspace' }).getByRole('link', { name: 'Watch' }).click();
+    await waitHash(page, /#\/app\/watch/);
+    expect(await page.getByRole('button', { name: 'Open menu' }).isVisible(), 'the drawer closes after choosing a page');
+  }, { page: phone.page });
+
+  await t.step('a very long site address and a 500-character answer still fit at 390 px', async () => {
+    const { page } = phone;
+    const longUrl = 'https://a-very-long-store-name-for-testing-overflow-on-phones.example.co.in/';
+    const up = await api(fast.base, '/api/reports', { method: 'POST', body: {
+      id: 'rep_long_host_phone', url: longUrl, score: 52, testedAt: new Date().toISOString(), costRupees: 9, botWall: 'none', framework: 'unknown', instantScan: null,
+      tasks: [{ taskId: 'find_price', goal: 'x', mode: 'lite', proxy: 'off', runId: null, status: 'passed', answer: 'Long answer '.repeat(42), blocker: null, stuckUrl: null,
+        streamingUrl: null, steps: [], numSteps: 3, seconds: 20, points: 25, findings: [] }],
+    } });
+    expect(up.status === 201, `uploaded (${up.status})`);
+    await page.goto(fast.base + '/#/app/test/rep_long_host_phone');
+    await page.locator('.ar-report-score').waitFor();
+    await sleep(300);
+    expect(await noHScroll(page), `long address fits (scrollWidth ${await page.evaluate(() => document.documentElement.scrollWidth)})`);
+    await page.goto(fast.base + '/#/app');
+    await page.locator('.ar-recent tr', { hasText: 'a-very-long-store-name' }).first().waitFor();
+    expect(await noHScroll(page), 'recent tests ledger fits');
+  }, { page: phone.page });
   await t.step('phone page: no browser errors', async () => { await closeWithCheck(phone, 'phone'); });
+
+  console.log('Theme, keyboard, print');
+  const noStore = await newPage(fast.base, { label: 'dark-no-storage', colorScheme: 'dark', init: () => {
+    for (const k of ['getItem', 'setItem', 'removeItem']) Storage.prototype[k] = () => { throw new Error('storage blocked'); };
+  } });
+  await t.step('system dark theme with storage blocked (private window): dark, no errors, the toggle still works', async () => {
+    const { page } = noStore;
+    const theme = () => page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+    for (const h of ['#/', '#/app', '#/docs/scoring']) {
+      await page.goto(fast.base + '/' + h);
+      await page.getByRole('heading', { level: 1 }).first().waitFor();
+      expect(await theme() === 'dark', `${h} is dark (${await theme()})`);
+    }
+    await page.locator('.theme-toggle').first().click();
+    await page.waitForFunction(() => document.documentElement.getAttribute('data-theme') === 'light');
+    await closeWithCheck(noStore, 'dark-no-storage');
+  }, { page: noStore.page });
+
+  const kb = await newPage(fast.base, { label: 'keyboard' });
+  await t.step('report tabs move with the arrow keys; Copy link and Replay are reachable', async () => {
+    const { page } = kb;
+    await page.goto(fast.base + '/#/app/test/rep_20261031_demo_nykaa');
+    await page.locator('.ar-report-score').waitFor();
+    await page.getByRole('tab', { name: 'Overview' }).focus();
+    await page.keyboard.press('ArrowRight');
+    expect(await page.getByRole('tab', { name: /^Findings/ }).getAttribute('aria-selected') === 'true', 'ArrowRight selects Findings');
+    expect(await page.evaluate(() => document.activeElement?.getAttribute('role')) === 'tab', 'focus stays on the tabs');
+    await page.keyboard.press('End');
+    expect(await page.getByRole('tab', { name: 'Scan' }).getAttribute('aria-selected') === 'true', 'End selects the last tab');
+    await page.keyboard.press('Home');
+    expect(await page.getByRole('tab', { name: 'Overview' }).getAttribute('aria-selected') === 'true', 'Home selects the first tab');
+    await page.getByRole('button', { name: 'Copy link' }).focus();
+    expect(await page.evaluate(() => document.activeElement?.textContent) === 'Copy link', 'Copy link takes focus');
+    await openTab(page, 'Steps');
+    await page.getByRole('button', { name: 'Replay' }).first().focus();
+    expect(await page.evaluate(() => document.activeElement?.textContent) === 'Replay', 'Replay takes focus');
+  }, { page: kb.page });
+
+  await t.step('Save as PDF: the print layout shows every tab and hides the app frame and buttons', async () => {
+    const { page } = kb;
+    await openTab(page, 'Overview');
+    await page.emulateMedia({ media: 'print' });
+    const shown = await page.evaluate(() => [...document.querySelectorAll('[role=tabpanel]')].map((p) => getComputedStyle(p).display !== 'none'));
+    expect(shown.length === 5 && shown.every(Boolean), `all five tab panels print (${shown})`);
+    expect(await page.evaluate(() => getComputedStyle(document.querySelector('.ar-sidebar')).display) === 'none', 'sidebar hidden in print');
+    expect(await page.evaluate(() => getComputedStyle(document.querySelector('.ar-tabs')).display) === 'none', 'tab bar hidden in print');
+    const pdf = await page.pdf({ format: 'A4' });
+    expect(pdf.length > 20000, `a PDF was produced (${pdf.length} bytes)`);
+    await page.emulateMedia({ media: 'screen' });
+    await closeWithCheck(kb, 'keyboard');
+  }, { page: kb.page });
 } catch (err) {
   console.error('E2E aborted:', err);
   process.exitCode = 1;

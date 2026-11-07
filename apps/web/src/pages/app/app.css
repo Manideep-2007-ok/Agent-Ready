@@ -1,7 +1,7 @@
 /* App pages: Tests home and the report workbench (redesign spec 5.2-5.3). Reads tokens only. */
 
 /* Small shared utilities */
-.ar-stack { display: grid; gap: 16px; align-content: start; }
+.ar-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-content: start; }
 .ar-muted { color: var(--text-muted); }
 .ar-faint { color: var(--text-faint); }
 .ar-small { font-size: 13px; }
@@ -30,7 +30,7 @@
 @media (max-width: 640px) { .ar-newtest-row { grid-template-columns: minmax(0, 1fr); } .ar-newtest-actions { width: 100%; } .ar-newtest-actions .ar-btn { flex: 1; } }
 
 /* Report header */
-.ar-report { display: grid; gap: 16px; }
+.ar-report { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .ar-report-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 24px; align-items: end; padding-bottom: 4px; }
 .ar-report-id { display: grid; gap: 6px; min-width: 0; }
 .ar-report-host { margin: 0; font-size: 28px; letter-spacing: -0.035em; overflow-wrap: anywhere; }
