@@ -5,6 +5,7 @@ import { config } from './config.js';
 import * as store from './store.js';
 import { logEvent, safeUrl } from './log.js';
 import { httpError } from './validate.js';
+import { assertDailyBudget, recordSpend, limits } from './budget.js';
 
 /** @typedef {import('@agentready/engine/types').SiteReport} SiteReport */
 
@@ -53,18 +54,20 @@ async function newReportId(url) {
 /**
  * `pack`: a pack id, or 'auto' = the Instant Scan decides which pack fits (live mode only; replay mode has shop recordings
  * only, so auto means shop there). Explicit `tasks` win over everything and name the pack too. Neither: shop.
- * @param {{url:string, tasks?:string[], pack?:string, customText?:string, source?:string, instantScan?:boolean}} request
+ * `confirm`: run each task again (and a third time when the two disagree) so the result rests on a majority (D41).
+ * @param {{url:string, tasks?:string[], pack?:string, customText?:string, source?:string, instantScan?:boolean, confirm?:boolean}} request
  * @param {{engine:any, events:{publish:Function}}} deps
  * @returns {Promise<string>} the new report id (the test keeps running after this returns)
  */
 export async function startReport(request, { engine, events }) {
-  const { url, customText, source = 'web', instantScan = true } = request;
+  const { url, customText, source = 'web', instantScan = true, confirm = false } = request;
   // Every running test can spend agent steps; refuse a flood instead of queueing without limit.
   const limit = Number(process.env.MAX_ACTIVE_TESTS) > 0 ? Number(process.env.MAX_ACTIVE_TESTS) : 6;
   const busy = new Set([...(engine.activeReportIds?.() ?? []), ...activeJobs]).size + pendingStarts;
   if (busy >= limit) {
     throw httpError(429, `${limit} tests are already running. Please wait for one to finish (or stop one) and try again.`);
   }
+  await assertDailyBudget({ mock: config.mock });
   pendingStarts++; // held until the report has an id and is in activeJobs
   const explicitTasks = request.tasks?.filter((t) => t !== 'custom');
   // Auto-detect needs the scan before the agents start, so it only applies when nothing else names the pack or the tasks.
@@ -72,7 +75,7 @@ export async function startReport(request, { engine, events }) {
   const pack = normalisePack(request.pack) ?? (explicitTasks?.length ? packForTasks(explicitTasks) : 'shop');
   let report;
   try {
-    report = await createRunningReport({ ...request, pack, detectingPack: detectPack });
+    report = await createRunningReport({ ...request, pack, detectingPack: detectPack, confirm });
     activeJobs.add(report.id);
   } finally {
     pendingStarts--;
@@ -81,7 +84,7 @@ export async function startReport(request, { engine, events }) {
   logEvent('test.start', { id: report.id, host: safeUrl(url), source, pack: detectPack ? 'auto' : pack, tasks: (tasks?.length ?? 4) + (customText ? 1 : 0) });
 
   // Not awaited: the dashboard gets the id now and follows progress over SSE.
-  runInBackground(report, { tasks, customText, instantScan }, { engine, events })
+  runInBackground(report, { tasks, customText, instantScan, confirm }, { engine, events })
     .catch((err) => {
       logEvent('test.error', { id: report.id, message: err?.message || String(err) });
       console.error(`[${report.id}] test crashed:`, err);
@@ -91,7 +94,7 @@ export async function startReport(request, { engine, events }) {
 }
 
 /** Save the "running" report the dashboard opens while the agents work. */
-async function createRunningReport({ url, source = 'web', pack = 'shop', customText, detectingPack = false }) {
+async function createRunningReport({ url, source = 'web', pack = 'shop', customText, detectingPack = false, confirm = false }) {
   /** @type {SiteReport} */
   const report = {
     id: await newReportId(url),
@@ -101,6 +104,8 @@ async function createRunningReport({ url, source = 'web', pack = 'shop', customT
     pack,
     ...(detectingPack ? { detectingPack: true } : {}),
     ...(customText ? { customText } : {}),
+    ...(confirm ? { confirm: true } : {}),
+    ...(limits().perTestRupees ? { budgetRupees: limits().perTestRupees } : {}),
     status: 'running',
     score: 0,
     botWall: 'none',
@@ -114,7 +119,7 @@ async function createRunningReport({ url, source = 'web', pack = 'shop', customT
   return report;
 }
 
-async function runInBackground(report, { tasks, customText, instantScan }, { engine, events }) {
+async function runInBackground(report, { tasks, customText, instantScan, confirm }, { engine, events }) {
   // tasks === null: the pack is still to be detected from the Instant Scan (below).
   const reportId = report.id;
   const startedAt = Date.now();
@@ -202,7 +207,7 @@ async function runInBackground(report, { tasks, customText, instantScan }, { eng
 
   let result;
   try {
-    result = await engine.runSiteTest({ id: reportId, url: report.url, tasks, pack: report.pack, customText, source: report.source }, onEvent);
+    result = await engine.runSiteTest({ id: reportId, url: report.url, tasks, pack: report.pack, customText, source: report.source, confirm, budgetRupees: limits().perTestRupees }, onEvent);
   } catch (err) {
     logEvent('test.error', { id: reportId, message: err.message });
     console.error(`[${reportId}] runSiteTest failed:`, err.message);
@@ -234,6 +239,7 @@ async function runInBackground(report, { tasks, customText, instantScan }, { eng
     report.topFixes = rankTopFixes(report, engine);
   }
   await save();
+  await recordSpend(report, { mock: config.mock });
   events.publish({ type: 'report-complete', reportId, report });
   const seconds = Math.round((Date.now() - startedAt) / 1000);
   logEvent(cancelled ? 'test.cancelled' : 'test.finish', { id: reportId, status: report.status, score: report.score, costRupees: report.costRupees, seconds, botWall: report.botWall });

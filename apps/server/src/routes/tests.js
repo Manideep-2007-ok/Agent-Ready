@@ -12,8 +12,16 @@ import { logEvent } from '../log.js';
 import { rateLimit } from '../rateLimit.js';
 import { SAFE_ID, assertSafeId, httpError, parseSiteUrl, parseTasks, parseCustomTask, parsePack } from '../validate.js';
 import { assertReplayable, assertReplayPack, recordedDemoReport } from '../replay.js';
+import { budgetState } from '../budget.js';
 
 const RUN_ID = SAFE_ID;
+
+/** `confirm` in a request body: true, false or left out. Anything else is refused so a typo is not silently ignored. */
+export function parseConfirm(value) {
+  if (value === undefined || value === null) return false;
+  if (typeof value !== 'boolean') throw httpError(400, 'confirm must be true or false.');
+  return value;
+}
 export { httpError, parseSiteUrl, parseTasks, parseCustomTask, parsePack };
 
 /**
@@ -85,12 +93,29 @@ export default function testsRoutes({ engine, events }) {
     const recorded = req.body?.customTask ? null : recordedDemoReport(url);
     if (recorded) return res.status(202).json({ reportId: recorded });
     const customText = parseCustomTask(req.body?.customTask);
+    const confirm = parseConfirm(req.body?.confirm);
     // pack: 'auto' lets the Instant Scan choose; omitted means shop (what every client before packs meant).
-    const reportId = await startReport({ url, customText, tasks, pack: pack ?? (tasks ? undefined : 'shop') }, { engine, events });
+    const reportId = await startReport({ url, customText, tasks, confirm, pack: pack ?? (tasks ? undefined : 'shop') }, { engine, events });
     res.status(202).json({ reportId });
   });
 
   router.get('/tests', async (_req, res) => res.json(await store.listReports()));
+
+  // What a test will probably cost before it starts (P2-8), with the limits it runs under. ?tasks=4&confirm=1
+  router.get('/estimate', async (req, res) => {
+    const n = Number(req.query.tasks ?? 4);
+    if (!Number.isInteger(n) || n < 1 || n > 5) throw httpError(400, 'tasks must be a whole number from 1 to 5.');
+    const confirm = ['1', 'true'].includes(String(req.query.confirm ?? ''));
+    res.json({ tasks: n, confirm, ...engine.estimateCost({ tasks: n, confirm }), mock: config.mock, budget: await budgetState() });
+  });
+
+  // Every finished test of one site, oldest first (P3-4): the score over time and what changed. ?url=https://shop.example
+  router.get('/sites/history', async (req, res) => {
+    let url;
+    try { url = new URL(String(req.query.url ?? '')); } catch { throw httpError(400, 'Give the site address as ?url=https://...'); }
+    if (!['http:', 'https:'].includes(url.protocol)) throw httpError(400, 'The address must start with http:// or https://.');
+    res.json(await store.siteHistory(url.href));
+  });
 
   // Agent-Ready badge for a dashboard report (README / LinkedIn). Always an SVG: an unknown or invalid id gets a grey badge.
   router.get('/badge/:file', async (req, res) => {

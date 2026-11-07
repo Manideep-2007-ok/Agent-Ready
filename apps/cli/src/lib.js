@@ -6,15 +6,15 @@ export const MAX_TASK_TEXT = 300; // same limit as the dashboard's custom task
 export const LOCAL_RE = /^(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0|\[::1?\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|.*\.local|.*\.localhost)$/i;
 
 const VALUE_FLAGS = ['tasks', 'min-score', 'badge', 'pack', 'task'];
-const BOOL_FLAGS = ['json', 'no-tunnel', 'no-scan', 'help', 'version'];
+const BOOL_FLAGS = ['json', 'no-tunnel', 'no-scan', 'help', 'version', 'confirm'];
 
 /**
  * @param {string[]} argv  process.argv.slice(2)
  * `--tasks` is a comma list of task ids from any pack, or `quick` (the pack's two key tasks), or `none` (only the `--task` text).
- * @returns {{url?:string, tasks:string[]|null, pack:string|null, task:string|null, json:boolean, minScore:number|null, noTunnel:boolean, noScan:boolean, help:boolean, version:boolean, badge:string|null, errors:string[]}}
+ * @returns {{url?:string, tasks:string[]|null, pack:string|null, task:string|null, json:boolean, minScore:number|null, noTunnel:boolean, noScan:boolean, confirm:boolean, help:boolean, version:boolean, badge:string|null, errors:string[]}}
  */
 export function parseArgs(argv) {
-  const out = { url: undefined, tasks: null, pack: null, task: null, json: false, minScore: null, noTunnel: false, noScan: false, help: false, version: false, badge: null, errors: [] };
+  const out = { url: undefined, tasks: null, pack: null, task: null, json: false, minScore: null, noTunnel: false, noScan: false, confirm: false, help: false, version: false, badge: null, errors: [] };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (!arg.startsWith('--')) {

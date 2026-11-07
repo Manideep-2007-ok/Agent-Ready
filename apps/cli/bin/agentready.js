@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // AgentReady CLI: test a website (even one on localhost) with real AI web agents.
 // Usage: agentready <url> [--pack auto|shop|saas|content|local] [--tasks a,b|quick|none] [--task "text"] [--json] [--min-score N]
-//        [--badge file.svg] [--no-tunnel] [--no-scan] [--version] [--help]
+//        [--badge file.svg] [--no-tunnel] [--no-scan] [--confirm] [--version] [--help]
 // Exit codes: 0 ok, 1 score below --min-score or the test could not finish, 2 bad usage / setup.
 import { spawn } from 'node:child_process';
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
@@ -37,7 +37,7 @@ const say = (...m) => (asJson ? console.error(...m) : console.log(...m)); // pro
 const usage = (why) => {
   if (why) console.error(why);
   const packTasks = PACK_IDS.map((p) => `  ${p.padEnd(8)} ${PACKS[p].tasks.join(', ')}`).join('\n');
-  console.error('Usage: agentready <url> [--pack auto|shop|saas|content|local] [--tasks ids|quick|none] [--task "text"] [--json] [--min-score N] [--badge file.svg] [--no-tunnel] [--no-scan]\n' +
+  console.error('Usage: agentready <url> [--pack auto|shop|saas|content|local] [--tasks ids|quick|none] [--task "text"] [--json] [--min-score N] [--badge file.svg] [--no-tunnel] [--no-scan] [--confirm]\n' +
     '  --pack P      what kind of site this is. auto (default) reads the site with the Instant Scan and picks one;\n' +
     '                with --no-scan and no --pack the shop pack is used\n' +
     '  --tasks LIST  task ids from any pack, comma separated (default: the four tasks of the pack);\n' +
@@ -46,6 +46,7 @@ const usage = (why) => {
     '                100. With --tasks none it is the only task that runs\n' +
     '  --no-tunnel   test the address as it is (no Cloudflare tunnel); use for sites that are already public\n' +
     '  --no-scan     skip the Instant Scan (pop-ups, unlabelled buttons, prices in images)\n' +
+    '  --confirm     run each task again (a third time if the two disagree) and keep the majority; costs about 2x\n' +
     '  --min-score N exit with code 1 if the score is below N (for CI)\n' +
     '  --badge FILE  write an Agent-Ready score badge (SVG) after the run\n' +
     '  --json        print the full report as JSON on stdout (progress goes to stderr)\n' +
@@ -194,10 +195,12 @@ try {
       say(`  [${labelOf(e.taskId)}]   step: ${e.step.label}`);
     }
   };
-  let report = await runSiteTest({ url: testUrl, tasks, pack: pack ?? 'shop', customText: customText ?? undefined, source: 'cli' }, onEvent);
+  let report = await runSiteTest({ url: testUrl, tasks, pack: pack ?? 'shop', customText: customText ?? undefined, source: 'cli', confirm: opts.confirm }, onEvent);
   if (interrupted) await new Promise(() => {}); // the signal handler is cancelling and will exit; never print a half report
   if (report.status === 'cancelled') {
-    console.error('The test was stopped before it finished (an agent run was cancelled). No report was written.');
+    console.error(report.stopReason === 'budget'
+      ? `The test reached its cost limit (₹${report.budgetRupees}, set with BUDGET_PER_TEST_RUPEES) and was stopped. No report was written.`
+      : 'The test was stopped before it finished (an agent run was cancelled). No report was written.');
     quit(1);
   }
   report.url = parsed.href; // show the address the developer typed, not the tunnel
@@ -259,7 +262,7 @@ try {
     console.log(n ? `AgentReady score: ${report.score}/100${n < 4 ? ` (out of ${n} task${n === 1 ? '' : 's'} tested)` : ''}` : 'AgentReady score: none (only your own task ran, and it is not part of the 100)');
     console.log(`Bot wall: ${verdicts[report.botWall] || report.botWall}`);
     console.log(`Cost: about ₹${Number(report.costRupees).toFixed(2)}\n`);
-    const rows = report.tasks.map((t) => [labelOf(t.taskId), t.status, String(t.numSteps), `${Math.round(t.seconds)}s`]);
+    const rows = report.tasks.map((t) => [labelOf(t.taskId), t.status + (t.flaky ? ' (runs disagreed)' : t.runs?.length > 1 ? ` (${t.runs.filter((r) => !r.stopped).length} runs)` : ''), String(t.numSteps), `${Math.round(t.seconds)}s`]);
     const head = ['Task', 'Result', 'Steps', 'Time'];
     const w = head.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i].length)));
     for (const r of [head, ...rows]) console.log(r.map((c, i) => c.padEnd(w[i])).join('  '));

@@ -31,6 +31,8 @@ function cli(args, { env = {}, signal: killWith, killAfterMs } = {}) {
 test('parseArgs: values, inline values, flags, and complaints', () => {
   const a = parseArgs(['localhost:3000', '--tasks', 'find_price,add_to_cart', '--json', '--min-score=80', '--no-tunnel', '--no-scan']);
   assert.deepEqual([a.url, a.tasks, a.json, a.minScore, a.noTunnel, a.noScan, a.errors], ['localhost:3000', ['find_price', 'add_to_cart'], true, 80, true, true, []]);
+  assert.equal(parseArgs(['x.com', '--confirm']).confirm, true);
+  assert.equal(parseArgs(['x.com']).confirm, false);
   assert.deepEqual(parseArgs([]).errors, []);
   assert.match(parseArgs(['x.com', '--bogus']).errors[0], /Unknown option: --bogus/);
   assert.match(parseArgs(['x.com', '--tasks']).errors[0], /needs a value/);

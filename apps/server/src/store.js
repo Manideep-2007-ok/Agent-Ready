@@ -11,6 +11,7 @@ const dirs = {
   watch: path.join(config.dataDir, 'watch'),
   races: path.join(config.dataDir, 'races'),
   shots: path.join(config.dataDir, 'shots'),
+  budget: path.join(config.dataDir, 'budget'),
 };
 
 const SAFE_ID = /^[\w-]+$/;
@@ -82,6 +83,44 @@ export async function listReports(limit = 50) {
     .sort((a, b) => String(b.testedAt).localeCompare(String(a.testedAt)))
     .slice(0, limit)
     .map(({ id, url, score, testedAt, status, source, botWall }) => ({ id, url, score, testedAt, status, source, botWall }));
+}
+
+const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, '').toLowerCase(); } catch { return null; } };
+
+/**
+ * Every finished test of one site (same host, www. ignored), oldest first, with what a history chart and a
+ * "what changed" list need (P3-4). Live reports and the committed demo backups both count.
+ */
+export async function siteHistory(url, limit = 30) {
+  const host = hostOf(url);
+  if (!host) return [];
+  const read = async (dir) => Promise.all((await listJson(dir)).map((name) => readJson(path.join(dir, name))));
+  const all = [...(await read(dirs.reports)), ...(await read(path.join(config.cachedDemoDir, 'reports')))];
+  const seen = new Set();
+  return all
+    .filter((r) => r && r.status === 'complete' && hostOf(r.url) === host && !seen.has(r.id) && seen.add(r.id))
+    .sort((a, b) => String(a.testedAt).localeCompare(String(b.testedAt)))
+    .slice(-limit)
+    .map((r) => ({
+      id: r.id, url: r.url, testedAt: r.testedAt, score: r.score, botWall: r.botWall, costRupees: r.costRupees, source: r.source,
+      pack: r.pack, confirm: !!r.confirm,
+      tasks: (r.tasks ?? []).map((t) => ({ taskId: t.taskId, status: t.status, numSteps: t.numSteps, seconds: t.seconds, points: t.points, flaky: !!t.flaky })),
+      findingTypes: [...new Set([...(r.tasks ?? []).flatMap((t) => (t.findings ?? []).map((f) => f.type)), ...(r.scanFindings ?? []).map((f) => f.type)])],
+    }));
+}
+
+// Agent spending per day (D43), in rupees: data/budget/<YYYY-MM-DD>.json = {spentRupees, tests}.
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+export const getSpend = async (day) => (DAY_RE.test(day) ? readJson(path.join(dirs.budget, `${day}.json`), { spentRupees: 0, tests: 0 }) : { spentRupees: 0, tests: 0 });
+/** Add a finished (or stopped) test's cost to its day. Serialised per file, so two tests finishing together both count. */
+export function addSpend(day, rupees) {
+  if (!DAY_RE.test(day)) return Promise.resolve();
+  const file = path.join(dirs.budget, `${day}.json`);
+  return serialise(file + ':add', async () => {
+    const now = await readJson(file, { spentRupees: 0, tests: 0 });
+    const next = { spentRupees: Math.round(((now.spentRupees || 0) + (Number(rupees) || 0)) * 100) / 100, tests: (now.tests || 0) + 1 };
+    await writeJson(file, next);
+  });
 }
 
 /**
