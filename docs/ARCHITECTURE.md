@@ -2,7 +2,7 @@
 
 Single source of truth for Team Mavericks (Manideep Thumu, Sai Shakti Nayak, Akhil Daitha) and every coding agent in this repo.
 
-- **Read with:** [`DECISIONS.md`](DECISIONS.md) (why we chose each thing) and [`RESEARCH.md`](RESEARCH.md) (everything we tested and learned, with numbers and screenshots).
+- **Read with:** [`DECISIONS.md`](DECISIONS.md) (why we chose each thing). The team's research notes, work log, design specs and agent instructions live in a private repo (`Agent-Ready-internal`, linked into a checkout by its `link.sh`); references to `RESEARCH.md` below point there.
 - **Origin:** started at Swim with TinyFish (Scaler School of Technology, 1 Nov 2026); now in active development.
 - If you change anything here, update this file and `DECISIONS.md` in the same commit and tell the team.
 
@@ -47,11 +47,10 @@ Every `package.json` has `"type": "module"`.
 
 ```
 agent-ready/
-  AGENTS.md, CLAUDE.md          rules for coding agents
   docs/ARCHITECTURE.md          this file
   docs/DECISIONS.md             decision log
-  docs/RESEARCH.md              all research + test evidence
-  docs/proofs/*.jpg             screenshots from our 31 Oct tests
+  docs/PACK-LIVE-TEST.md        how to try the untested pack goals on live agents
+  (private, linked in)          AGENTS.md, CLAUDE.md, docs/RESEARCH.md, docs/WORKLOG.md, docs/superpowers/, docs/proofs/
   packages/engine/src/
     types.js                    THE CONTRACT (JSDoc). Team agreement to change
     goals.js                    task goal wording (tested)
@@ -386,7 +385,7 @@ Store API: `saveReport(r)`, `getReport(id)`, `listReports()`, `siteHistory(url)`
 
 ## 13. Dashboard, site and docs (`apps/web`)
 
-Redesign (D44, spec `docs/superpowers/specs/2026-11-07-agentready-redesign-design.md`): one design system for the app, the public site and the docs. Paper-and-ink surfaces, one ember accent for the main action, Inter + JetBrains Mono (self-hosted), 4 px corners, hairlines, ledgers with numbered rows. Light by default, dark with `data-theme="dark"`.
+Redesign (D44; the spec is in the private repo): one design system for the app, the public site and the docs. Paper-and-ink surfaces, one ember accent for the main action, Inter + JetBrains Mono (self-hosted), 4 px corners, hairlines, ledgers with numbered rows. Light by default, dark with `data-theme="dark"`.
 
 **Files:** `src/design/` (tokens.css is the only place colours are defined; the kit: Button, Badge, Panel, Ledger, Stat, Tabs, Field, Toast, EmptyState, Skeleton, CodeBlock, Logo, ThemeToggle; `status.js` maps task status and score to badge tone and words), `src/shell/` (AppShell: sidebar workbench; SiteShell: top bar and footer), `src/pages/app|site|docs/`, `src/routes.js`.
 
