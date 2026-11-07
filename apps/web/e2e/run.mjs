@@ -53,7 +53,6 @@ try {
     expect((await page.title()).length > 0, 'page has a title');
     await page.getByLabel('Website to test').waitFor();
     expect(await page.getByRole('button', { name: 'Test my site' }).isDisabled(), 'Test button is disabled while the box is empty');
-    expect(await page.getByText('Demo mode:').isVisible(), 'replay banner is shown');
     await page.locator('.hero-facts .fact').first().waitFor();
     await shot(page, 'home');
   }, { page: home.page });
@@ -61,9 +60,9 @@ try {
   await t.step('fact cards open their reports (Instant Scan, before/after, Watch)', async () => {
     const { page } = home;
     const facts = [
-      { text: /Caught in seconds/, hash: /#\/test\/rep_demo_flaws_on$/, expect: async () => page.locator('.score-card').waitFor() },
-      { text: /35 → 19 steps/, hash: /#\/test\/rep_demo_flaws_off\/rep_demo_flaws_on/, expect: async () => page.locator('.ba-before').waitFor() },
-      { text: /Alert in 6 min/, hash: /#\/watch/, expect: async () => page.getByRole('heading', { name: 'Watch a site' }).waitFor() },
+      { text: /Caught in seconds/, hash: /#\/app\/test\/rep_demo_flaws_on$/, expect: async () => page.locator('.score-card').waitFor() },
+      { text: /35 → 19 steps/, hash: /#\/app\/test\/rep_demo_flaws_off\/rep_demo_flaws_on/, expect: async () => page.locator('.ba-before').waitFor() },
+      { text: /Alert in 6 min/, hash: /#\/app\/watch/, expect: async () => page.getByRole('heading', { name: 'Watch a site' }).waitFor() },
     ];
     for (const f of facts) {
       await page.goto(fast.base + '/#/test');
@@ -120,12 +119,14 @@ try {
 
   await t.step('tabs Test / Watch switch pages; logo goes home', async () => {
     const { page } = home;
+    await page.goto(fast.base + '/#/app');
+    expect(await page.getByText('Recorded agent runs, no agent cost').isVisible(), 'replay strip is shown in the app');
     await page.getByRole('link', { name: 'Watch', exact: true }).click();
-    await waitHash(page, /#\/watch/);
+    await waitHash(page, /#\/app\/watch/);
     await page.getByRole('heading', { name: 'Watch a site' }).waitFor();
     expect(await page.getByRole('link', { name: 'Watch', exact: true }).getAttribute('aria-current') === 'page', 'Watch tab is marked current');
-    await page.getByRole('link', { name: 'AgentReady' }).click();
-    await waitHash(page, /#\/test/);
+    await page.getByRole('link', { name: 'AgentReady home' }).first().click();
+    await waitHash(page, /^#\/app$/);
     await page.getByRole('heading', { level: 1 }).waitFor();
   }, { page: home.page });
 
@@ -137,7 +138,7 @@ try {
     const { page } = run;
     await typeUrl(page, 'nykaa.com');
     await clickTest(page);
-    await waitHash(page, /#\/test\/rep_\d+_\d+_nykaa/);
+    await waitHash(page, /#\/app\/test\/rep_\d+_\d+_nykaa/);
     await page.locator('.ar-lane').first().waitFor();
     expect(await page.getByRole('button', { name: /Testing…/ }).isDisabled(), 'button is disabled while running');
     expect(await page.getByLabel('Website to test').isDisabled(), 'URL box is disabled while running');
@@ -191,7 +192,7 @@ try {
     await page.reload();
     await page.locator('.score-card').waitFor();
     expect((await hash(page)).includes(id), 'same report after refresh');
-    await page.getByRole('link', { name: 'AgentReady' }).click();
+    await page.getByRole('link', { name: 'AgentReady home' }).first().click();
     await page.locator('.recent a', { hasText: 'nykaa' }).first().waitFor();
   }, { page: run.page });
 
@@ -214,7 +215,7 @@ try {
     await page.getByRole('button', { name: '+ Add your own task' }).click();
     await page.getByLabel('Custom task').fill('Find the delivery charge for a ₹300 order 🚚');
     await clickTest(page);
-    await waitHash(page, /#\/test\/rep_/);
+    await waitHash(page, /#\/app\/test\/rep_/);
     await reportDone(page);
     const lane = page.locator('.ar-lane', { hasText: 'Your task' });
     await lane.waitFor();
@@ -229,7 +230,7 @@ try {
     const { page } = demo;
     await page.goto(fast.base + '/#/test');
     await page.getByRole('button', { name: /Try it on our demo store/ }).click();
-    await waitHash(page, /#\/test\/rep_demo_flaws_on/);
+    await waitHash(page, /#\/app\/test\/rep_demo_flaws_on/);
     await page.locator('.score-card').waitFor();
     expect(await page.locator('.score-num').innerText() === '91', 'recorded flawed store scores 91');
     await page.getByRole('button', { name: 'Apply fixes and re-test' }).waitFor();
@@ -239,12 +240,12 @@ try {
   await t.step('"Apply fixes and re-test" shows the before/after card', async () => {
     const { page } = demo;
     await page.getByRole('button', { name: 'Apply fixes and re-test' }).click();
-    await waitHash(page, /#\/test\/rep_demo_flaws_off\/rep_demo_flaws_on/);
+    await waitHash(page, /#\/app\/test\/rep_demo_flaws_off\/rep_demo_flaws_on/);
     await page.locator('.ba-after').getByText('97/100').waitFor();
     expect(/91\/100/.test(await page.locator('.ba-before').innerText()), 'before is 91');
     expect(/\+6 points/.test(await page.locator('.demo-card').innerText()), '+6 points');
     await page.locator('.ba-before').click();
-    await waitHash(page, /#\/test\/rep_demo_flaws_on$/);
+    await waitHash(page, /#\/app\/test\/rep_demo_flaws_on$/);
     await shot(page, 'demo-fixed');
   }, { page: demo.page });
   await t.step('demo page: no browser errors', async () => { await closeWithCheck(demo, 'demo'); });
@@ -286,7 +287,7 @@ try {
     const { page } = stop;
     await typeUrl(page, 'myntra.com');
     await clickTest(page);
-    await waitHash(page, /#\/test\/rep_/);
+    await waitHash(page, /#\/app\/test\/rep_/);
     await page.locator('.ar-lane-chip', { hasText: 'Running' }).first().waitFor();
     // the other two lanes wait, and the page says why
     await page.locator('.ar-lane-wait').first().waitFor({ timeout: 10000 });
@@ -325,7 +326,7 @@ try {
     await page.goto(slow.base + '/#/test');
     await typeUrl(page, 'myntra.com');
     await clickTest(page);
-    await waitHash(page, /#\/test\/rep_/);
+    await waitHash(page, /#\/app\/test\/rep_/);
     const wait = page.locator('.ar-lane-wait').first();
     await wait.waitFor({ timeout: 15000 });
     const text = await wait.innerText();
@@ -383,7 +384,7 @@ try {
     expect(/All passed|Problem/.test(await row.innerText()), 'history row has a verdict');
     await shot(page, 'watch-run');
     await row.getByRole('link', { name: 'Open report' }).click();
-    await waitHash(page, /#\/test\/rep_/);
+    await waitHash(page, /#\/app\/test\/rep_/);
     await page.locator('.score-card').waitFor();
     await page.goBack();
     await page.locator('.watch-card').first().waitFor();
@@ -438,14 +439,15 @@ try {
   const rl = await newPage(fast.base, { label: 'race-leaderboard' });
   await t.step('Race tab: a replay race of 3 recorded sites finishes and names a winner', async () => {
     const { page } = rl;
+    await page.goto(fast.base + '/#/app');
     await page.getByRole('link', { name: 'Race', exact: true }).click();
-    await waitHash(page, /#\/race/);
+    await waitHash(page, /#\/app\/race/);
     await page.getByRole('heading', { name: /^Race:/ }).waitFor();
     expect(await page.getByRole('button', { name: 'Start race' }).isDisabled(), 'Start is disabled with no sites');
     for (const name of ['Nykaa', 'Myntra', 'Demo store']) await page.getByRole('button', { name }).click();
     expect(await page.getByLabel('Website 3').inputValue() !== '', 'third site filled by the chip');
     await page.getByRole('button', { name: 'Start race' }).click();
-    await waitHash(page, /#\/race\/race_/);
+    await waitHash(page, /#\/app\/race\/race_/);
     await page.locator('.race-lane').nth(2).waitFor();
     expect(await page.getByRole('button', { name: 'Stop race' }).isVisible(), 'Stop race button while racing');
     expect(await page.locator('.race-winner').count() === 0, 'no winner is named while sites are still running');
@@ -472,7 +474,7 @@ try {
   await t.step('Leaderboard tab: ranked rows, and a row opens its report', async () => {
     const { page } = rl;
     await page.getByRole('link', { name: 'Leaderboard', exact: true }).click();
-    await waitHash(page, /#\/leaderboard/);
+    await waitHash(page, /#\/app\/leaderboard/);
     await page.locator('.lb-row').first().waitFor();
     const n = await page.locator('.lb-row').count();
     expect(n >= 3, `at least 3 rows (${n})`);
@@ -483,7 +485,7 @@ try {
     expect((await page.locator('.lb-wall').allInnerTexts()).some((x) => /Blocks cloud AI agents/.test(x)), 'bot-wall status shown');
     await shot(page, 'leaderboard');
     await page.locator('.lb-row').first().getByRole('link', { name: /View report/ }).click();
-    await waitHash(page, /#\/test\/rep_/);
+    await waitHash(page, /#\/app\/test\/rep_/);
     await page.locator('.score-card').waitFor();
     expect(await noHScroll(page), 'report fits');
   }, { page: rl.page });
@@ -519,6 +521,7 @@ try {
     const flagged = await newPage(off.base, { label: 'flags-off' });
     await t.step('with the features off, Race and Leaderboard tabs are hidden and their links land on Test', async () => {
       const { page } = flagged;
+      await page.goto(off.base + '/#/app');
       await page.getByRole('link', { name: 'Watch', exact: true }).waitFor();
       expect(await page.getByRole('link', { name: 'Race', exact: true }).count() === 0, 'no Race tab');
       expect(await page.getByRole('link', { name: 'Leaderboard', exact: true }).count() === 0, 'no Leaderboard tab');

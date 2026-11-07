@@ -153,15 +153,15 @@ function Hero({ children }) {
 function Facts() {
   return (
     <section className="hero-facts" aria-label="What our agents found">
-      <a className="fact fact-orange" href="#/test/rep_demo_flaws_on">
+      <a className="fact fact-orange" href="#/app/test/rep_demo_flaws_on">
         <b>Caught in seconds</b>
         <span>The Instant Scan flagged a full-page pop-up and a price drawn as an image on our demo store, before the agents finished.</span>
       </a>
-      <a className="fact fact-yellow" href="#/test/rep_demo_flaws_off/rep_demo_flaws_on">
+      <a className="fact fact-yellow" href="#/app/test/rep_demo_flaws_off/rep_demo_flaws_on">
         <b>35 → 19 steps</b>
         <span>Fixing four flaws on our demo store nearly halved the agent's work and cost.</span>
       </a>
-      <a className="fact fact-paper" href="#/watch">
+      <a className="fact fact-paper" href="#/app/watch">
         <b>Alert in 6 min</b>
         <span>We broke our demo store's cart. Watch's agents caught it and posted to Slack 6 minutes later.</span>
       </a>
@@ -172,19 +172,19 @@ function Facts() {
 const Tint = ({ tone }) => <div className={`bento-bg bento-bg-${tone}`} aria-hidden="true" />;
 
 const FEATURES = [
-  { Icon: MonitorPlay, name: 'Live agent lanes', tone: 'blue', className: 'col-span-3 lg:col-span-2 bg-card dark:bg-card', href: '#/test',
+  { Icon: MonitorPlay, name: 'Live agent lanes', tone: 'blue', className: 'col-span-3 lg:col-span-2 bg-card dark:bg-card', href: '#/app',
     description: 'Four real TinyFish agents work in parallel. Watch every step, the live browser and a screenshot of each step.' },
-  { Icon: Gauge, name: 'Score out of 100', tone: 'green', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/test/rep_20261031_demo_nykaa',
+  { Icon: Gauge, name: 'Score out of 100', tone: 'green', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/app/test/rep_20261031_demo_nykaa',
     description: 'Plain rules, same result every time: passed, steps, time, and any workaround needed.' },
-  { Icon: ShieldAlert, name: 'Bot-wall check', tone: 'red', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/test/rep_20261031_demo_myntra',
+  { Icon: ShieldAlert, name: 'Bot-wall check', tone: 'red', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/app/test/rep_20261031_demo_myntra',
     description: 'Blocked? We retry with an Indian home address, then stealth, to show who your security lets in.' },
-  { Icon: Wrench, name: 'Top 3 fixes', tone: 'amber', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/test/rep_demo_flaws_on',
+  { Icon: Wrench, name: 'Top 3 fixes', tone: 'amber', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/app/test/rep_demo_flaws_on',
     description: 'Each problem names the page, the likely cause, the web standard and how to check it is fixed.' },
-  { Icon: ScanSearch, name: 'Instant Scan', tone: 'blue', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/test/rep_demo_flaws_on',
+  { Icon: ScanSearch, name: 'Instant Scan', tone: 'blue', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/app/test/rep_demo_flaws_on',
     description: 'In seconds: pop-ups, unlabelled buttons, prices drawn as images, missing product data.' },
-  { Icon: BellRing, name: 'Watch + Slack alerts', tone: 'green', className: 'col-span-3 lg:col-span-2 bg-card dark:bg-card', href: '#/watch',
+  { Icon: BellRing, name: 'Watch + Slack alerts', tone: 'green', className: 'col-span-3 lg:col-span-2 bg-card dark:bg-card', href: '#/app/watch',
     description: 'Agents re-test your live site on a schedule and post to Slack the moment a task breaks, and when it recovers.' },
-  { Icon: Terminal, name: 'CLI for localhost', tone: 'amber', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/test',
+  { Icon: Terminal, name: 'CLI for localhost', tone: 'amber', className: 'col-span-3 lg:col-span-1 bg-card dark:bg-card', href: '#/app',
     description: 'npx agentready localhost:3000 tests a site before it ships, through a secure tunnel.' },
 ];
 
@@ -342,7 +342,7 @@ function RecentReports() {
       <h2>Recent tests</h2>
       <div className="recent">
         {reports.slice(0, 8).map((r) => (
-          <a key={r.id} href={`#/test/${encodeURIComponent(r.id)}`}>
+          <a key={r.id} href={`#/app/test/${encodeURIComponent(r.id)}`}>
             {hostOf(r.url)} · {r.status === 'complete' ? `${r.score}/100` : r.status === 'cancelled' ? 'stopped' : 'running'}
           </a>
         ))}

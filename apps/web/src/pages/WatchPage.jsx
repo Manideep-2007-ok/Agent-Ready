@@ -85,7 +85,7 @@ function HistoryRow({ report }) {
       <span>{when(report.testedAt)}</span>
       <span><b>{report.score}/100</b> · {stepsOf(report)} steps</span>
       {failed.length > 0 && <span className="muted">Failed: {failed.map((t) => TASK_LABELS[t.taskId] ?? t.taskId).join(', ')}</span>}
-      <a href={`#/test/${encodeURIComponent(report.id)}`}>Open report</a>
+      <a href={`#/app/test/${encodeURIComponent(report.id)}`}>Open report</a>
     </li>
   );
 }
@@ -182,7 +182,7 @@ function WatchCard({ watch, onChange, onShotClick }) {
         <>
           <p className="muted">
             {checking ? 'Checking now…' : live.report?.status === 'cancelled' ? 'Check stopped.' : live.report ? `Check finished: ${live.report.score}/100.` : ''}{' '}
-            <a href={`#/test/${encodeURIComponent(checkId)}`}>Open full report</a>
+            <a href={`#/app/test/${encodeURIComponent(checkId)}`}>Open full report</a>
           </p>
           {tasks.length > 0 && (
             <section className="lanes">

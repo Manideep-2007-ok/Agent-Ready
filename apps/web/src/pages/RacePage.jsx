@@ -88,7 +88,7 @@ function RaceLane({ lane, taskId, place, finished, onShotClick }) {
         {finished && !place && task && <span className="chip">No place</span>}
       </div>
       <Lane task={task} label={TASK_LABELS[taskId]} onShotClick={onShotClick} waitReason={waitReason} />
-      {live.report && <a className="race-report-link" href={`#/test/${encodeURIComponent(lane.reportId)}`}>Open the full report for {host}</a>}
+      {live.report && <a className="race-report-link" href={`#/app/test/${encodeURIComponent(lane.reportId)}`}>Open the full report for {host}</a>}
     </div>
   );
 }

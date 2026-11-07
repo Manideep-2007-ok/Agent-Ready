@@ -25,7 +25,7 @@ export default function ReportActions({ report, onEnriched }) {
     }
   };
   const copy = async () => {
-    const link = `${location.origin}${location.pathname}#/test/${encodeURIComponent(report.id)}`;
+    const link = `${location.origin}${location.pathname}#/app/test/${encodeURIComponent(report.id)}`;
     try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { window.prompt('Copy this link:', link); }
   };
 

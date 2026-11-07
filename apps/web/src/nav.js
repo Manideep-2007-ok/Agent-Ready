@@ -1,5 +1,7 @@
-// Moves between pages by changing the URL hash; App.jsx listens for the change.
-// Extra parts go after the page, e.g. navigate('test', newId, beforeId) -> #/test/<newId>/<beforeId>.
+// Moves between app pages by changing the URL hash; App.jsx listens for the change.
+// navigate('test', newId, beforeId) -> #/app/test/<newId>/<beforeId>. Links are built by routes.js href().
+import { href } from './routes.js';
+
 export function navigate(page, ...parts) {
-  window.location.hash = ['#', page, ...parts.filter(Boolean).map(encodeURIComponent)].join('/');
+  window.location.hash = href('app', page, ...parts);
 }

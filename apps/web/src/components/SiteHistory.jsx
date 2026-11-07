@@ -67,7 +67,7 @@ export default function SiteHistory({ report }) {
           <p className="muted">{rows.length} tests from {fmt(rows[0].testedAt)} to {fmt(rows[rows.length - 1].testedAt)}. The dashed line is 80 (ready).</p>
           {previous && (
             <>
-              <h3>Since the test before (<a href={`#/test/${encodeURIComponent(previous.id)}`}>{fmt(previous.testedAt)}</a>)</h3>
+              <h3>Since the test before (<a href={`#/app/test/${encodeURIComponent(previous.id)}`}>{fmt(previous.testedAt)}</a>)</h3>
               {changes.length ? <ul className="history-changes">{changes.map((c) => <li key={c}>{c}</li>)}</ul> : <p className="muted">Nothing changed.</p>}
             </>
           )}

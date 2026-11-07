@@ -48,7 +48,7 @@ export default function LeaderboardPage() {
                   <span className={`chip band-${b.cls}`}>{r.score}/100 · {b.label}</span>
                 </div>
                 <div className={`lb-wall${r.botWall && r.botWall !== 'none' ? ' lb-wall-bad' : ''}`}>{WALL[r.botWall] ?? WALL.none}</div>
-                <a className="lb-open" href={`#/test/${encodeURIComponent(r.id)}`} aria-label={`View report for ${host}`}>View report</a>
+                <a className="lb-open" href={`#/app/test/${encodeURIComponent(r.id)}`} aria-label={`View report for ${host}`}>View report</a>
               </li>
             );
           })}
