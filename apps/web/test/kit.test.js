@@ -1,0 +1,46 @@
+// Design kit helpers: one mapping from task status and score to badge tone and words, used on every page.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { statusBadge, scoreBand } from '../src/design/status.js';
+
+test('statusBadge: every task status gets a tone and a word, a wall counts as blocked', () => {
+  assert.deepEqual(statusBadge('passed'), { tone: 'pass', label: 'PASSED' });
+  assert.deepEqual(statusBadge('failed'), { tone: 'fail', label: 'FAILED' });
+  assert.deepEqual(statusBadge('blocked'), { tone: 'fail', label: 'BLOCKED' });
+  assert.deepEqual(statusBadge('failed', 'blocks-cloud-agents'), { tone: 'fail', label: 'BLOCKED' });
+  assert.deepEqual(statusBadge('running'), { tone: 'accent', label: 'RUNNING' });
+  assert.deepEqual(statusBadge('queued'), { tone: 'wait', label: 'WAITING' });
+  assert.deepEqual(statusBadge('cancelled'), { tone: 'wait', label: 'STOPPED' });
+  assert.deepEqual(statusBadge(undefined), { tone: 'wait', label: 'WAITING' });
+});
+
+test('scoreBand: 80 and up ready, 50 to 79 partly, under 50 not ready', () => {
+  assert.deepEqual(scoreBand(100), { tone: 'pass', label: 'Ready for AI agents' });
+  assert.equal(scoreBand(80).tone, 'pass');
+  assert.deepEqual(scoreBand(79), { tone: 'warn', label: 'Partly ready' });
+  assert.equal(scoreBand(50).tone, 'warn');
+  assert.deepEqual(scoreBand(49), { tone: 'fail', label: 'Not ready' });
+});
+
+// One design system: plain JS (D1) and every colour from tokens.css.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const src = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src');
+const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]));
+
+test('the web app has no TypeScript files', () => {
+  const ts = walk(src).filter((f) => /\.tsx?$/.test(f)).map((f) => path.relative(src, f));
+  assert.deepEqual(ts, []);
+});
+
+test('no colour is written outside design/tokens.css', () => {
+  const hex = /#[0-9a-fA-F]{3,8}\b/;
+  const bad = walk(src)
+    .filter((f) => /\.(css|jsx?)$/.test(f) && !f.endsWith(path.join('design', 'tokens.css')))
+    .flatMap((f) => fs.readFileSync(f, 'utf8').split('\n').map((line, i) => [f, i + 1, line]))
+    .filter(([, , line]) => hex.test(line.replace(/href=\{?[`'"]#[^`'"]*[`'"]/g, '').replace(/['"`]#\/[^'"`]*['"`]/g, '').replace(/#(?:[\w-]+)['"`]/g, '')))
+    .map(([f, n, line]) => `${path.relative(src, f)}:${n}: ${line.trim().slice(0, 80)}`);
+  assert.deepEqual(bad, []);
+});

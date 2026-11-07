@@ -12,7 +12,7 @@ Real [TinyFish](https://tinyfish.ai) web agents shop your site, live, and show y
 
 <br>
 
-<img src="docs/images/home.png" alt="AgentReady dashboard" width="900">
+<img src="docs/images/landing.png" alt="AgentReady landing page: Can AI agents actually use your website?" width="900">
 
 </div>
 
@@ -37,7 +37,7 @@ Static checkers read `robots.txt` and markup; none of them actually tries to buy
 
 We built a small demo store with four flaws we can switch on and off: a pop-up covering the page, a price drawn as an image, an icon-only cart button and a returns page buried several clicks deep. With the flaws on, the agents still finished every task, but they needed **35 steps instead of 19**, the run cost **₹49 instead of ₹27**, and the agent put **2 units in the cart instead of 1**. A pass/fail checker would see nothing wrong.
 
-<p align="center"><img src="docs/images/score-card.png" alt="Demo store report: score 91 out of 100 with the top 3 fixes" width="900"><br><sub>Our demo store with its flaws on: the score and the top 3 fixes</sub></p>
+<p align="center"><img src="docs/images/report.png" alt="Demo store report: score 91 out of 100 with the top 3 fixes and the task ledger" width="900"><br><sub>Our demo store with its flaws on: the score and the top 3 fixes</sub></p>
 
 <p align="center"><img src="docs/images/before-after.png" alt="Demo store before and after fixes: 91 to 97, steps 35 to 19, cost Rs 49 to Rs 27" width="900"><br><sub>The same store after the fixes: half the steps and close to half the cost</sub></p>
 
@@ -73,7 +73,7 @@ flowchart LR
 | **4. Scoring** | Plain code, never an AI's opinion: 25 points per task for passing, few steps, speed and no web search, capped when it only passed through a workaround. The same run always gets the same score. |
 | **5. Findings** | Each one answers six questions: what happened, where, why it breaks agents, how bad it is, how to fix it, and how to check it's fixed. Always a site cause, never "the agent got confused". |
 
-<p align="center"><img src="docs/images/finding-card.png" alt="A finding card answering six questions" width="900"><br><sub>Every finding answers the six questions a store owner or developer asks</sub></p>
+<p align="center"><img src="docs/images/findings.png" alt="Findings, each answering six questions" width="900"><br><sub>Every finding answers the six questions a store owner or developer asks</sub></p>
 
 ---
 

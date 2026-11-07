@@ -32,7 +32,8 @@
     "start": "npm start -w @agentready/server",
     "build": "npm run build --workspaces --if-present",
     "test": "node scripts/run-tests.mjs",
-    "test:e2e": "node apps/web/e2e/run.mjs"
+    "test:e2e": "node apps/web/e2e/run.mjs",
+    "docs:data": "node scripts/gen-docs-data.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"

@@ -301,3 +301,17 @@ Built in replay mode and against the in-process fake TinyFish. No real TinyFish 
 | H41 | No ceiling on what one test or one day can spend | No budget | Estimate endpoint, per-test limit (engine, live), per-day limit (server, 429) (D43) | `trust.test.js` budget stop, `trust-api.test.js` |
 | H42 | Fix Report route had no button; no replay, history or PDF | Not built | ReportActions, StepTimeline, SiteHistory, print CSS | checked in the browser on a confirmed replay test; e2e suite |
 | H43 | Phone e2e: "Test my site" under the sticky header after leaving a long report | A new hash kept the old scroll depth | `window.scrollTo(0, 0)` on every page change (App.jsx) | e2e phone step |
+
+## 7 Nov 2026: Redesign (Manideep)
+
+Spec `docs/superpowers/specs/2026-11-07-agentready-redesign-design.md`, plan `docs/superpowers/plans/2026-11-07-agentready-redesign.md`. Replay mode only; no TinyFish call.
+
+| # | Symptom | Cause | Fix | Proof |
+|---|---|---|---|---|
+| H44 | Hackathon look (confetti, comic burst, cursor, globe); colours defined in several files | Built for a demo day | Design system in `apps/web/src/design` (D44), app/site/docs shells, hash routes with redirects | `npm test` 226/226, `npm run test:e2e` 44/44 |
+| H45 | Spec accent `#D9480F` and faint grey failed WCAG AA (4.30:1, 3.49:1) | Picked by eye | `#C2410C`, `#6E6C75`/`#8B8C96`; light pass `#17773F`; accent tint 8 % | `apps/web/test/contrast.test.js` |
+| H46 | `#/app` was 536 px wide on a 390 px phone | A grid's implicit column grew to its table's minimum width | `grid-template-columns: minmax(0, 1fr)` on single-column grids | e2e phone steps |
+| H47 | Leaving the docs kept "… · AgentReady docs" as the tab title | The docs page set the title and never reset it | Reset on unmount | e2e docs step |
+| H48 | `#/foo` showed the landing page as if the address were right | `parseHash` sent every unknown address to the landing page | 404 page (`pages/NotFound.jsx`) for the site and the app; one `APP_PAGES` list for routes and redirects | `routes.test.js`, e2e 404 step |
+| H49 | Server down: Recent tests said "Run your first test" | The load error was turned into an empty list | Error state with Try again | e2e step (GET `/api/tests` answers 503) |
+| H50 | Printed report ran the tabs together; inline checkbox field dropped its error | Tab bar is hidden in print and nothing replaced it; the inline layout had no error line | Print-only heading per tab panel; error line in the inline Field | e2e print step, `field.test.js` |

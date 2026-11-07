@@ -1,0 +1,82 @@
+/* AgentReady design tokens: the only place colours are defined (redesign spec 3.1).
+   Paper and ink surfaces, one ember accent for the main action, solid status colours with soft tints.
+   Light is the default; dark is data-theme="dark" on <html>. Contrast is checked by apps/web/test/contrast.test.js. */
+:root {
+  --bg: #F6F5F1;
+  --surface: #FFFFFF;
+  --surface-2: #EFEDE7;
+  --border: #E2E0D9;
+  --border-strong: #C9C7BF;
+  --text: #16161A;
+  --text-muted: #5B5A63;
+  --text-faint: #6E6C75;
+  --accent: #C2410C;
+  --accent-ink: #FFFFFF;
+  --accent-soft: rgba(194, 65, 12, 0.08);
+  --pass: #17773F;
+  --pass-soft: rgba(23, 119, 63, 0.10);
+  --warn: #9A520F;
+  --warn-soft: rgba(154, 82, 15, 0.12);
+  --fail: #B23324;
+  --fail-soft: rgba(178, 51, 36, 0.10);
+  --wait: #5B5A63;
+  --wait-soft: rgba(91, 90, 99, 0.08);
+  --radius: 4px;
+  --radius-lg: 8px;
+  --shadow-pop: 0 1px 2px rgba(22, 22, 26, 0.06), 0 8px 24px rgba(22, 22, 26, 0.10);
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  color-scheme: light;
+
+}
+
+:root[data-theme='dark'] {
+  --bg: #0E0F12;
+  --surface: #15161A;
+  --surface-2: #1C1D22;
+  --border: #2A2B32;
+  --border-strong: #3C3D46;
+  --text: #F2F1EE;
+  --text-muted: #A3A4AD;
+  --text-faint: #8B8C96;
+  --accent: #FF7A3D;
+  --accent-ink: #1A0B03;
+  --accent-soft: rgba(255, 122, 61, 0.14);
+  --pass: #4ADE80;
+  --pass-soft: rgba(74, 222, 128, 0.14);
+  --warn: #F5B341;
+  --warn-soft: rgba(245, 179, 65, 0.14);
+  --fail: #F3716A;
+  --fail-soft: rgba(243, 113, 106, 0.14);
+  --wait: #A3A4AD;
+  --wait-soft: rgba(163, 164, 173, 0.10);
+  --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+/* Save as PDF: paper is white, so a report printed from the dark theme uses the light (ink) colours. */
+@media print {
+  :root[data-theme='dark'] {
+    --bg: #F6F5F1;
+    --surface: #FFFFFF;
+    --surface-2: #EFEDE7;
+    --border: #E2E0D9;
+    --border-strong: #C9C7BF;
+    --text: #16161A;
+    --text-muted: #5B5A63;
+    --text-faint: #6E6C75;
+    --accent: #C2410C;
+    --accent-ink: #FFFFFF;
+    --accent-soft: rgba(194, 65, 12, 0.08);
+    --pass: #17773F;
+    --pass-soft: rgba(23, 119, 63, 0.10);
+    --warn: #9A520F;
+    --warn-soft: rgba(154, 82, 15, 0.12);
+    --fail: #B23324;
+    --fail-soft: rgba(178, 51, 36, 0.10);
+    --wait: #5B5A63;
+    --wait-soft: rgba(91, 90, 99, 0.08);
+    color-scheme: light;
+  }
+}
