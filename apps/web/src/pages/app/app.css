@@ -59,10 +59,13 @@
 .ar-finding-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px 14px; border-bottom: 1px solid var(--border); }
 .ar-finding-head h3 { margin: 0; font-size: 15px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.4; }
 .ar-finding-head .ar-mono { padding-top: 2px; }
-.ar-finding-qa { margin: 0; padding: 4px 14px 14px; display: grid; grid-template-columns: 200px minmax(0, 1fr); }
-.ar-finding-qa dt, .ar-finding-qa dd { padding: 10px 0; border-bottom: 1px solid var(--border); margin: 0; }
+.ar-finding-qa { margin: 0; padding: 4px 14px 8px; display: grid; grid-template-columns: 120px minmax(0, 1fr); }
+.ar-finding-qa dt, .ar-finding-qa dd { padding: 8px 0; margin: 0; }
+.ar-finding-more { padding: 0 14px 12px; }
+.ar-finding-more > summary { cursor: pointer; font: 500 13px/1 var(--font-sans); color: var(--text-muted); padding: 4px 0; width: max-content; }
+.ar-finding-more > summary:hover { color: var(--text); }
+.ar-finding-more .ar-finding-qa { padding: 6px 0 0; border-top: 1px solid var(--border); margin-top: 8px; }
 .ar-finding-qa dt { font: 500 11px/1.6 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); padding-right: 16px; }
-.ar-finding-qa dt:last-of-type, .ar-finding-qa dd:last-of-type { border-bottom: 0; }
 .ar-finding-shot { display: block; margin-top: 10px; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); background: none; cursor: zoom-in; max-width: 360px; overflow: hidden; }
 .ar-finding-shot img { display: block; width: 100%; }
 @media (max-width: 760px) { .ar-finding-qa { grid-template-columns: minmax(0, 1fr); } .ar-finding-qa dt { border-bottom: 0; padding-bottom: 0; } .ar-finding-head { grid-template-columns: auto minmax(0, 1fr); } .ar-finding-head .ar-badges { grid-column: 2; justify-content: flex-start; } }
@@ -95,7 +98,7 @@ a.ba-box:hover { background: var(--surface-2); text-decoration: none; }
 .timeline-steps { list-style: none; padding: 0; margin: 12px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .timeline-steps button { display: grid; gap: 6px; width: 100%; padding: 6px; text-align: left; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); font: inherit; cursor: pointer; }
 .timeline-steps button:hover { background: var(--surface-2); }
-.timeline-steps img, .timeline-noshot { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 3px; background: var(--surface-2); display: grid; place-items: center; font-family: var(--font-mono); color: var(--text-faint); }
+.timeline-steps img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 3px; background: var(--surface-2); display: block; }
 .timeline-label { font-size: 12px; line-height: 1.35; }
 .timeline-steps li.is-stuck button { border-color: var(--fail); box-shadow: inset 0 0 0 1px var(--fail); }
 .timeline-steps li.is-current button { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
@@ -121,6 +124,9 @@ a.ba-box:hover { background: var(--surface-2); text-decoration: none; }
   [role='tabpanel'][hidden] { display: block !important; }
   .ar-tabpanel { break-before: auto; }
   .ar-panel, .ar-finding, .timeline-task { break-inside: avoid; }
+  /* "More" opens on paper (beforeprint also opens it, for browsers without ::details-content) */
+  .ar-finding-more::details-content { content-visibility: visible; }
+  .ar-finding-more > summary { display: none; }
 }
 
 /* Watch */
@@ -160,3 +166,6 @@ a.ba-box:hover { background: var(--surface-2); text-decoration: none; }
 .lb-wall { font-size: 13px; color: var(--text-muted); }
 .lb-wall-bad { color: var(--fail); }
 @media (max-width: 760px) { .lb-row { grid-template-columns: 28px minmax(0, 1fr) auto; } .lb-wall { display: none; } .lb-score { grid-column: 2; } .lb-open { grid-column: 3; grid-row: 1; } }
+.ar-panel--plain .timeline-task { padding-left: 0; padding-right: 0; }
+.timeline-outcome { display: grid; gap: 8px; margin-top: 10px; max-width: 76ch; }
+.timeline-outcome:empty { display: none; }

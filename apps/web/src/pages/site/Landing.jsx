@@ -75,24 +75,6 @@ const WATCH_PANEL = (
   </div>
 );
 
-const SCORE_PANEL = (
-  <div className="ar-mock">
-    <div className="ar-mock-head"><span className="ar-label">Live · 4 agents</span><Badge tone="accent">Running</Badge></div>
-    {[
-      ['T1', 'Find a product and its price', 'pass', 'Passed', '4'],
-      ['T2', 'Add to cart and read the total', 'accent', 'Running', '5'],
-      ['T3', 'Find the return policy', 'wait', 'Blocked → retry', '2'],
-      ['T4', 'Find customer support', 'pass', 'Passed', '3'],
-    ].map(([id, t, tone, w, steps]) => (
-      <div className="ar-mock-row" key={id}><span className="ar-mono ar-faint">{id}</span><span>{t} <span className="ar-mono ar-faint">· {steps} steps</span></span><Badge tone={tone}>{w}</Badge></div>
-    ))}
-    <div className="ar-mock-detail">
-      <span className="ar-label">Bot-wall check</span>
-      <p>Blocked from a cloud server? The agent tries again from an Indian home address, then with a stealth browser.</p>
-    </div>
-  </div>
-);
-
 const CLI = 'npx @agentready/cli http://localhost:3000';
 const ACTION = `- uses: Manideep-2007-ok/Agent-Ready@v1
   with:
@@ -117,17 +99,9 @@ export default function Landing() {
         <HeroLedger />
       </section>
 
-      <section className="ar-strip" aria-label="How agents arrive">
-        <span className="ar-label">Agents arrive as</span>
-        <span className="ar-mono">a cloud server</span><span className="ar-strip-dot" aria-hidden="true" />
-        <span className="ar-mono">an Indian home address</span><span className="ar-strip-dot" aria-hidden="true" />
-        <span className="ar-mono">a stealth browser</span>
-      </section>
-
       <div className="ar-features">
         <FeatureRow eyebrow="01 · Test" title="Four everyday tasks, real agents, a score out of 100."
-          points={['Agents work in parallel; watch each one live with a screenshot of every step.', 'Plain rules, same score every time: passed, steps, time, workarounds.', 'Bot protection is tested too: we show who your security lets in.']}
-          panel={SCORE_PANEL} />
+          points={['Agents work in parallel; watch each one live with a screenshot of every step.', 'Plain rules, same score every time: passed, steps, time, workarounds.', 'Bot protection is tested too: blocked from a cloud server, an agent tries again from an Indian home address, then with a stealth browser.']} />
         <FeatureRow flip eyebrow="02 · Fix" title="Every problem names the page, the cause and the fix."
           points={['The exact step and screenshot where an agent got stuck.', 'A likely cause on your site, the web standard, and a code example for your framework.', 'A pass check, so you know the fix worked.']}
           panel={FIX_PANEL} />

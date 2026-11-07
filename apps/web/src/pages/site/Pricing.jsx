@@ -41,7 +41,7 @@ export default function Pricing() {
       <section className="ar-cost" aria-labelledby="cost-title">
         <h2 id="cost-title">What a test costs</h2>
         <p>
-          Agents are billed per step (each click, scroll or page they read) at about ₹{estimate?.rupeesPerStep ?? 1.41} a step.
+          Agents are billed per step (each click, scroll or page they read) at about ₹{(Math.round((estimate?.rupeesPerStep ?? 1.408) * 10) / 10).toFixed(1)} a step.
           {estimate && !estimate.mock
             ? ` A full four-task test usually costs ₹${estimate.lowRupees} to ₹${estimate.highRupees}; a site that blocks agents can take up to ₹${estimate.worstRupees} because we retry from a home address and in a stealth browser.`
             : ' On our demo store a full four-task test cost ₹27 with its flaws fixed and ₹49 with them on; large stores take more steps.'}

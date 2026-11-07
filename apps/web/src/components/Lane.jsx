@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { GOAL_SUFFIX, TASK_LABELS } from '@agentready/engine/goals';
 import './Lane.css';
+import { claimNote, confirmNote } from './taskNotes.jsx';
 
 const CHIPS = {
   waiting: ['Waiting for an agent', 'waiting'],
@@ -23,25 +24,6 @@ function chipOf(task) {
   if (s === 'failed') return 'failed';
   if (s === 'running' || s === 'started') return 'running';
   return 'waiting';
-}
-
-/** After a confirmed test: how many runs agreed (D41). */
-function confirmNote(task) {
-  const runs = (task?.runs ?? []).filter((r) => !r.stopped);
-  if (runs.length < 2) return null;
-  const passed = runs.filter((r) => r.passed).length;
-  return task.flaky
-    ? <div className="ar-lane-note ar-lane-note--warn" role="note">Runs disagreed: passed {passed} of {runs.length}. The result shown is the majority.</div>
-    : <div className="ar-lane-note" role="note">Confirmed: {runs.length} of {runs.length} runs agree</div>;
-}
-
-/** Claim check (D42): did the page the agent named show what it reported? */
-function claimNote(task) {
-  const c = task?.claim;
-  if (!c) return null;
-  if (c.status === 'confirmed') return <div className="ar-lane-note" role="note">Checked: the page it named shows {c.facts.map((f) => f.label).join(', ')}</div>;
-  if (c.status === 'off-site') return <div className="ar-lane-note ar-lane-note--warn" role="note">The answer points to another website</div>;
-  return <div className="ar-lane-note ar-lane-note--warn" role="note">Not confirmed: the page it named does not show {c.facts.filter((f) => !f.found).map((f) => f.label).join(', ')}</div>;
 }
 
 /**
@@ -118,24 +100,27 @@ export default function Lane({ task, label, onShotClick, startedAt, waitReason }
         </div>
       )}
       <div className="ar-lane-step" aria-live="polite">{lastStep?.label || (running ? (task?.streamingUrl ? 'Agent is on the site, looking around…' : 'Starting the agent…') : '')}</div>
-      <div className="ar-lane-view">
-        {showIframe ? (
-          <iframe
-            src={task.streamingUrl}
-            title={`Live view: ${title}`}
-            sandbox="allow-scripts allow-same-origin"
-            onError={() => setIframeFailed(true)}
-          />
-        ) : shot ? (
-          <button type="button" className="ar-lane-shot" aria-label={`Enlarge latest screenshot for ${title}`} onClick={() => onShotClick?.(shot)}>
-            <img key={shot} src={shot} alt={`Latest screenshot: ${shotLabel}`} onError={() => markBad(shot)} />
-          </button>
-        ) : shotUrls.length ? (
-          <div className="ar-lane-empty">No screenshot for this step</div>
-        ) : (
-          <div className="ar-lane-empty">{chip === 'waiting' ? 'Waiting for an agent' : chip === 'cancelled' ? 'Stopped before a picture was taken' : 'No picture yet'}</div>
-        )}
-      </div>
+      {showIframe || shot ? (
+        <div className="ar-lane-view">
+          {showIframe ? (
+            <iframe
+              src={task.streamingUrl}
+              title={`Live view: ${title}`}
+              sandbox="allow-scripts allow-same-origin"
+              onError={() => setIframeFailed(true)}
+            />
+          ) : (
+            <button type="button" className="ar-lane-shot" aria-label={`Enlarge latest screenshot for ${title}`} onClick={() => onShotClick?.(shot)}>
+              <img key={shot} src={shot} alt={`Latest screenshot: ${shotLabel}`} onError={() => markBad(shot)} />
+            </button>
+          )}
+        </div>
+      ) : (
+        // No picture to show: one quiet line instead of an empty grey box.
+        <div className="ar-lane-empty">
+          {shotUrls.length ? 'No screenshot for this step' : chip === 'waiting' ? 'Waiting for an agent' : chip === 'cancelled' ? 'Stopped before a picture was taken' : 'No picture yet'}
+        </div>
+      )}
       {chip === 'waiting' && waitReason && <div className="ar-lane-wait" role="status">{waitReason}</div>}
       {task?.confirming && (
         <div className="ar-lane-attempt ar-lane-attempt--retry" role="status">

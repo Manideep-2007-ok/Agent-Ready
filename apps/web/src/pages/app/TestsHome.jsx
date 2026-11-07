@@ -13,7 +13,7 @@ const PACKS = [
 /** "About ₹23 to ₹84" before a test starts (P2-8); replay mode costs nothing. */
 export function costLine(e) {
   if (!e) return '';
-  if (e.mock) return 'Replay mode: recorded runs, no agent cost.';
+  if (e.mock) return ''; // the replay banner at the top already says there is no agent cost
   const limit = e.budget?.perTestRupees ? ` Every test stops at ₹${e.budget.perTestRupees}.` : '';
   const today = e.budget?.perDayRupees ? ` Left today: ₹${e.budget.leftTodayRupees} of ₹${e.budget.perDayRupees}.` : '';
   return `Agent cost: usually ₹${e.lowRupees} to ₹${e.highRupees}, up to ₹${e.worstRupees} if the site blocks agents.${limit}${today}`;
@@ -99,8 +99,11 @@ function NewTest({ demoStoreUrl }) {
 const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
 const when = (iso) => (iso ? new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '');
 
+const RECENT_SHOWN = 8;
+
 function Recent() {
   const [rows, setRows] = useState(null);
+  const [all, setAll] = useState(false);
   const [failed, setFailed] = useState(false);
   const load = () => {
     setFailed(false); setRows(null);
@@ -119,9 +122,13 @@ function Recent() {
   if (!rows) return <Panel label="Recent tests"><Skeleton rows={3} /></Panel>;
   const status = (r) => (r.status === 'complete' ? null : r.status === 'cancelled' ? 'cancelled' : 'running');
   return (
-    <Panel label="Recent tests" className="ar-recent">
+    <Panel label="Recent tests" className="ar-recent ar-panel--plain"
+      actions={rows.length > RECENT_SHOWN && (
+        <Button variant="ghost" size="sm" onClick={() => setAll((a) => !a)} aria-expanded={all}>{all ? 'Show fewer' : `Show all ${rows.length}`}</Button>
+      )}>
       <Ledger
         caption="Recent tests"
+        showId={false}
         columns={[
           { key: 'site', label: 'Site' },
           { key: 'score', label: 'Score', align: 'right', mono: true },
@@ -129,7 +136,7 @@ function Recent() {
           { key: 'source', label: 'From', hideOnPhone: true, mono: true },
           { key: 'date', label: 'Tested', hideOnPhone: true },
         ]}
-        rows={rows.slice(0, 20).map((r) => ({
+        rows={(all ? rows : rows.slice(0, RECENT_SHOWN)).map((r) => ({
           id: r.id,
           href: href('app', 'test', r.id),
           cells: {

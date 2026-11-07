@@ -78,7 +78,8 @@ export function countAddToCartPresses(steps) {
   return (steps || []).filter((s) => press.test(s.label || '') && !check.test(s.label || '')).length;
 }
 
-const FAIL_FINDING = {
+/** Task id -> the finding a failed task creates: [type, severity, what, likelyCause, fix, standard, passCheck]. */
+export const FAIL_FINDING = {
   add_to_cart: ['cart-not-found', 'high', "Add to cart or the cart total could not be found", 'The Add to cart button or the cart total is hard to find: no clear text label, hidden behind a menu, or covered by another element.', 'Give the Add to cart control a visible text label (or aria-label) and show the cart total as plain text on the cart page.', 'WCAG 4.1.2 Name, Role, Value', 'Add to cart passes in 5 steps or fewer'],
   find_price: ['price-not-found', 'high', 'No product price could be read', 'Prices may be drawn inside images or loaded so late that they are not in the page text.', 'Show prices as plain text next to the product name and add schema.org Product/Offer data.', 'WCAG 1.1.1 Non-text Content; schema.org Product', 'A product price is found in 5 steps or fewer'],
   find_returns: ['returns-not-found', 'medium', 'The return policy could not be found', 'There is probably no clear "Returns" link in the header or footer; the policy sits deep inside a help centre.', 'Add a "Returns" or "Refund policy" link to the footer and header of every page.', undefined, 'The return policy is found in 5 steps or fewer'],

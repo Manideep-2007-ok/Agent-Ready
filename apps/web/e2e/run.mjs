@@ -57,6 +57,9 @@ try {
     await page.getByLabel('Website to test').waitFor();
     expect(await runButton(page).isDisabled(), 'Run test is disabled while the box is empty');
     await page.locator('.ar-hero-ledger').waitFor();
+    const main = await page.locator('main').textContent();
+    expect(!main.includes('Agents arrive as') && !main.includes('Live · 4 agents'), 'no arrival strip and no live-agents mock');
+    expect(await page.locator('.ar-mock').count() <= 2, `at most two mock panels below the hero (${await page.locator('.ar-mock').count()})`);
     await shot(page, 'home');
   }, { page: home.page });
 
@@ -80,6 +83,7 @@ try {
     for (const plan of ['Free', 'Watch', 'Team']) await page.getByRole('heading', { level: 2, name: plan, exact: true }).waitFor();
     const text = await page.locator('main').innerText();
     expect(!/₹\s?\d[\d,]*\s*(\/|per)\s*(mo|month)/i.test(text), 'no monthly price is invented');
+    expect(/about ₹1\.4 a step/.test(text) && !/₹1\.\d\d/.test(text), 'cost per step is rounded (about ₹1.4)');
     await shot(page, 'pricing');
     await page.getByRole('navigation', { name: 'Site' }).getByRole('link', { name: 'Docs' }).click();
     await waitHash(page, /^#\/docs\//);
@@ -105,6 +109,11 @@ try {
     expect(names.includes('Findings reference') && names.includes('CLI'), `pages: ${names.join(', ')}`);
     await page.goto(fast.base + '/#/docs/findings');
     expect(await page.locator('.ar-doc-finding').count() >= 30, 'findings reference lists every finding type');
+    expect(await page.locator('h2[id^=group-]').count() === 6, 'grouped by kind of site');
+    const height = await page.evaluate(() => document.documentElement.scrollHeight / window.innerHeight);
+    expect(height < 6, `findings reference is a few screens, not twelve (${height.toFixed(1)})`);
+    await page.locator('#popup-blocking summary').click();
+    await page.locator('#popup-blocking').getByText('Likely cause').waitFor();
     await page.goto(fast.base + '/#/docs/nope');
     await page.getByText('This page does not exist').waitFor();
     await nav.waitFor();
@@ -157,6 +166,36 @@ try {
     expect(left.length === 0, left.join('\n'));
   }, { page: home.page });
 
+  await t.step('Recent tests: the last 8, no internal id, Show all for the rest; the replay note is said once', async () => {
+    const { page } = home;
+    for (let i = 0; i < 9; i++) {
+      const up = await api(fast.base, '/api/reports', { method: 'POST', body: {
+        id: `rep_recent_${i}`, url: `https://recent-${i}.example.com/`, score: 60 + i, testedAt: new Date(Date.now() - i * 60000).toISOString(),
+        costRupees: 5, botWall: 'none', framework: 'unknown', instantScan: null,
+        tasks: [{ taskId: 'find_price', goal: 'x', mode: 'lite', proxy: 'off', runId: null, status: 'passed', answer: 'x', blocker: null, stuckUrl: null,
+          streamingUrl: null, steps: [], numSteps: 3, seconds: 20, points: 25, findings: [] }],
+      } });
+      expect(up.status === 201, `uploaded ${i} (${up.status})`);
+    }
+    await page.goto(fast.base + '/#/app');
+    await page.reload(); // already on #/app: reload so the list is read again after the uploads
+    const rows = page.locator('.ar-recent tbody tr');
+    await rows.first().waitFor();
+    expect(await rows.count() === 8, `8 rows shown (${await rows.count()})`);
+    const head = await page.locator('.ar-recent thead').innerText();
+    expect(!/\bID\b/.test(head), `no ID column (${head.replace(/\s+/g, ' ')})`);
+    expect(!(await page.locator('.ar-recent tbody').innerText()).includes('rep_'), 'no internal ids in the rows');
+    await page.getByRole('button', { name: /^Show all \d+$/ }).click();
+    expect(await rows.count() >= 9, 'Show all lists every test');
+    await page.getByRole('button', { name: 'Show fewer' }).click();
+    await rows.first().getByRole('link').click();
+    await waitHash(page, /^#\/app\/test\/rep_recent_0$/);
+    await page.goto(fast.base + '/#/app');
+    await rows.first().waitFor();
+    const said = (await page.locator('body').innerText()).match(/no agent cost/gi) ?? [];
+    expect(said.length === 1, `the replay note appears once on the page (${said.length})`);
+  }, { page: home.page });
+
   await t.step('theme toggle switches light and dark and remembers the choice', async () => {
     const { page } = home;
     const toggle = page.locator('.theme-toggle');
@@ -205,8 +244,11 @@ try {
     await waitHash(page, /#\/app\/test\/rep_\d+_\d+_nykaa/);
     await page.locator('.ar-lane').first().waitFor();
     await page.getByRole('button', { name: 'Stop test' }).waitFor();
+    expect(await page.locator('.ar-lane').count() === 4, 'four lanes while it runs');
     await reportDone(page);
-    expect(await page.locator('.ar-lane').count() === 4, 'four lanes');
+    await page.locator('.ar-task-ledger').waitFor();
+    expect(await page.locator('.ar-lane').count() === 0, 'a finished report shows the task table, not the lane cards');
+    expect(await page.locator('.ar-task-ledger tbody tr').count() === 4, 'four task rows');
     const chips = await chipsSeen(run.page);
     expect(chips.includes('Running'), `lanes showed Running (saw ${chips.join(', ')})`);
     expect(chips.some((c) => c === 'Waiting for an agent'), `lanes showed Waiting for an agent (saw ${chips.join(', ')})`);
@@ -220,19 +262,26 @@ try {
     await shot(page, 'nykaa-report');
   }, { page: run.page });
 
-  await t.step('click a screenshot to open the viewer, then close it (click and Esc)', async () => {
+  await t.step('Steps: each task shows the agent\'s answer; a screenshot opens the viewer, then closes (click and Esc)', async () => {
     const { page } = run;
-    await page.locator('.ar-lane-shot').first().click();
+    await openTab(page, 'Steps');
+    const firstTask = page.locator('.timeline-task').first();
+    await firstTask.waitFor();
+    expect(/Agent's answer|What blocked it/.test(await firstTask.textContent()), 'the task shows its answer in Steps');
+    await firstTask.locator('.timeline-steps button').nth(1).click();
+    const stageShot = () => page.locator('.timeline-stage-shot').first().click();
+    await stageShot();
     const viewer = page.getByRole('dialog', { name: 'Screenshot' });
     await viewer.waitFor();
     await page.waitForFunction(() => { const i = document.querySelector('.shot-viewer img'); return i && i.complete && i.naturalWidth > 0; });
     await shot(page, 'screenshot-viewer');
     await viewer.click();
     await viewer.waitFor({ state: 'detached' });
-    await page.locator('.ar-lane-shot').first().click();
+    await stageShot();
     await viewer.waitFor();
     await page.keyboard.press('Escape');
     await viewer.waitFor({ state: 'detached' });
+    await openTab(page, 'Overview');
   }, { page: run.page });
 
   await t.step('Top fix "See details" jumps to its finding card', async () => {
@@ -245,8 +294,15 @@ try {
     await sleep(300);
     const box = await page.locator('#top-fix-1').boundingBox();
     expect(box && box.y >= -5 && box.y < 400, `finding card is scrolled into view (y=${box?.y})`);
-    const text = await page.locator('#top-fix-1').textContent();
-    for (const q of ['What happened?', 'Where exactly?', 'How bad is it?', 'How to fix it?']) expect(text.includes(q), `finding answers "${q}"`);
+    const card = page.locator('#top-fix-1');
+    const shown = await card.innerText();
+    expect(/FIX/i.test(shown) && /FIXED WHEN/i.test(shown), 'the card shows the fix and how to know it is fixed');
+    const title = (await card.locator('h3').innerText()).trim();
+    expect(shown.split(title).length === 2, 'the problem is said once (the title), not again in the body');
+    expect(!(await card.getByText('Likely cause:').isVisible()), 'where, why and how bad wait behind More');
+    await card.getByText('More', { exact: true }).click();
+    await card.getByText('Likely cause:').waitFor();
+    for (const q of ['Where', 'Why', 'How bad']) expect((await card.innerText()).includes(q.toUpperCase()) || (await card.innerText()).includes(q), `More shows "${q}"`);
     await shot(page, 'finding');
   }, { page: run.page });
 
@@ -282,12 +338,13 @@ try {
     await clickTest(page);
     await waitHash(page, /#\/app\/test\/rep_/);
     await reportDone(page);
-    const lane = page.locator('.ar-lane', { hasText: 'Your task' });
+    expect(/Not run in replay mode/.test(await page.locator('.ar-task-ledger').innerText()), 'task ledger says the custom task was not run');
+    await openTab(page, 'Steps');
+    const lane = page.locator('.timeline-task', { hasText: 'Your task' });
     await lane.waitFor();
-    expect((await lane.innerText()).includes('🚚'), 'emoji shown in the lane title');
+    expect((await lane.innerText()).includes('🚚'), 'emoji shown in the task title');
     expect(/Replay: this answer is from a recorded run, not your custom task/.test(await lane.innerText()), 'honest replay note');
     expect(!(await lane.innerText()).includes("Agent's answer"), 'no recorded answer shown as the result');
-    expect(/Not run in replay mode/.test(await page.locator('.ar-task-ledger').innerText()), 'task ledger says the custom task was not run');
     await shot(page, 'custom-task');
   }, { page: demo.page });
 
@@ -675,6 +732,9 @@ try {
     await page.locator('.ar-report-score').waitFor();
     await sleep(300);
     expect(await noHScroll(page), `long address fits (scrollWidth ${await page.evaluate(() => document.documentElement.scrollWidth)})`);
+    await openTab(page, 'Steps');
+    await page.getByText('Long answer Long answer').first().waitFor();
+    expect(await noHScroll(page), 'a 500-character answer fits in Steps');
     await page.goto(fast.base + '/#/app');
     await page.locator('.ar-recent tr', { hasText: 'a-very-long-store-name' }).first().waitFor();
     expect(await noHScroll(page), 'recent tests ledger fits');
@@ -737,6 +797,8 @@ try {
     await page.emulateMedia({ media: 'print' });
     const shown = await page.evaluate(() => [...document.querySelectorAll('[role=tabpanel]')].map((p) => getComputedStyle(p).display !== 'none'));
     expect(shown.length === 5 && shown.every(Boolean), `all five tab panels print (${shown})`);
+    const more = await page.evaluate(() => { const dd = document.querySelector('.ar-finding-more dd'); return dd ? dd.getBoundingClientRect().height : -1; });
+    expect(more > 0, `a finding's "More" part prints (height ${more})`);
     const heads = await page.evaluate(() => [...document.querySelectorAll('.ar-print-heading')].filter((h) => getComputedStyle(h).display !== 'none').map((h) => h.textContent));
     expect(heads.join(',') === 'Overview,Findings,Steps,History,Scan', `each printed tab has its heading (${heads})`);
     expect(await page.evaluate(() => getComputedStyle(document.querySelector('.ar-sidebar')).display) === 'none', 'sidebar hidden in print');
