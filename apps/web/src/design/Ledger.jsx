@@ -1,3 +1,5 @@
+import { followsRowClick } from './rowClick.js';
+
 // Numbered table rows (Vouch-style ledger). A row with href is a link across the whole row; hideOnPhone drops a column under 640 px.
 /**
  * @param {{columns:{key:string,label:string,align?:'left'|'right',hideOnPhone?:boolean,mono?:boolean}[],
@@ -19,7 +21,7 @@ export default function Ledger({ columns, rows, empty = null, caption }) {
         <tbody>
           {rows.map((r) => (
             <tr key={r.id} className={r.href || r.onClick ? 'is-link' : undefined}
-              onClick={r.onClick ?? (r.href ? () => { window.location.hash = r.href.replace(/^#/, ''); } : undefined)}>
+              onClick={r.onClick ?? (r.href ? (e) => { if (followsRowClick(e, window.getSelection?.().toString())) window.location.hash = r.href.replace(/^#/, ''); } : undefined)}>
               <td className="ar-ledger-id">
                 {r.href ? <a href={r.href} onClick={(e) => e.stopPropagation()}>{r.id}</a> : r.id}
               </td>

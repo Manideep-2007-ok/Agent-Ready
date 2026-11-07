@@ -605,8 +605,11 @@ try {
     const { page } = phone;
     await page.goto(fast.base + '/#/app');
     const menu = page.getByRole('button', { name: 'Open menu' });
+    await page.locator('#ar-sidebar').waitFor({ state: 'attached' });
+    expect(await page.locator('#ar-sidebar').evaluate((e) => e.inert === true), 'the closed drawer is out of keyboard and screen-reader reach');
     await menu.click();
     await page.getByRole('navigation', { name: 'Workspace' }).getByRole('link', { name: 'Watch' }).waitFor();
+    expect(await page.locator('#ar-sidebar').evaluate((e) => !e.inert && e.contains(document.activeElement)), 'focus moves into the open drawer');
     await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Open menu' }).waitFor();
     expect(await page.evaluate(() => document.activeElement?.getAttribute('aria-label')) === 'Open menu', 'focus is back on the menu button');
@@ -672,6 +675,18 @@ try {
     expect(await page.evaluate(() => document.activeElement?.textContent) === 'Replay', 'Replay takes focus');
   }, { page: kb.page });
 
+  await t.step('a failed Re-run (server busy) keeps the report on screen and says why', async () => {
+    const { page } = kb;
+    await page.route('**/api/tests', (route) => (route.request().method() === 'POST'
+      ? route.fulfill({ status: 429, contentType: 'application/json', body: JSON.stringify({ error: '6 tests are already running. Please wait for one to finish (or stop one) and try again.' }) })
+      : route.continue()));
+    await page.getByRole('button', { name: 'Re-run' }).click();
+    await page.getByRole('alert').filter({ hasText: 'already running' }).waitFor();
+    expect(await page.locator('.ar-report-score').isVisible(), 'the report is still shown');
+    expect(await page.getByText('could not find that report', { exact: false }).count() === 0, 'not mistaken for a missing report');
+    await page.unroute('**/api/tests');
+  }, { page: kb.page });
+
   await t.step('Save as PDF: the print layout shows every tab and hides the app frame and buttons', async () => {
     const { page } = kb;
     await openTab(page, 'Overview');
@@ -680,6 +695,11 @@ try {
     expect(shown.length === 5 && shown.every(Boolean), `all five tab panels print (${shown})`);
     expect(await page.evaluate(() => getComputedStyle(document.querySelector('.ar-sidebar')).display) === 'none', 'sidebar hidden in print');
     expect(await page.evaluate(() => getComputedStyle(document.querySelector('.ar-tabs')).display) === 'none', 'tab bar hidden in print');
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
+    const ink = await page.evaluate(() => getComputedStyle(document.querySelector('.ar-report-host')).color);
+    const [r, g, b] = ink.match(/\d+/g).map(Number);
+    expect(r + g + b < 200, `dark theme still prints dark ink on white paper (${ink})`);
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
     const pdf = await page.pdf({ format: 'A4' });
     expect(pdf.length > 20000, `a PDF was produced (${pdf.length} bytes)`);
     await page.emulateMedia({ media: 'screen' });

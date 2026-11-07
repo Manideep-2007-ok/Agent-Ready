@@ -46,6 +46,18 @@ function Sidebar({ page, features, version, onNavigate }) {
 export default function AppShell({ page, features, replay, version, title, crumbs, actions, children }) {
   const [open, setOpen] = useState(false);
   const menuButton = useRef(null);
+  const aside = useRef(null);
+  // Under 900 px the sidebar is a drawer: while closed it is inert (no Tab stops, hidden from screen readers).
+  const [narrow, setNarrow] = useState(() => window.matchMedia?.('(max-width: 900px)').matches ?? false);
+  useEffect(() => {
+    const mq = window.matchMedia?.('(max-width: 900px)');
+    if (!mq) return undefined;
+    const on = () => setNarrow(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+  // Opening the drawer moves focus to its first link.
+  useEffect(() => { if (open) aside.current?.querySelector('a, button')?.focus(); }, [open]);
   const close = () => { setOpen(false); menuButton.current?.focus(); };
   useEffect(() => {
     if (!open) return undefined;
@@ -65,7 +77,7 @@ export default function AppShell({ page, features, replay, version, title, crumb
         </button>
       </header>
       {open && <div className="ar-scrim" onClick={close} aria-hidden="true" />}
-      <aside id="ar-sidebar" className={`ar-sidebar${open ? ' is-open' : ''}`}>
+      <aside id="ar-sidebar" ref={aside} className={`ar-sidebar${open ? ' is-open' : ''}`} inert={narrow && !open ? '' : undefined}>
         <Sidebar page={page} features={features} version={version} onNavigate={() => setOpen(false)} />
       </aside>
       <div className="ar-main">

@@ -41,7 +41,8 @@ function topFixesOf(report) {
 export default function ReportPage({ id, beforeId }) {
   const live = useLiveEvents(id);
   const [url, setUrl] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(''); // the report itself could not be loaded
+  const [actionError, setActionError] = useState(''); // Stop, Re-run or Apply fixes failed: the report stays on screen
   const [tab, setTab] = useState('overview');
   const [shot, setShot] = useState(null);
   const [stopping, setStopping] = useState(false);
@@ -51,7 +52,7 @@ export default function ReportPage({ id, beforeId }) {
   const [jump, setJump] = useState(null);
 
   useEffect(() => {
-    setUrl(''); setError(''); setStopping(false); setRerunning(false); setEnriched(null); setTab('overview');
+    setUrl(''); setError(''); setActionError(''); setStopping(false); setRerunning(false); setEnriched(null); setTab('overview');
     getReport(id).then((r) => setUrl(r.url)).catch((e) => setError(e.message));
   }, [id]);
   useEffect(() => { getHealth().then((h) => setDemoStoreUrl(h.demoStoreUrl ?? null)).catch(() => {}); }, []);
@@ -78,22 +79,25 @@ export default function ReportPage({ id, beforeId }) {
 
   const onStop = async () => {
     setStopping(true);
-    try { const r = await cancelTest(id); if (!r?.cancelled) setStopping(false); } catch (e) { setError(e.message); }
+    setActionError('');
+    try { const r = await cancelTest(id); if (!r?.cancelled) setStopping(false); } catch (e) { setActionError(e.message); setStopping(false); }
   };
   const onRerun = async () => {
     setRerunning(true);
+    setActionError('');
     try {
       const r = report ?? (await getReport(id));
       const { reportId } = await startTest(r.url, r.customText, { confirm: !!r.confirm, pack: r.pack });
       navigate('test', reportId);
-    } catch (e) { setError(e.message); setRerunning(false); }
+    } catch (e) { setActionError(e.message); setRerunning(false); }
   };
   const onApplyFixes = async () => {
     setRerunning(true);
+    setActionError('');
     try {
       const { reportId } = await startTest((await setDemoFlaws(false)).url);
       navigate('test', reportId, id);
-    } catch (e) { setError(e.message); setRerunning(false); }
+    } catch (e) { setActionError(e.message); setRerunning(false); }
   };
 
   const finished = report?.status === 'complete';
@@ -113,6 +117,7 @@ export default function ReportPage({ id, beforeId }) {
   return (
     <div className="ar-report">
       <ReportHeader report={report} url={url} tasks={tasks} running={running} stopping={stopping} onStop={onStop} onRerun={onRerun} rerunning={rerunning} />
+      {actionError && <p className="ar-error" role="alert">{actionError}</p>}
       {live.connection === 'lost' && running && <p className="ar-faint ar-small">Connection dropped, reconnecting…</p>}
       <Tabs tabs={TABS} current={tab} onChange={setTab} label="Report sections" idPrefix="report" />
       <TabPanel id="overview" current={tab} idPrefix="report">
