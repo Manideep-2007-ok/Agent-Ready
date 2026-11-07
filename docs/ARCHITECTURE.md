@@ -152,6 +152,8 @@ getWallet()
 
 // proxy mapping used by startRun*: 'off' -> {enabled:false}; 'IN'|'US' -> {enabled:true,type:'tinyfish',country_code}
 // mode mapping: browser_profile = mode ('lite'|'stealth'); agent_config = {max_duration_seconds: maxSeconds}
+// output_schema = ANSWER_SCHEMA (goals.js, P2-4): the result is always {success, answer, blocker, stuck_url}. An HTTP 400 naming
+// output_schema sends the run again without it, and later runs skip it (D45).
 
 // runner.js
 runTask({ url, taskId, customText, mode, proxy }, onEvent, ctx?)   // -> TaskResult (single attempt)

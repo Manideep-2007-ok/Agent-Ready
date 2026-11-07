@@ -6,6 +6,20 @@ export const GOAL_SUFFIX =
   'stop and describe exactly what blocked you and at which step. ' +
   'Return JSON: {"success": true/false, "answer": string or null, "blocker": string or null, "stuck_url": string or null}';
 
+/** The same answer shape as TinyFish output_schema (P2-4), so the result is always this object, not prose. Only keywords
+ * TinyFish accepts (no additionalProperties; nullable instead of type arrays). GOAL_SUFFIX stays as the tested wording. */
+export const ANSWER_SCHEMA = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    answer: { type: 'string', nullable: true },
+    blocker: { type: 'string', nullable: true },
+    stuck_url: { type: 'string', nullable: true },
+  },
+  required: ['success'],
+  propertyOrdering: ['success', 'answer', 'blocker', 'stuck_url'],
+};
+
 // Goal wording for the four packs. The shop goals were tested on 31 Oct 2026 against real stores. The saas, content and
 // local goals are UNTESTED ON LIVE AGENTS: they follow the same style (one clear job, what to report, "do NOT submit" where a
 // form is involved) but have not been run yet. docs/PACK-LIVE-TEST.md is how to try each once and tune the wording.

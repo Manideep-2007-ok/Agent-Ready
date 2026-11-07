@@ -1,6 +1,7 @@
 // Every TinyFish HTTP call lives here (plain fetch, header X-API-Key). Mock mode delegates to mock.js.
 import { config, requireApiKey } from './config.js';
 import * as mock from './mock.js';
+import { ANSWER_SCHEMA } from './goals.js';
 
 const AGENT = 'https://agent.tinyfish.ai';
 const FETCH_API = 'https://api.fetch.tinyfish.ai';
@@ -31,6 +32,11 @@ async function check(res, what) {
 
 const proxyConfig = (proxy) => (proxy === 'IN' || proxy === 'US' ? { enabled: true, type: 'tinyfish', country_code: proxy } : { enabled: false });
 
+// Structured answers (P2-4): every run asks for ANSWER_SCHEMA. If the account refuses the field (HTTP 400 naming it),
+// the run is sent again without it and the refusal is remembered, so a run is never lost to it.
+let schemaRefused = false;
+const refusesSchema = (err) => err?.status === 400 && /output_schema/i.test(err.message);
+
 function runBody({ url, goal, mode = 'lite', proxy = 'off', maxSeconds, webhookUrl }) {
   const body = {
     url, goal,
@@ -38,8 +44,20 @@ function runBody({ url, goal, mode = 'lite', proxy = 'off', maxSeconds, webhookU
     proxy_config: proxyConfig(proxy),
     agent_config: { max_duration_seconds: maxSeconds || config.maxDurationSeconds }, // never max_steps / capture_config
   };
+  if (!schemaRefused) body.output_schema = ANSWER_SCHEMA;
   if (webhookUrl) body.webhook_url = webhookUrl;
   return body;
+}
+
+/** POST a run; on an output_schema refusal, remember it and POST once more without the field. */
+async function postRun(path, params, what, init = {}) {
+  const send = () => fetch(`${AGENT}${path}`, { method: 'POST', headers: headers(true), body: JSON.stringify(runBody(params)), ...init });
+  const res = await send();
+  try { return await check(res, what); } catch (err) {
+    if (schemaRefused || !refusesSchema(err)) throw err;
+    schemaRefused = true;
+    return check(await send(), what);
+  }
 }
 
 /**
@@ -56,14 +74,12 @@ export async function startRunSSE(params, handlers = {}) {
   const startTimer = setTimeout(() => startCtl.abort(), 60_000);
   let res;
   try {
-    res = await fetch(`${AGENT}/v1/automation/run-sse`, { method: 'POST', headers: headers(true), body: JSON.stringify(runBody(params)),
-      signal: signal ? AbortSignal.any([signal, startCtl.signal]) : startCtl.signal });
+    res = await postRun('/v1/automation/run-sse', params, 'start run', { signal: signal ? AbortSignal.any([signal, startCtl.signal]) : startCtl.signal });
   } catch (err) {
     if (signal?.aborted) throw err; // the caller cancelled
     if (startCtl.signal.aborted) throw new Error('TinyFish did not answer in time (start run)');
     throw err;
   } finally { clearTimeout(startTimer); }
-  await check(res, 'start run');
 
   const dropped = (why) => Object.assign(new Error(`Live stream closed before the run finished (${why})`), { code: 'STREAM_DROPPED', runId });
   const handle = (e) => {
@@ -123,8 +139,7 @@ export async function* parseSSE(body) {
 /** Start a background run. Returns {runId}. */
 export async function startRunAsync(params) {
   if (config.mock) return mock.startRunAsync(params);
-  const res = await fetch(`${AGENT}/v1/automation/run-async`, { method: 'POST', headers: headers(true), body: JSON.stringify(runBody(params)), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
-  await check(res, 'start background run');
+  const res = await postRun('/v1/automation/run-async', params, 'start background run', { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   const j = await res.json();
   return { runId: j.run_id };
 }

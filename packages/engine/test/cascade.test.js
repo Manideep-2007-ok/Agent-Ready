@@ -294,3 +294,35 @@ test('after Stop the lane says cancelled at once and the agent slot is free whil
   assert.equal(report.tasks[0].numSteps, 0);
   assert.equal(report.costRupees, 0);
 });
+
+// P2-4: structured answers. Every run asks TinyFish for the answer shape GOAL_SUFFIX describes (output_schema), using
+// only keywords TinyFish accepts. An account that refuses the field still gets its runs: the run is sent again
+// without it, and later runs skip it. (Keep these two tests last: the refusal is remembered for the process.)
+test('every run asks for the answer shape as output_schema (TinyFish-allowed keywords only)', async () => {
+  fake = installFakeTinyFish({ runSse: () => finished(ok, 2) });
+  await runTaskWithBotWall({ url: URL_, taskId: 'find_price' });
+  const schema = fake.calls.sse[0].body.output_schema;
+  assert.deepEqual(Object.keys(schema.properties), ['success', 'answer', 'blocker', 'stuck_url']);
+  assert.equal(schema.type, 'object');
+  assert.equal(schema.properties.success.type, 'boolean');
+  assert.deepEqual(schema.required, ['success']);
+  for (const k of ['answer', 'blocker', 'stuck_url']) assert.deepEqual(schema.properties[k], { type: 'string', nullable: true });
+  const allowed = new Set(['type', 'properties', 'required', 'propertyOrdering', 'nullable', 'items', 'enum', 'format', 'minimum', 'maximum', 'minItems', 'maxItems', 'anyOf']);
+  const walk = (node) => { for (const [k, v] of Object.entries(node)) { if (k === 'properties') Object.values(v).forEach(walk); else assert.ok(allowed.has(k), `keyword ${k}`); } };
+  walk(schema);
+});
+
+test('if TinyFish refuses output_schema, the run is sent again without it and later runs skip it', async () => {
+  fake = installFakeTinyFish({
+    runSse: ({ body }) => (body.output_schema
+      ? { end: 'http', status: 400, body: { error: { code: 'INVALID_INPUT', message: 'output_schema is not enabled for this account' } } }
+      : finished(ok, 2)),
+  });
+  const r = await runTaskWithBotWall({ url: URL_, taskId: 'find_price' });
+  assert.equal(r.status, 'passed');
+  assert.equal(fake.calls.sse.length, 2);
+  assert.ok(fake.calls.sse[0].body.output_schema && !fake.calls.sse[1].body.output_schema);
+  await runTaskWithBotWall({ url: URL_, taskId: 'find_contact' });
+  assert.equal(fake.calls.sse.length, 3);
+  assert.ok(!fake.calls.sse[2].body.output_schema, 'remembered: no second refusal');
+});
