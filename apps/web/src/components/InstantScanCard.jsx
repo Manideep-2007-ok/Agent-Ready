@@ -50,6 +50,15 @@ export default function InstantScanCard({ scan, loading }) {
         <Row label="Product data (schema.org)" value={schema[0]} tone={schema[1]} />
         <Row label="robots.txt" value={fileText(scan.robotsTxt)} tone={fileTone(scan.robotsTxt)} />
         <Row label="sitemap" value={fileText(scan.sitemap)} tone={fileTone(scan.sitemap)} />
+        {/* Scan v2 fields; older reports have none, so the rows only show when the scan measured them. */}
+        {Array.isArray(scan.aiBlockedAgents) && scan.robotsTxt === 'found' && (
+          <Row label="AI agents allowed by robots.txt" value={scan.aiBlockedAgents.length ? `${scan.aiBlockedAgents.length} blocked` : 'All allowed'}
+            tone={scan.aiBlockedAgents.some((a) => /-User$/.test(a)) ? 'bad' : scan.aiBlockedAgents.length ? 'warn' : 'good'} />
+        )}
+        {typeof scan.cartLink === 'boolean' && browserRan && (
+          <Row label="Link to the cart" value={scan.cartLink ? 'Found' : 'Missing'} tone={scan.cartLink ? 'good' : 'warn'} />
+        )}
+        {scan.llmsTxt && <Row label="llms.txt" value={fileText(scan.llmsTxt)} tone={scan.llmsTxt === 'found' ? 'good' : 'info'} />}
         <Row label="Framework" value={FRAMEWORKS[scan.framework] || 'Not detected'} tone="info" />
       </ul>
       <div className="ar-scan-foot">Scanned in {n(scan.seconds)}s</div>

@@ -326,7 +326,7 @@ button.secondary:hover:not(:disabled) { background: var(--line-strong); }
 .hero { grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); }
 .hero-globe { position: relative; width: 100%; aspect-ratio: 1; max-width: 520px; justify-self: center; }
 .hero-shadow { font-style: italic; color: var(--text); }
-@media (max-width: 900px) { .hero-globe { max-width: 340px; } }
+@media (max-width: 900px) { .hero { grid-template-columns: 1fr; } .hero-globe { max-width: 340px; } }
 .hero-facts { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 .hero-facts .fact { background: var(--card); box-shadow: var(--shadow); }
 .hero-facts .fact:hover { box-shadow: var(--shadow-lift); }

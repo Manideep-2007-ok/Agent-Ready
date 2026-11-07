@@ -64,7 +64,8 @@ export default function App() {
   const page = tabOn(TABS.find((t) => t.id === route.page)) ? route.page : (features === null ? route.page : 'test');
 
   useEffect(() => {
-    const onChange = () => setRoute(readHash());
+    // The hash is only used for pages, so a new hash is a new page: start it at the top, not at the old scroll depth.
+    const onChange = () => { setRoute(readHash()); window.scrollTo(0, 0); };
     window.addEventListener('hashchange', onChange);
     return () => window.removeEventListener('hashchange', onChange);
   }, []);

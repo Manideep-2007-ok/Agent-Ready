@@ -257,15 +257,30 @@ Answer checks (D28, findings only: they never fail a task or change points; `poi
 
 The answer checks are shop-only (they look at `find_price` / `add_to_cart` answers). A `cancelled` task scores 0 points and has no findings.
 
+More findings from the agent's own words and from re-reading the page (findings only, `pointsIfFixed: 0`):
+
+| Condition | Finding type | Severity |
+|---|---|---|
+| `add_to_cart` passed and 2+ step labels press Add to cart (`countAddToCartPresses`) | `no-cart-feedback` | medium |
+| `find_price`/`add_to_cart` passed and the answer or a step label says the price was read from an image/screenshot | `price-in-image` | high |
+| confirmed test (D41): the runs disagreed (`task.flaky`) | `inconsistent-results` | medium |
+| claim check (D42): the page the agent named does not show what it reported, or the answer names another website | `unconfirmed-claim` | low |
+
+**Confirm results (D41, `confirm.js`, opt-in):** `runSiteTest({confirm:true})` runs each task again with the mode and proxy the bot-wall cascade ended on; if the two disagree, a third run decides. The majority sets the status; the task shown is the first run that agrees with the majority, keeping the cascade's `attempts`/`verdict`. `task.runs[]` lists every run (`runs[0]` = the cascade's), `task.flaky` = they disagreed, `task.confirming = {run, of}` is on live updates while a repeat runs. Not repeated: stopped tasks, replay placeholders, never-started runs, and `blocked` tasks (the cascade already proved the wall).
+
+**Claim checks (D42, `claims.js`):** after the agents finish, every passed task whose answer names a page on this site (and states a checkable fact: return days, a price, an email, a phone number) gets that page read with TinyFish Fetch (free, 20 s cap). `task.claim = {status:'confirmed'|'not-found'|'off-site', url, facts:[{label, found}]}`. An unreadable page leaves no `claim` (unchecked, never a failure). Skipped in replay mode.
+
 `pointsIfFixed` = points the task would gain if the finding disappeared (e.g. failed -> passed in 5 steps = up to +25).
-`costRupees = totalSteps * 0.016 * 88` (all attempts included).
+`costRupees = totalSteps * 0.016 * 88` (all bot-wall attempts and all repeat runs included; `taskSteps(t)`).
+
+**Cost estimate and limits (D43):** `estimateCost({tasks, confirm})` -> `{lowRupees, highRupees, worstRupees, rupeesPerStep}` from 4-15 typical steps per task (x2 when confirming; worst = the 3-run cascade, 5 runs when confirming). Each test runs under a cost limit (`BUDGET_PER_TEST_RUPEES`, default 300, 0 = off): the run context counts live steps and cancels the test with reason `budget` when they reach the limit; the report gets `status:'cancelled'`, `stopReason:'budget'`, `budgetRupees`. The server also keeps a daily total (`data/budget/<YYYY-MM-DD>.json`) and refuses new tests with `429` once `BUDGET_PER_DAY_RUPEES` is spent (replay mode is never counted or refused).
 
 ---
 
 ## 8. Instant Scan (`instantScan.js`), target 15-30 s
 
 Run in parallel:
-- **Fetch (free):** `fetchPages([url, origin+'/robots.txt', origin+'/sitemap.xml'])` -> `pageTextChars`, `robotsTxt`, `sitemap`.
+- **Fetch (free):** `fetchPages([url, origin+'/robots.txt', origin+'/sitemap.xml', origin+'/llms.txt'])` -> `pageTextChars`, `robotsTxt`, `sitemap`, `llmsTxt`, and `aiBlockedAgents` (Scan v2): the AI agents (`AI_AGENTS`: ChatGPT-User, OAI-SearchBot, GPTBot, Claude-User, ClaudeBot, PerplexityBot, Perplexity-User, Google-Extended, CCBot, Applebot-Extended) whose robots.txt group (their own, else `*`) has `Disallow: /` without `Allow: /` (`aiAgentsBlockedByRobots`, pure).
 - **Browser API:** `createBrowserSession({url, countryCode:'IN'})` -> `chromium.connectOverCDP(cdpUrl)` -> wait `domcontentloaded` + 3 s -> `page.evaluate` to compute:
   - `unlabelledButtons`: `button, [role=button], a` with no innerText, no `aria-label`, no `title`, no `img[alt]` inside.
   - `imagesWithoutAlt`, `totalImages`.
@@ -273,10 +288,11 @@ Run in parallel:
   - `overlayCoveringPage`: any visible element with `position: fixed|sticky` covering >30% of the viewport.
   - `productSchema`: any `script[type="application/ld+json"]` containing `Product` or `Offer`.
   - `framework`: `detectFramework(page)`.
+  - `cartLink` (Scan v2): a visible link or button whose text, label, title or address says cart/bag/basket/trolley.
   - `schemaTypes` and `keywordHits` (D40): the schema.org `@type` names in the JSON-LD, and how often words for cart, pricing, sign-up, docs, article, newsletter, hours, booking and menu appear in the page text (each count capped at 20). Same page evaluate, no extra cost. `detectPack(scan)` (`packs.js`, pure) turns them into a pack: product schema, Add to cart or price text score for `shop`; software schema, pricing/sign-up/docs words for `saas`; article schema, blog/newsletter words for `content`; LocalBusiness schema, opening hours, reserve/appointment/menu words for `local`. Highest score wins; no signal or a tie goes to `content`, then `saas`, `local`, `shop` (shop wins only through product signals). A scan that read nothing means "auto" falls back to `shop`.
 - Then open one same-origin product link from the home page (`/product`, `/products/`, `/p/`, `/dp/`, 12 s cap) and run the same audit there; counts add up, a problem on either page counts. Many flaws (icon-only Add to cart, price images) live on product pages.
 - robots.txt / sitemap that Fetch could not read are reported as `missing`; `error` only when the whole Fetch call failed.
-- Always `closeBrowserSession` in `finally`. Instant Scan findings: `popup-blocking`, `unlabelled-buttons`, `price-in-image` (no price text but price expected), `no-product-schema` (low severity). The last two are shop-only: `instantScanFindings(scan, pack)` never flags a blog, SaaS or local site for "no price" (D40).
+- Always `closeBrowserSession` in `finally`. Instant Scan findings: `popup-blocking`, `unlabelled-buttons`, `price-in-image` (no price text but price expected), `no-product-schema` (low severity), and from Scan v2 `robots-blocks-ai-agents` (high when an assistant that visits for a person, `*-User`, is blocked, else medium; needs only Fetch) and `no-cart-link` (medium, shop only; only when the scan measured `cartLink`). Price, product-data and cart findings are shop-only: `instantScanFindings(scan, pack)` never flags a blog, SaaS or local site for "no price" (D40).
 - The server stores them as `SiteReport.scanFindings` (`instantScanFindings(scan, pack)`) as soon as the scan finishes. They are not part of the 100-point score (`pointsIfFixed: 0`), are shown in the findings list next to task findings, and can enter the Top 3 (D25).
 
 ---
@@ -297,8 +313,8 @@ For each finding:
 
 | Method + path | Body / query | Returns |
 |---|---|---|
-| `GET /api/health` | | `{ok, version, mock, demoStoreUrl, features:{RACE,WATCH,FIXES_AI,CUSTOM_TASK,LEADERBOARD,CLI_UPLOAD}, queue:{maxParallel,running,queued,bySource,groups}, activeTests}` (`demoStoreUrl` is null when not set; the dashboard hides the Race and Leaderboard tabs when their flag is false) |
-| `POST /api/tests` | `{url, pack?, tasks?, customTask?}` | `{reportId}`; starts Instant Scan + test in background. `pack` = `auto`, `shop`, `saas`, `content` or `local` (D40; omitted = shop). `tasks` may be ids from any pack and name the pack themselves. `auto` runs the Instant Scan first, picks the pack (SSE `pack-detected`, report `pack` + `packDetected`; `detectingPack: true` until then) and runs that pack's four tasks. In replay mode only shop tasks are accepted (400 otherwise); `auto` means shop there |
+| `GET /api/health` | | `{ok, version, mock, demoStoreUrl, features:{RACE,WATCH,FIXES_AI,CUSTOM_TASK,LEADERBOARD,CLI_UPLOAD}, queue:{maxParallel,running,queued,bySource,groups}, activeTests, budget:{perTestRupees, perDayRupees, spentTodayRupees, testsToday, leftTodayRupees}}` (`demoStoreUrl` is null when not set; the dashboard hides the Race and Leaderboard tabs when their flag is false) |
+| `POST /api/tests` | `{url, pack?, tasks?, customTask?, confirm?}` | `{reportId}`; starts Instant Scan + test in background. `confirm: true` runs each task 2-3 times and keeps the majority (D41; anything but a boolean is a 400). Refused with `429` when today's budget is spent (D43). `pack` = `auto`, `shop`, `saas`, `content` or `local` (D40; omitted = shop). `tasks` may be ids from any pack and name the pack themselves. `auto` runs the Instant Scan first, picks the pack (SSE `pack-detected`, report `pack` + `packDetected`; `detectingPack: true` until then) and runs that pack's four tasks. In replay mode only shop tasks are accepted (400 otherwise); `auto` means shop there |
 | `GET /api/tests/:id` | | `SiteReport` (includes `scanFindings` once the Instant Scan is done) |
 | `GET /api/tests/:id/events` | | SSE `LiveEvent` stream; first message replays current report |
 | `POST /api/tests/:id/cancel` | | `{ok, cancelled, status}`; stops a running test or Watch check (idempotent, 404 for unknown ids). Report ends with status `cancelled` |
@@ -317,6 +333,8 @@ For each finding:
 | `GET /api/watch/:id/history` | | `SiteReport[]` |
 | `PATCH /api/watch/:id` | `{enabled?, everyMinutes?}` | `Watch`. `enabled:false` also cancels the check running right now |
 | `POST /api/webhooks/tinyfish` | TinyFish webhook | `200` |
+| `GET /api/estimate` | `?tasks=1-5&confirm=1` | `{tasks, confirm, lowRupees, highRupees, worstRupees, rupeesPerStep, mock, budget}` before a test starts (D43) |
+| `GET /api/sites/history` | `?url=` | every finished report of that host (www. ignored, live + cached), oldest first: `{id, url, testedAt, score, botWall, costRupees, source, pack, confirm, tasks:[{taskId,status,numSteps,seconds,points,flaky}], findingTypes}` |
 | `GET /api/badge/:id.svg` | | flat SVG badge with the report's score (`image/svg+xml`, `Cache-Control: max-age=300`); a missing or invalid id returns a grey "unknown" badge with status 404 |
 | `GET /api/leaderboard` | | reports from `data/cached-demo/leaderboard/` ranked |
 | `POST /api/demo-store/flaws` | `{on:boolean}` | used by "Apply fixes": returns the store URL with `?flaws=on|off` |
@@ -341,10 +359,11 @@ JSON files, written atomically (write temp file, then rename):
 | Watch history | `data/watch/<watchId>.json` (array of reportIds) |
 | Races | `data/races/<raceId>.json` |
 | Screenshot cache | `data/shots/<runId>_<stepId>.jpg` |
+| Agent spend per day | `data/budget/<YYYY-MM-DD>.json` (`{spentRupees, tests}`) |
 | Demo backups (committed) | `data/cached-demo/reports/*.json`, `data/cached-demo/leaderboard/*.json` |
 | Mock fixtures (committed) | `data/cached-demo/fixtures/*` (real 31 Oct runs) |
 
-Store API: `saveReport(r)`, `getReport(id)`, `listReports()`, `saveWatch(w)`, `listWatches()`, `appendWatchHistory(watchId, reportId)`, `getWatchHistory(watchId)`. Swap to MongoDB later by reimplementing these functions only.
+Store API: `saveReport(r)`, `getReport(id)`, `listReports()`, `siteHistory(url)`, `getSpend(day)`, `addSpend(day, rupees)`, `saveWatch(w)`, `listWatches()`, `appendWatchHistory(watchId, reportId)`, `getWatchHistory(watchId)`. Swap to MongoDB later by reimplementing these functions only.
 
 ---
 
@@ -391,6 +410,10 @@ Plain HTML/CSS/JS deployed on Vercel (static). Pages: `index.html` (products), `
 - **iconCart:** Add to cart is an icon-only `<button>` with no text and no `aria-label`; the header cart link is an icon with a number, no "Cart" text.
 - **hiddenReturns:** no "Returns" link in the footer; reachable only via Help -> Policies -> Shipping -> More shipping information -> "Other information" -> "Read the full document" (vague labels, one page deeper than with flaws off).
 With flaws off: normal text price, labelled button, footer Returns link, no popup.
+**v2 flaws that change the outcome** (on with `?flaws=all` or one by one; `?flaws=on` still means the four above):
+- **qtyTwo:** the product page has a quantity box that starts at 2, so one click puts two units in the cart and the total doubles (`wrong-quantity`).
+- **slowCart:** Add to cart takes 4 s, shows no message and leaves the cart count alone until then, so the click looks like it did nothing (`no-cart-feedback`).
+`node apps/demo-store/test-flaws.mjs` checks every flaw (`CHROMIUM_PATH=/usr/bin/chromium` to use a system Chromium).
 `release.js` (`window.RELEASE = {cartBroken:false}`) simulates a bad deploy for the Watch demo: when `true`, Add to cart shows "Something went wrong" and adds nothing. Flip it, push to `main` (Vercel redeploys), run the watch, then revert. Expect ~30 s per task.
 
 ---
@@ -444,6 +467,8 @@ With flaws off: normal text price, labelled button, footer Returns link, no popu
 | `RATE_LIMIT_PER_MIN`, `MAX_ACTIVE_TESTS` | `10`, `6` | server limits |
 | `LOG_LEVEL` | `silent` | turn the JSON log lines off |
 | `AGENTREADY_DATA_DIR` | temp folder | where reports/watches are stored (tests use a temp folder) |
+| `BUDGET_PER_TEST_RUPEES` | `300` | engine: a test stops when its agents have spent this much (0 = no limit; D43) |
+| `BUDGET_PER_DAY_RUPEES` | `1000` | server: refuse new tests once today's agents spent this much (unset/0 = no limit; D43) |
 | `AGENTREADY_ENV_FILE` | path to a file | server and CLI read this file instead of the repo `.env` (a missing file is fine; tests point it at one) |
 
 ---
