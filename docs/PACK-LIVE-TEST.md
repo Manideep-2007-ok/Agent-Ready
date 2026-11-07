@@ -52,3 +52,15 @@ For every task, compare the agent's answer with the page yourself:
 
 Change wording only in `TASK_GOALS` in `goals.js` (never `GOAL_SUFFIX`), run `npm test`, run the task again, and once
 a pack's four tasks pass the checks, remove that pack from the "untested" note in `goals.js` and in ARCHITECTURE section 7.
+
+## Results, 7 Nov 2026
+
+One live run per pack, CLI with `--pack <id> --no-tunnel --no-scan`, about ₹160 in total.
+
+| Pack | Test site | Score | Result |
+|---|---|---|---|
+| `saas` | an open-source analytics product | 94 | 4/4 passed; plan names and prices, sign-up form fields, docs and sales email all right. Wording kept |
+| `content` | a web design magazine | 89 | 4/4 passed; search found an on-topic article through the site's own search (12 steps), the rest in 3-10 steps. Wording kept |
+| `local` | a dental clinic chain | 33 | Not judged. The site answered cloud agents with 403 Forbidden; two tasks "passed" with answers taken from web search. This led to D47. Run again on a restaurant or salon that does not block agents |
+
+`saas` and `content` are no longer marked untested in `goals.js` and ARCHITECTURE section 7; `local` still is.

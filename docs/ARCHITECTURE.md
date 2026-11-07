@@ -49,7 +49,7 @@ Every `package.json` has `"type": "module"`.
 agent-ready/
   docs/ARCHITECTURE.md          this file
   docs/DECISIONS.md             decision log
-  docs/PACK-LIVE-TEST.md        how to try the untested pack goals on live agents
+  docs/PACK-LIVE-TEST.md        how to try the pack goals on live agents, and the 7 Nov results
   (private, linked in)          AGENTS.md, CLAUDE.md, docs/RESEARCH.md, docs/WORKLOG.md, docs/superpowers/, docs/proofs/
   packages/engine/src/
     types.js                    THE CONTRACT (JSDoc). Team agreement to change
@@ -204,8 +204,9 @@ detectFramework(page)                       // Playwright page -> 'nextjs'|'shop
 ## 6. Bot-wall cascade (`botwall.js`)
 
 1. Attempt 1: `mode 'lite'`, `proxy 'off'` (how cloud AI agents arrive).
-2. If not `success` AND looks blocked (blocker matches `/access denied|denied|error page|blocked|captcha|something went wrong|blank|empty page|could not load|not available|\(null\)/i`, or fewer than 2 steps): attempt 2 `lite` + `IN`.
+2. If not `success` AND looks blocked (blocker matches `/access denied|denied|error page|blocked|captcha|something went wrong|blank|empty page|could not load|not available|\(null\)|\b403\b|forbidden/i`, or fewer than 2 steps): attempt 2 `lite` + `IN`.
 3. If attempt 2 still looks blocked: attempt 3 `stealth` + `IN`. **Except (D26):** if attempt 2 took 5+ steps, the agent clearly used the site from an Indian home address, so the "block" is the site's own error (e.g. a broken cart's "Something went wrong"): stop, verdict `none`, normal failure finding.
+**Refusals (D47):** a `403`/`Forbidden` answer counts as blocked (step 2). A task that "passed" while its answer says the site refused it (`saysRefused`: `403`, forbidden, access denied) is treated as blocked, its borrowed answer is dropped, and the cascade goes on; such a refusal is never a site failure under D26.
 4. Verdict per task: passed on 1 -> `none`; passed on 2 -> `blocks-cloud-agents`; passed on 3 -> `blocks-automation`; never -> `site-broken`. Site verdict = worst task verdict.
 5. A task that failed for a non-blocking reason (could not find returns) does not re-run.
 6. **A `cancelled` task is never "blocked" (D29):** no retry, verdict `none`.
@@ -214,7 +215,7 @@ detectFramework(page)                       // Playwright page -> 'nextjs'|'shop
 
 ## 7. Scoring (`scoring.js`)
 
-Each task max 25, total 100 for any pack (custom task scored separately, not in the 100; a replay placeholder task, see section 17, is not counted either). When fewer than 4 tasks run (CLI `--tasks`, a 1-task Watch), the total is scaled to 100: `round(sum * 4 / tasksRun)`. The point rules are the same for every task in every pack. The 12 new fail findings (D40) use the same shape as the shop ones: a site cause, a fix, a standard and a pass check, never "the agent got confused" (D22). Their goal wording is **untested on live agents** until `docs/PACK-LIVE-TEST.md` has been run.
+Each task max 25, total 100 for any pack (custom task scored separately, not in the 100; a replay placeholder task, see section 17, is not counted either). When fewer than 4 tasks run (CLI `--tasks`, a 1-task Watch), the total is scaled to 100: `round(sum * 4 / tasksRun)`. The point rules are the same for every task in every pack. The 12 new fail findings (D40) use the same shape as the shop ones: a site cause, a fix, a standard and a pass check, never "the agent got confused" (D22). The `saas` and `content` wording passed on live agents (7 Nov, `docs/PACK-LIVE-TEST.md`); the `local` wording is still **untested on live agents** (its test site refused cloud agents). Step and time bands stay the same for every task after the 10-store calibration (D48).
 
 | Rule | Points |
 |---|---|

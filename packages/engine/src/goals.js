@@ -33,7 +33,7 @@ export const TASK_GOALS = {
     "Find this site's return or refund policy. Report how many days customers have to return a product and the URL of the policy page.",
   find_contact:
     "Find a way to contact this company's customer support (phone, email, chat or contact form) and report it with the page URL where you found it.",
-  // ---- saas (untested on live agents) ----
+  // ---- saas (tested on live agents 7 Nov: 4/4 passed, answers right) ----
   find_pricing_plans:
     "Find this site's pricing page. Report the name and price of each plan (or say that prices are only given on request) and the URL of the pricing page.",
   reach_signup:
@@ -42,7 +42,7 @@ export const TASK_GOALS = {
     "Find this site's developer documentation, API reference or help center. Report the URL of the page you reached and the title of one article or section on it.",
   contact_sales:
     'Find a way to contact the sales team or book a demo (form, email, phone number or booking page). Do NOT submit any form. Report what you found and the page URL.',
-  // ---- content: blogs, news, documentation (untested on live agents) ----
+  // ---- content: blogs, news, documentation (tested on live agents 7 Nov: 4/4 passed, answers right) ----
   search_topic:
     "Work out what this site is mainly about. Then use the site's own search box or its navigation menus (not an outside search engine) to find one article about that topic. Report the article title and its URL.",
   read_article:
@@ -51,7 +51,7 @@ export const TASK_GOALS = {
     'Find the newsletter or email subscribe form on this site. Do NOT enter an email address or subscribe. Report the URL of the page where you found it and what the form asks for.',
   find_author_contact:
     'Find out how to contact the author or the editorial team (an about page, contact page, email address or social profile). Report what you found and the page URL.',
-  // ---- local: restaurants, clinics, salons, shops with a location (untested on live agents) ----
+  // ---- local: restaurants, clinics, salons, shops with a location (untested: the 7 Nov test site refused cloud agents) ----
   find_hours:
     'Find the opening hours of this business. Report the days and times exactly as the site gives them and the URL of the page where you found them.',
   find_location:
