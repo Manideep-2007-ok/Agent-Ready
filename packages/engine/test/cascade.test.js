@@ -295,6 +295,43 @@ test('after Stop the lane says cancelled at once and the agent slot is free whil
   assert.equal(report.costRupees, 0);
 });
 
+// P2-7 (live runs, 7 Nov): a site that refused cloud agents with "403 Forbidden" was not seen as a wall, and two tasks
+// "passed" with answers the agent took from web search after the site refused it. Neither is a pass on the site.
+const refused = (answer) => ({ success: true, answer, blocker: null, stuck_url: URL_ });
+
+test('a "403 Forbidden" failure counts as a wall: the India-proxy attempt runs', async () => {
+  let n = 0;
+  fake = installFakeTinyFish({ runSse: () => (++n === 1 ? finished(wall('The site returned 403 Forbidden on every page'), 6) : finished(ok, 3)) });
+  const r = await runTaskWithBotWall({ url: URL_, taskId: 'find_price' });
+  assert.equal(fake.calls.sse.length, 2);
+  assert.equal(fake.calls.sse[1].body.proxy_config.country_code, 'IN');
+  assert.equal(r.status, 'passed');
+  assert.equal(r.verdict, 'blocks-cloud-agents');
+});
+
+test('a "pass" whose answer says the site refused the agent is not a pass: retried, and the borrowed answer is dropped', async () => {
+  let n = 0;
+  fake = installFakeTinyFish({ runSse: () => (++n === 1
+    ? finished(refused('The website returned a 403 Forbidden error. From search results: open 10am to 8pm.'), 11)
+    : finished(ok, 4)) });
+  const r = await runTaskWithBotWall({ url: URL_, taskId: 'find_price' });
+  assert.equal(fake.calls.sse.length, 2, 'the India-proxy attempt ran');
+  assert.equal(r.status, 'passed');
+  assert.equal(r.verdict, 'blocks-cloud-agents');
+  assert.equal(r.attempts[0].passed, false, 'the first attempt is recorded as refused, not passed');
+  assert.match(r.attempts[0].blocker, /refused/i);
+});
+
+test('refused on every attempt: failed, verdict site-broken, no answer kept (D13), and D26 does not stop a 403 early', async () => {
+  fake = installFakeTinyFish({ runSse: () => finished(refused('Access denied (403 Forbidden) on clinic pages; the hours below are from web search.'), 9) });
+  const r = await runTaskWithBotWall({ url: URL_, taskId: 'find_hours' });
+  assert.equal(fake.calls.sse.length, 3, 'all three attempts');
+  assert.equal(r.status, 'failed');
+  assert.equal(r.verdict, 'site-broken');
+  assert.equal(r.answer, null);
+  assert.match(r.blocker, /refused/i);
+});
+
 // P2-4: structured answers. Every run asks TinyFish for the answer shape GOAL_SUFFIX describes (output_schema), using
 // only keywords TinyFish accepts. An account that refuses the field still gets its runs: the run is sent again
 // without it, and later runs skip it. (Keep these two tests last: the refusal is remembered for the process.)
