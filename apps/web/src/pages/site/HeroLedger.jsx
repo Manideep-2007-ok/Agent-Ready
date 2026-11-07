@@ -1,47 +1,88 @@
-// The landing hero's product panel: our demo store's real fixed run (1 Nov 2026, rep_demo_flaws_off) filling in row
-// by row, then the score. Recorded data, no network. With reduced motion everything shows at once.
-import { useEffect, useState } from 'react';
+// The landing hero's product panel: a looping replay of our demo store's two real runs (flaws on, then flaws off).
+// The address types in, agents run two at a time with their steps ticking up, then the score counts up and holds.
+// Frames come from heroFrame (pure, tested). The loop pauses off screen; with reduced motion it shows the finished run.
+import { useEffect, useRef, useState } from 'react';
 import { Badge } from '../../design/index.js';
+import { SCENARIOS, TIMING, finalFrame, heroFrame } from './heroDemo.js';
+import { useInView, useReducedMotion } from './motion.jsx';
 
-const ROWS = [
-  { id: 'T1', task: 'Find a product and its price', steps: 4, secs: 22 },
-  { id: 'T2', task: 'Add to cart and read the total', steps: 7, secs: 22 },
-  { id: 'T3', task: 'Find the return policy', steps: 5, secs: 16 },
-  { id: 'T4', task: 'Find customer support', steps: 3, secs: 21 },
-];
-const calm = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+const BADGE = { waiting: ['wait', 'Waiting'], running: ['accent', 'Running'], passed: ['pass', 'Passed'] };
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 export default function HeroLedger() {
-  const [shown, setShown] = useState(() => (calm() ? ROWS.length + 1 : 0));
+  const reduce = useReducedMotion();
+  const [ref, inView] = useInView({ amount: 0.3 });
+  const [f, setF] = useState(() => (reduce ? finalFrame(0) : heroFrame(0, 0)));
+  const [fading, setFading] = useState(false);
+  const idx = useRef(0);
+  const at = useRef(0);
+  const [restart, setRestart] = useState(0);
+
   useEffect(() => {
-    if (shown > ROWS.length) return undefined;
-    const t = setTimeout(() => setShown((n) => n + 1), shown === 0 ? 500 : 650);
-    return () => clearTimeout(t);
-  }, [shown]);
+    if (reduce) { setF(finalFrame(idx.current)); setFading(false); return undefined; }
+    if (!inView) return undefined;
+    let raf = 0;
+    let start = performance.now() - at.current;
+    let last = null;
+    const tick = (now) => {
+      let t = now - start;
+      if (t >= TIMING.end) { idx.current = (idx.current + 1) % SCENARIOS.length; start = now; t = 0; }
+      at.current = t;
+      const next = heroFrame(idx.current, t);
+      if (!last || !same(next, last)) { last = next; setF(next); }
+      setFading(t >= TIMING.end - 350);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [reduce, inView, restart]);
+
+  const pick = (i) => {
+    idx.current = i; at.current = 0;
+    if (reduce) setF(finalFrame(i)); else { setF(heroFrame(i, 0)); setRestart((r) => r + 1); }
+  };
+
+  const sc = SCENARIOS[f.idx];
+  const total = f.rows.reduce((a, r) => a + r.steps, 0);
+  const typing = !reduce && f.typed < sc.url.length;
   return (
-    <div className="ar-hero-ledger" aria-label="Example result: our demo store, four tasks passed, score 97">
+    <div ref={ref} className="ar-hero-ledger" role="group" aria-label="Animated example: our demo store tested with its flaws on, then off">
+      <p className="sr-only">Our demo store with four flaws on scored 91 in 35 agent steps for ₹49; with the flaws fixed it scored 97 in 19 steps for ₹27.</p>
       <div className="ar-hero-ledger-head">
-        <span className="ar-label">Report · agent-ready-demo.vercel.app</span>
-        <span className="ar-label">Example</span>
-      </div>
-      <table>
-        <thead><tr><th>ID</th><th>Task</th><th className="is-right">Steps</th><th className="is-right">Result</th></tr></thead>
-        <tbody>
-          {ROWS.map((r, i) => (
-            <tr key={r.id} className={i < shown ? 'is-in' : ''}>
-              <td className="ar-mono ar-faint">{r.id}</td>
-              <td>{r.task}<span className="ar-mono ar-faint"> · {r.secs}s</span></td>
-              <td className="is-right ar-mono">{i < shown ? r.steps : ''}</td>
-              <td className="is-right">{i < shown ? <Badge tone="pass">Passed</Badge> : i === shown ? <Badge tone="accent">Running</Badge> : <Badge tone="wait">Waiting</Badge>}</td>
-            </tr>
+        <div className="ar-hero-tabs" role="group" aria-label="Example run">
+          {SCENARIOS.map((s, i) => (
+            <button key={s.tab} type="button" aria-pressed={f.idx === i} className="ar-hero-tab" onClick={() => pick(i)}>{s.tab}</button>
           ))}
-        </tbody>
-      </table>
-      <div className={`ar-hero-ledger-foot${shown > ROWS.length ? ' is-in' : ''}`}>
-        <span className="ar-label">Score</span>
-        <span className="ar-hero-score">{shown > ROWS.length ? 97 : '··'}<span>/100</span></span>
-        {shown > ROWS.length && <Badge tone="pass">Ready for AI agents</Badge>}
-        <span className="ar-mono ar-faint ar-hero-cost">19 steps · ₹27</span>
+        </div>
+        <span className="ar-label">Example · 1 Nov 2026</span>
+      </div>
+      <div className={`ar-hero-body${fading ? ' is-fading' : ''}`} aria-hidden="true">
+        <div className="ar-hero-url ar-mono">
+          <span className="ar-faint">https://</span>{sc.url.slice(0, f.typed)}{typing && <span className="ar-caret" />}
+        </div>
+        <table>
+          <thead><tr><th>ID</th><th>Task</th><th className="is-right">Steps</th><th className="is-right">Result</th></tr></thead>
+          <tbody>
+            {f.rows.map((r) => {
+              const [tone, word] = BADGE[r.state];
+              return (
+                <tr key={r.id} className={`is-${r.state}`}>
+                  <td className="ar-mono ar-faint">{r.id}</td>
+                  <td>{r.task}{r.state === 'passed' && <span className="ar-mono ar-faint"> · {r.secs}s</span>}</td>
+                  <td className="is-right ar-mono">{r.state === 'waiting' ? '' : r.steps}</td>
+                  <td className="is-right"><Badge tone={tone}>{word}</Badge></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <div className={`ar-hero-ledger-foot${f.score != null ? ' is-in' : ''}`}>
+          <span className="ar-label">Score</span>
+          <span className="ar-hero-score">{f.score ?? '··'}<span>/100</span></span>
+          {f.verdict && <Badge tone={sc.band[0]}>{sc.band[1]}</Badge>}
+          <span className="ar-mono ar-faint ar-hero-cost">{total} steps{f.verdict ? ` · ₹${sc.cost}` : ''}</span>
+        </div>
+        <p className="ar-hero-note ar-small ar-faint">{sc.note}</p>
       </div>
     </div>
   );
