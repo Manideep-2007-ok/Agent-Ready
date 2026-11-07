@@ -26,10 +26,12 @@ export default function Tabs({ tabs, current, onChange, label = 'Sections', idPr
   );
 }
 
-/** The panel for one tab. Always mounted (so print can show every tab); hidden when not current. */
-export function TabPanel({ id, current, idPrefix = 'tab', children }) {
+/** The panel for one tab. Always mounted (so print can show every tab); hidden when not current.
+ * `label` is printed as the section's heading, since the tab bar is not printed. */
+export function TabPanel({ id, current, idPrefix = 'tab', label, children }) {
   return (
     <div role="tabpanel" id={`${idPrefix}-panel-${id}`} aria-labelledby={`${idPrefix}-${id}`} hidden={current !== id} className="ar-tabpanel">
+      {label && <h2 className="ar-print-heading">{label}</h2>}
       {children}
     </div>
   );

@@ -1,5 +1,6 @@
 // Three areas on hash routes (routes.js): the public site (#/, #/pricing), docs (#/docs/<slug>) and the app
-// (#/app/...). Old dashboard links redirect with location.replace, so Back never loops. No router library.
+// (#/app/...). Old dashboard links redirect with location.replace, so Back never loops. An unknown address shows the
+// 404 page in its area and keeps the address. No router library.
 import { useEffect, useState } from 'react';
 import TestsHome from './pages/app/TestsHome.jsx';
 import ReportPage from './pages/app/ReportPage.jsx';
@@ -9,6 +10,7 @@ import LeaderboardPage from './pages/app/LeaderboardPage.jsx';
 import Landing from './pages/site/Landing.jsx';
 import Pricing from './pages/site/Pricing.jsx';
 import DocsPage from './pages/docs/DocsPage.jsx';
+import NotFound from './pages/NotFound.jsx';
 import AppShell from './shell/AppShell.jsx';
 import SiteShell from './shell/SiteShell.jsx';
 import { ToastProvider } from './design/index.js';
@@ -36,6 +38,7 @@ function AppArea({ route, health }) {
       {page === 'watch' && <WatchPage />}
       {page === 'race' && <RacePage raceId={route.id} />}
       {page === 'leaderboard' && <LeaderboardPage />}
+      {page === 'not-found' && <NotFound area="app" />}
     </AppShell>
   );
 }
@@ -55,8 +58,8 @@ export default function App() {
     <ToastProvider>
       {route.area === 'app' && <AppArea route={route} health={health} />}
       {route.area === 'site' && (
-        <SiteShell active={route.page === 'pricing' ? 'pricing' : 'product'}>
-          {route.page === 'pricing' ? <Pricing /> : <Landing />}
+        <SiteShell active={{ pricing: 'pricing', landing: 'product' }[route.page] ?? null}>
+          {route.page === 'pricing' ? <Pricing /> : route.page === 'not-found' ? <NotFound area="site" /> : <Landing />}
         </SiteShell>
       )}
       {route.area === 'docs' && (

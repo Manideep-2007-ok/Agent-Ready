@@ -114,6 +114,49 @@ try {
     expect(await page.title() === 'AgentReady', `leaving the docs resets the tab title (${await page.title()})`);
   }, { page: home.page });
 
+  await t.step('an unknown address shows the 404 page in its area and keeps the address', async () => {
+    const { page } = home;
+    await page.goto(fast.base + '/#/foo');
+    await page.getByRole('heading', { level: 1, name: 'This page does not exist.' }).waitFor();
+    expect(await hash(page) === '#/foo', `the address stays (${await hash(page)})`);
+    expect((await page.locator('.ar-notfound-address').textContent()) === '#/foo', 'the page names the address');
+    expect(await page.title() === 'Page not found · AgentReady', `tab title (${await page.title()})`);
+    expect(await page.locator('.ar-site-bar [aria-current=page]').count() === 0, 'no top-bar link is marked current');
+    await shot(page, 'not-found-site');
+    await page.getByRole('link', { name: 'Go to the home page' }).click();
+    await page.getByLabel('Website to test').first().waitFor();
+    expect(await page.title() === 'AgentReady', 'leaving the 404 resets the tab title');
+    await page.goto(fast.base + '/#/pricing/old-plan');
+    await page.getByRole('heading', { level: 1, name: 'This page does not exist.' }).waitFor();
+    await page.goto(fast.base + '/#/app/settings');
+    await page.getByRole('heading', { level: 1, name: 'This page does not exist.' }).waitFor();
+    expect(await page.locator('.ar-sidebar').isVisible(), 'an unknown app page keeps the app sidebar');
+    expect(await page.locator('.ar-btn--primary').count() === 1, 'one primary button');
+    await shot(page, 'not-found-app');
+    await page.getByRole('link', { name: 'Back to tests' }).click();
+    await waitHash(page, /^#\/app$/);
+    await page.getByLabel('Website to test').waitFor();
+  }, { page: home.page });
+
+  await t.step('Recent tests says when the server does not answer, and Try again loads the list', async () => {
+    const { page } = home;
+    await page.route('**/api/tests', (route) => (route.request().method() === 'GET'
+      ? route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Service unavailable' }) })
+      : route.continue()));
+    await page.goto(fast.base + '/#/app');
+    await page.reload();
+    await page.getByText('Could not load your recent tests').waitFor();
+    expect(await page.getByText('Run your first test').count() === 0, 'not mistaken for "no tests yet"');
+    await shot(page, 'recent-server-down');
+    await page.unroute('**/api/tests');
+    await page.getByRole('button', { name: 'Try again' }).click();
+    await page.locator('.ar-recent table, .ar-recent .ar-empty').first().waitFor();
+    expect(await page.getByText('Could not load your recent tests').count() === 0, 'the list loads after Try again');
+    // the two 503 answers were on purpose
+    const left = home.watcher.drain().filter((x) => !/status of 503/.test(x));
+    expect(left.length === 0, left.join('\n'));
+  }, { page: home.page });
+
   await t.step('theme toggle switches light and dark and remembers the choice', async () => {
     const { page } = home;
     const toggle = page.locator('.theme-toggle');
@@ -575,7 +618,7 @@ try {
     await page.getByRole('heading', { level: 1 }).waitFor();
     expect(await noHScroll(page), 'home fits');
     await shot(page, 'phone-home');
-    for (const h of ['#/pricing', '#/docs/cli', '#/docs/findings', '#/app', '#/app/watch', '#/app/race', '#/app/leaderboard',
+    for (const h of ['#/pricing', '#/nope/a-very-long-mistyped-address-that-goes-on-and-on-and-on', '#/app/nope', '#/docs/cli', '#/docs/findings', '#/app', '#/app/watch', '#/app/race', '#/app/leaderboard',
       '#/app/test/rep_20261031_demo_myntra', '#/app/test/rep_demo_flaws_off/rep_demo_flaws_on']) {
       await page.goto(fast.base + '/' + h);
       await page.getByRole('heading', { level: 1 }).first().waitFor();
@@ -690,9 +733,12 @@ try {
   await t.step('Save as PDF: the print layout shows every tab and hides the app frame and buttons', async () => {
     const { page } = kb;
     await openTab(page, 'Overview');
+    expect(await page.locator('.ar-print-heading:visible').count() === 0, 'tab headings are hidden on screen');
     await page.emulateMedia({ media: 'print' });
     const shown = await page.evaluate(() => [...document.querySelectorAll('[role=tabpanel]')].map((p) => getComputedStyle(p).display !== 'none'));
     expect(shown.length === 5 && shown.every(Boolean), `all five tab panels print (${shown})`);
+    const heads = await page.evaluate(() => [...document.querySelectorAll('.ar-print-heading')].filter((h) => getComputedStyle(h).display !== 'none').map((h) => h.textContent));
+    expect(heads.join(',') === 'Overview,Findings,Steps,History,Scan', `each printed tab has its heading (${heads})`);
     expect(await page.evaluate(() => getComputedStyle(document.querySelector('.ar-sidebar')).display) === 'none', 'sidebar hidden in print');
     expect(await page.evaluate(() => getComputedStyle(document.querySelector('.ar-tabs')).display) === 'none', 'tab bar hidden in print');
     await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));

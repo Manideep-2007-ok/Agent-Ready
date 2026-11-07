@@ -400,10 +400,11 @@ Redesign (D44, spec `docs/superpowers/specs/2026-11-07-agentready-redesign-desig
 | `#/app` | Tests home: new test (address, kind of site, own task, Confirm results, cost line), recent tests ledger |
 | `#/app/test/<id>[/<beforeId>]` | Report: header (score, band, cost, steps; Re-run, Copy link, Save as PDF, Stop while running), tabs Overview (bot wall, demo before/after, Top 3, task ledger, live lanes), Findings (fix report button, six-question cards), Steps (timeline + replay), History, Scan |
 | `#/app/watch`, `#/app/race[/<id>]`, `#/app/leaderboard` | Watch, Race (flag RACE), Leaderboard (flag LEADERBOARD) |
+| anything else | 404 page in its area (site top bar, or the app sidebar for `#/app/...`); the address stays as typed. An unknown docs slug says so inside the docs layout |
 
 Old links (`#/test/<id>`, `#/watch`, `#/race`, `#/leaderboard`) printed by the CLI, Watch alerts and READMEs redirect with `location.replace`.
 
-UI rules: plain language, sentence case; status always has a word, never colour alone; at most one primary button per view; every screenshot can be enlarged; WCAG AA contrast for every token pair (`apps/web/test/contrast.test.js`); no sideways scroll at 390 px; Save as PDF prints every report tab.
+UI rules: plain language, sentence case; a failed load says so (never an empty state that hides it); status always has a word, never colour alone; at most one primary button per view; every screenshot can be enlarged; WCAG AA contrast for every token pair (`apps/web/test/contrast.test.js`); no sideways scroll at 390 px; Save as PDF prints every report tab, each under its own heading.
 `vite.config.js` proxies `/api` to `http://localhost:4000`.
 
 ---

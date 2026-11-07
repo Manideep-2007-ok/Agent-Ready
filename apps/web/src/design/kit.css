@@ -107,3 +107,24 @@
 .ar-logo:hover { text-decoration: none; }
 .ar-logo-mark { flex: none; display: block; }
 .ar-logo-word { font: 600 17px/1 var(--font-sans); letter-spacing: -0.03em; }
+
+/* 404 page */
+.ar-notfound { display: grid; justify-items: start; gap: 14px; padding: 72px 0 88px; }
+.ar-notfound > * { max-width: 640px; }
+.ar-site-main .ar-notfound { max-width: 1200px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+.ar-notfound h1 { margin: 0; font-size: clamp(32px, 4.4vw, 48px); letter-spacing: -0.045em; line-height: 1.05; }
+.ar-notfound-lead { margin: 0 0 6px; color: var(--text-muted); font-size: 17px; overflow-wrap: anywhere; }
+.ar-notfound-address { color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 3px; padding: 1px 5px; }
+.ar-notfound-places { list-style: none; margin: 18px 0 0; padding: 0; width: 100%; border-top: 1px solid var(--border); }
+.ar-notfound-places li { display: grid; grid-template-columns: 32px minmax(0, 160px) minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.ar-notfound-no { font: 500 12px/1 var(--font-mono); color: var(--text-faint); }
+.ar-notfound-places a { font-weight: 500; color: var(--text); }
+.ar-notfound-note { color: var(--text-muted); font-size: 14px; }
+.ar-app .ar-notfound { padding-top: 24px; }
+@media (max-width: 560px) { .ar-site-main .ar-notfound { padding: 48px 16px 64px; } .ar-notfound-places li { grid-template-columns: 28px minmax(0, 1fr); } .ar-notfound-note { grid-column: 2; } }
+
+/* A tab panel's heading, shown only on paper (the tab bar is not printed) */
+.ar-print-heading { display: none; }
+@media print {
+  .ar-print-heading { display: block; margin: 28px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border-strong); font-size: 18px; letter-spacing: -0.02em; break-after: avoid; }
+}

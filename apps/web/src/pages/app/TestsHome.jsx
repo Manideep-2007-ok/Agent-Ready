@@ -101,7 +101,21 @@ const when = (iso) => (iso ? new Date(iso).toLocaleString('en-IN', { dateStyle: 
 
 function Recent() {
   const [rows, setRows] = useState(null);
-  useEffect(() => { listReports().then(setRows).catch(() => setRows([])); }, []);
+  const [failed, setFailed] = useState(false);
+  const load = () => {
+    setFailed(false); setRows(null);
+    listReports().then(setRows).catch(() => setFailed(true));
+  };
+  useEffect(load, []);
+  // A server that did not answer is not "no tests yet": say so, and offer to try again.
+  if (failed) {
+    return (
+      <Panel label="Recent tests" className="ar-recent">
+        <EmptyState title="Could not load your recent tests" body="The AgentReady server did not answer. Check that it is running, then try again."
+          action={<Button onClick={load}>Try again</Button>} />
+      </Panel>
+    );
+  }
   if (!rows) return <Panel label="Recent tests"><Skeleton rows={3} /></Panel>;
   const status = (r) => (r.status === 'complete' ? null : r.status === 'cancelled' ? 'cancelled' : 'running');
   return (

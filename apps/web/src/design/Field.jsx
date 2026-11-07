@@ -13,6 +13,7 @@ export default function Field({ label, help, error, children, inline = false }) 
       <div className="ar-field ar-field--inline">
         <label htmlFor={children.props?.id ?? id}>{control}<span>{label}</span></label>
         {help && <p className="ar-field-help" id={helpId}>{help}</p>}
+        {error && <p className="ar-field-error" id={errId} role="alert">{error}</p>}
       </div>
     );
   }

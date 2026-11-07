@@ -120,21 +120,21 @@ export default function ReportPage({ id, beforeId }) {
       {actionError && <p className="ar-error" role="alert">{actionError}</p>}
       {live.connection === 'lost' && running && <p className="ar-faint ar-small">Connection dropped, reconnecting…</p>}
       <Tabs tabs={TABS} current={tab} onChange={setTab} label="Report sections" idPrefix="report" />
-      <TabPanel id="overview" current={tab} idPrefix="report">
+      <TabPanel id="overview" current={tab} idPrefix="report" label="Overview">
         <OverviewTab report={report} tasks={tasks} fixes={finished ? topFixesOf(report) : []} onShotClick={setShot} waitReason={waitReason}
           onJump={(rank) => { setTab('findings'); setJump(rank); }} demo={demo} stoppedPanel={stopped ? <Stopped report={report} /> : null} />
       </TabPanel>
-      <TabPanel id="findings" current={tab} idPrefix="report">
+      <TabPanel id="findings" current={tab} idPrefix="report" label="Findings">
         {finished ? <FindingsTab report={report} onEnriched={setEnriched} onShotClick={setShot} />
           : <Panel><EmptyState title={stopped ? 'No findings for a stopped test' : 'Findings appear when the test finishes'} body="Half a test says nothing about the site." /></Panel>}
       </TabPanel>
-      <TabPanel id="steps" current={tab} idPrefix="report">
+      <TabPanel id="steps" current={tab} idPrefix="report" label="Steps">
         <StepTimeline report={report ?? { tasks }} onShotClick={setShot} />
       </TabPanel>
-      <TabPanel id="history" current={tab} idPrefix="report">
+      <TabPanel id="history" current={tab} idPrefix="report" label="History">
         {finished ? <SiteHistory report={report} /> : <Panel><EmptyState title="History appears when the test finishes" /></Panel>}
       </TabPanel>
-      <TabPanel id="scan" current={tab} idPrefix="report">
+      <TabPanel id="scan" current={tab} idPrefix="report" label="Scan">
         {(live.scan || running) && <InstantScanCard scan={live.scan} loading={!live.scan} />}
         {!live.scan && !running && <Panel><EmptyState title="No Instant Scan for this test" body="Tests from the command line can skip the scan." /></Panel>}
       </TabPanel>

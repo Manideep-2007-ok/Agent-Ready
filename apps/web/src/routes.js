@@ -1,29 +1,33 @@
 // Hash routes (no router library). Three areas: the public site (#/, #/pricing), docs (#/docs/<slug>) and the app
 // (#/app/...). Old dashboard links (#/test/<id>, #/watch, ...) printed by the CLI, Watch alerts and READMEs redirect.
 
-const APP_PAGES = ['test', 'watch', 'race', 'leaderboard'];
-const OLD_APP_PAGES = ['test', 'watch', 'race', 'leaderboard'];
+/** App pages under #/app/<page>. Old links (#/<page>/...) for the same pages redirect there. */
+export const APP_PAGES = ['test', 'watch', 'race', 'leaderboard'];
+const NOT_FOUND = { page: 'not-found', id: null, extra: null };
 
 const parts = (hash) => String(hash || '').replace(/^#\/?/, '').split('/').filter(Boolean);
 const decode = (p) => { if (!p) return null; try { return decodeURIComponent(p); } catch { return p; } };
 
-/** @returns {{area:'site'|'docs'|'app', page:string, id:string|null, extra:string|null}} */
+/** An address nobody knows is page 'not-found' in its area; the address stays as typed.
+ * @returns {{area:'site'|'docs'|'app', page:string, id:string|null, extra:string|null}} */
 export function parseHash(hash) {
-  const [first = '', second, third, fourth] = parts(hash);
+  const [first = '', second, third, fourth, ...rest] = parts(hash);
   if (first === 'docs') return { area: 'docs', page: decode(second) || 'getting-started', id: null, extra: null };
   if (first === 'app') {
-    if (!APP_PAGES.includes(second) || (second === 'test' && !third)) return { area: 'app', page: 'tests', id: null, extra: null };
+    if (!second || (second === 'test' && !third)) return { area: 'app', page: 'tests', id: null, extra: null };
+    if (!APP_PAGES.includes(second) || rest.length) return { area: 'app', ...NOT_FOUND };
     return { area: 'app', page: second, id: decode(third), extra: decode(fourth) };
   }
-  if (first === 'pricing') return { area: 'site', page: 'pricing', id: null, extra: null };
-  return { area: 'site', page: 'landing', id: null, extra: null };
+  if (!first) return { area: 'site', page: 'landing', id: null, extra: null };
+  if (first === 'pricing' && !second) return { area: 'site', page: 'pricing', id: null, extra: null };
+  return { area: 'site', ...NOT_FOUND };
 }
 
 /** The new address for an old dashboard link, or null. Parts are kept exactly as given (already encoded). */
 export function redirectFor(hash) {
   const raw = String(hash || '').replace(/^#\/?/, '');
   const [first, ...rest] = raw.split('/');
-  if (!OLD_APP_PAGES.includes(first)) return null;
+  if (!APP_PAGES.includes(first)) return null;
   if (first === 'test' && !rest.filter(Boolean).length) return '#/app';
   return ['#/app', first, ...rest.filter(Boolean)].join('/');
 }
