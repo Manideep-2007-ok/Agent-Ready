@@ -1,67 +1,53 @@
-import './InstantScanCard.css';
+// Instant Scan results as a ledger: what was measured, the value, and a badge saying whether it helps or hurts agents.
+// Older reports lack the Scan v2 fields, so those rows only show when the scan measured them.
+import { Badge, Ledger, Panel, Skeleton } from '../design/index.js';
 
 const FRAMEWORKS = { nextjs: 'Next.js', shopify: 'Shopify', unknown: 'Not detected' };
-
-function Row({ label, value, tone }) {
-  return (
-    <li className="ar-scan-row">
-      <span>{label}</span>
-      <span className={`ar-scan-pill ar-scan-pill--${tone}`}>{value}</span>
-    </li>
-  );
-}
-
+const TONE_WORD = { good: ['pass', 'OK'], warn: ['warn', 'Check'], bad: ['fail', 'Problem'], info: ['neutral', 'Info'] };
 const ratioTone = (bad, total) => (bad === 0 ? 'good' : total && bad / total > 0.2 ? 'bad' : 'warn');
 const fileTone = (s) => (s === 'found' ? 'good' : s === 'missing' ? 'warn' : 'bad');
 const fileText = (s) => (s === 'found' ? 'Found' : s === 'missing' ? 'Missing' : 'Could not check');
 
-/**
- * Quick page audit card.
- * @param {{scan?: object|null, loading?: boolean}} props
- */
-export default function InstantScanCard({ scan, loading }) {
-  if (loading || !scan) {
-    return (
-      <section className="ar-scan" aria-busy="true" aria-label="Instant Scan">
-        <h3 className="ar-scan-title">Scanning page…</h3>
-        <div className="ar-scan-skel" /><div className="ar-scan-skel" /><div className="ar-scan-skel" />
-      </section>
-    );
-  }
+/** Rows [label, value, tone]. Pure, so it is easy to read and test. */
+export function scanRows(scan) {
   const n = (v) => (Number.isFinite(v) ? v : 0);
-  const textChars = n(scan.pageTextChars), unl = n(scan.unlabelledButtons), ctl = n(scan.totalButtonsAndLinks);
-  const noAlt = n(scan.imagesWithoutAlt), imgs = n(scan.totalImages);
-  // If the browser check could not open the page, every browser number is 0: say so instead of showing red "No".
+  const ctl = n(scan.totalButtonsAndLinks), imgs = n(scan.totalImages);
   const browserRan = ctl > 0 || imgs > 0;
   const unknown = ['Could not check', 'info'];
   const yesNo = (ok, yes, no, badTone = 'bad') => (!browserRan ? unknown : ok ? [yes, 'good'] : [no, badTone]);
-  const price = yesNo(scan.priceAsText, 'Yes', 'No');
-  const popup = !browserRan ? unknown : scan.overlayCoveringPage ? ['Yes, blocks the page', 'bad'] : ['No', 'good'];
-  const schema = yesNo(scan.productSchema, 'Found', 'Missing', 'warn');
+  const rows = [
+    ['Page text', `${n(scan.pageTextChars)} characters`, n(scan.pageTextChars) < 500 ? 'bad' : 'good'],
+    ['Buttons and links without a name', ...(browserRan ? [`${n(scan.unlabelledButtons)} of ${ctl}`, ratioTone(n(scan.unlabelledButtons), ctl)] : unknown)],
+    ['Images without alt text', ...(browserRan ? [`${n(scan.imagesWithoutAlt)} of ${imgs}`, ratioTone(n(scan.imagesWithoutAlt), imgs)] : unknown)],
+    ['Price shown as text', ...yesNo(scan.priceAsText, 'Yes', 'No')],
+    ['Pop-up covering the page', ...(!browserRan ? unknown : scan.overlayCoveringPage ? ['Yes, blocks the page', 'bad'] : ['No', 'good'])],
+    ['Product data (schema.org)', ...yesNo(scan.productSchema, 'Found', 'Missing', 'warn')],
+    ['robots.txt', fileText(scan.robotsTxt), fileTone(scan.robotsTxt)],
+    ['sitemap', fileText(scan.sitemap), fileTone(scan.sitemap)],
+  ];
+  if (Array.isArray(scan.aiBlockedAgents) && scan.robotsTxt === 'found') {
+    const b = scan.aiBlockedAgents;
+    rows.push(['AI agents allowed by robots.txt', b.length ? `${b.length} blocked: ${b.join(', ')}` : 'All allowed', b.some((a) => /-User$/.test(a)) ? 'bad' : b.length ? 'warn' : 'good']);
+  }
+  if (typeof scan.cartLink === 'boolean' && browserRan) rows.push(['Link to the cart', scan.cartLink ? 'Found' : 'Missing', scan.cartLink ? 'good' : 'warn']);
+  if (scan.llmsTxt) rows.push(['llms.txt', fileText(scan.llmsTxt), scan.llmsTxt === 'found' ? 'good' : 'info']);
+  rows.push(['Framework', FRAMEWORKS[scan.framework] || 'Not detected', 'info']);
+  return rows;
+}
+
+/** @param {{scan?: object|null, loading?: boolean}} props */
+export default function InstantScanCard({ scan, loading }) {
+  if (loading || !scan) return <Panel label="Instant Scan"><Skeleton rows={4} label="Scanning the page" /></Panel>;
   return (
-    <section className="ar-scan" aria-label="Instant Scan">
-      <h3 className="ar-scan-title">Instant Scan</h3>
-      <ul className="ar-scan-list">
-        <Row label="Page text" value={`${textChars} characters`} tone={textChars < 500 ? 'bad' : 'good'} />
-        <Row label="Buttons and links without a name" value={browserRan ? `${unl} of ${ctl}` : unknown[0]} tone={browserRan ? ratioTone(unl, ctl) : 'info'} />
-        <Row label="Images without alt text" value={browserRan ? `${noAlt} of ${imgs}` : unknown[0]} tone={browserRan ? ratioTone(noAlt, imgs) : 'info'} />
-        <Row label="Price shown as text" value={price[0]} tone={price[1]} />
-        <Row label="Pop-up covering the page" value={popup[0]} tone={popup[1]} />
-        <Row label="Product data (schema.org)" value={schema[0]} tone={schema[1]} />
-        <Row label="robots.txt" value={fileText(scan.robotsTxt)} tone={fileTone(scan.robotsTxt)} />
-        <Row label="sitemap" value={fileText(scan.sitemap)} tone={fileTone(scan.sitemap)} />
-        {/* Scan v2 fields; older reports have none, so the rows only show when the scan measured them. */}
-        {Array.isArray(scan.aiBlockedAgents) && scan.robotsTxt === 'found' && (
-          <Row label="AI agents allowed by robots.txt" value={scan.aiBlockedAgents.length ? `${scan.aiBlockedAgents.length} blocked` : 'All allowed'}
-            tone={scan.aiBlockedAgents.some((a) => /-User$/.test(a)) ? 'bad' : scan.aiBlockedAgents.length ? 'warn' : 'good'} />
-        )}
-        {typeof scan.cartLink === 'boolean' && browserRan && (
-          <Row label="Link to the cart" value={scan.cartLink ? 'Found' : 'Missing'} tone={scan.cartLink ? 'good' : 'warn'} />
-        )}
-        {scan.llmsTxt && <Row label="llms.txt" value={fileText(scan.llmsTxt)} tone={scan.llmsTxt === 'found' ? 'good' : 'info'} />}
-        <Row label="Framework" value={FRAMEWORKS[scan.framework] || 'Not detected'} tone="info" />
-      </ul>
-      <div className="ar-scan-foot">Scanned in {n(scan.seconds)}s</div>
-    </section>
+    <Panel label="Instant Scan" actions={<span className="ar-mono ar-faint">Scanned in {Number(scan.seconds) || 0}s</span>} className="ar-scan-ledger">
+      <Ledger
+        caption="Instant Scan"
+        columns={[{ key: 'what', label: 'Check' }, { key: 'value', label: 'Result' }, { key: 'tone', label: '', align: 'right' }]}
+        rows={scanRows(scan).map(([what, value, tone], i) => ({
+          id: `S${i + 1}`,
+          cells: { what, value, tone: <Badge tone={TONE_WORD[tone][0]}>{TONE_WORD[tone][1]}</Badge> },
+        }))}
+      />
+    </Panel>
   );
 }

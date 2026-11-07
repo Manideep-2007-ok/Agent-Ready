@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { TASK_LABELS } from '@agentready/engine/goals';
 import { getReport } from '../api.js';
+import { Badge, Button } from '../design/index.js';
 
 /** @typedef {import('@agentready/engine/types').SiteReport} SiteReport */
 
@@ -58,27 +59,25 @@ export default function DemoStoreCard({ report, beforeId, demoStoreUrl, url, bus
   if (before) {
     const diff = report ? report.score - before.score : null;
     return (
-      <section className="card demo-card">
+      <section className="ar-panel demo-card">
         <div className="before-after">
           <a href={`#/app/test/${encodeURIComponent(beforeId)}`} className="ba-box ba-before">
-            <span className="muted">Before fixes</span>
+            <span className="ar-label">Before fixes</span>
             <b>{before.score}/100</b>
           </a>
           <span className="ba-arrow" aria-hidden="true">→</span>
           <div className="ba-box ba-after">
-            <span className="muted">After fixes</span>
+            <span className="ar-label">After fixes</span>
             <b>{report ? `${report.score}/100` : 'Testing…'}</b>
           </div>
           {diff !== null && (
-            <span className={`chip ${diff > 0 ? 'band-pass' : 'band-warn'}`}>
-              {diff > 0 ? `+${diff} points` : diff === 0 ? 'No change' : `${diff} points`}
-            </span>
+            <Badge tone={diff > 0 ? 'pass' : 'warn'}>{diff > 0 ? `+${diff} points` : diff === 0 ? 'No change' : `${diff} points`}</Badge>
           )}
         </div>
         {report && <Effort before={before} after={report} />}
         {(isMock(before) || (report && isMock(report))) && (
-          <p className="mock-note">
-            <b>Mock mode:</b> these runs replay a recording instead of sending real agents, so the numbers cannot
+          <p className="ar-banner ar-banner--warn">
+            <b>Replay mode:</b> these runs replay a recording instead of sending real agents, so the numbers cannot
             change between flaws on and off. Turn mock mode off for a real comparison.
           </p>
         )}
@@ -89,14 +88,12 @@ export default function DemoStoreCard({ report, beforeId, demoStoreUrl, url, bus
   // A finished run on the flawed store: offer the one-click fix.
   if (report && flawsOn(report.url)) {
     return (
-      <section className="card demo-card">
+      <section className="ar-panel demo-card demo-offer">
         <p>
           This is our demo store with four flaws switched on: {FLAWS}. Switch them off to see what fixing them does to
           the score.
         </p>
-        <button type="button" onClick={onApplyFixes} disabled={busy}>
-          {busy ? 'Starting…' : 'Apply fixes and re-test'}
-        </button>
+        <Button onClick={onApplyFixes} disabled={busy} loading={busy}>Apply fixes and re-test</Button>
       </section>
     );
   }

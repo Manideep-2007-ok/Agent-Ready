@@ -2,6 +2,8 @@
 // (#/app/...). Old dashboard links redirect with location.replace, so Back never loops. No router library.
 import { useEffect, useState } from 'react';
 import TestPage from './pages/TestPage.jsx';
+import TestsHome from './pages/app/TestsHome.jsx';
+import ReportPage from './pages/app/ReportPage.jsx';
 import WatchPage from './pages/WatchPage.jsx';
 import RacePage from './pages/RacePage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
@@ -25,8 +27,10 @@ function AppArea({ route, health }) {
   const off = FLAGGED[route.page] && features && features[FLAGGED[route.page]] !== true;
   const page = off ? 'tests' : route.page;
   return (
-    <AppShell page={page} features={features} replay={Boolean(health?.mock)} version={health?.version}>
-      {(page === 'tests' || page === 'test') && <TestPage reportId={page === 'test' ? route.id : null} beforeId={route.extra} />}
+    <AppShell page={page} features={features} replay={Boolean(health?.mock)} version={health?.version}
+      title={page === 'tests' ? 'Tests' : null}>
+      {page === 'tests' && <TestsHome />}
+      {page === 'test' && <ReportPage key={route.id} id={route.id} beforeId={route.extra} />}
       {page === 'watch' && <WatchPage />}
       {page === 'race' && <RacePage raceId={route.id} />}
       {page === 'leaderboard' && <LeaderboardPage />}

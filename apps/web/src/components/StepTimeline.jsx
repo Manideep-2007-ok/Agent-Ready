@@ -2,6 +2,7 @@
 // highlighted, and a Replay button that plays the screenshots as a slideshow (1.5 s per step).
 import { useEffect, useMemo, useState } from 'react';
 import { TASK_LABELS } from '@agentready/engine/goals';
+import { Button, EmptyState, Panel } from '../design/index.js';
 
 const STEP_MS = 1500;
 const prefersCalm = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -32,16 +33,16 @@ function TaskSteps({ task, onShotClick }) {
     <article className="timeline-task">
       <header className="timeline-head">
         <h3>{label}</h3>
-        <span className="muted">{steps.length} steps · {Math.round(task.seconds || 0)} s</span>
-        <button type="button" className="secondary" onClick={playing ? () => setPlaying(false) : play} aria-pressed={playing}>
+        <span className="ar-mono ar-faint">{steps.length} steps · {Math.round(task.seconds || 0)}s</span>
+        <Button size="sm" className="no-print" onClick={playing ? () => setPlaying(false) : play} aria-pressed={playing}>
           {playing ? 'Pause' : 'Replay'}
-        </button>
+        </Button>
       </header>
       {(playing || at > 0) && current && (
         <figure className="timeline-stage">
           <button type="button" className="timeline-stage-shot" onClick={() => onShotClick?.(current.screenshotUrl)} aria-label={`Enlarge step ${at + 1}`}>
             {bad.has(current.screenshotUrl)
-              ? <span className="muted">No screenshot for this step</span>
+              ? <span className="ar-muted">No screenshot for this step</span>
               : <img src={current.screenshotUrl} alt={`Step ${at + 1}: ${current.label}`} onError={() => setBad((b) => new Set(b).add(current.screenshotUrl))} />}
           </button>
           <figcaption aria-live={prefersCalm() ? 'off' : 'polite'}>
@@ -71,12 +72,11 @@ function TaskSteps({ task, onShotClick }) {
 /** @param {{report: import('@agentready/engine/types').SiteReport, onShotClick?: (url:string)=>void}} props */
 export default function StepTimeline({ report, onShotClick }) {
   const tasks = report.tasks.filter((t) => (t.steps ?? []).some((s) => s.screenshotUrl));
-  if (!tasks.length) return null;
+  if (!tasks.length) return <Panel><EmptyState title="No steps yet" body="Screenshots of every step appear here once an agent finishes a task." /></Panel>;
   return (
-    <section className="card timeline" aria-labelledby="timeline-title">
-      <h2 id="timeline-title">Step by step</h2>
-      <p className="muted">Every step each agent took, with its screenshot. Press Replay to watch a task again.</p>
+    <Panel label="Step by step" className="timeline">
+      <p className="ar-panel-body ar-muted ar-tight">Every step each agent took, with its screenshot. Press Replay to watch a task again.</p>
       {tasks.map((t) => <TaskSteps key={t.taskId} task={t} onShotClick={onShotClick} />)}
-    </section>
+    </Panel>
   );
 }

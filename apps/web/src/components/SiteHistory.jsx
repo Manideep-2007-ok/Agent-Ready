@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { TASK_LABELS } from '@agentready/engine/goals';
 import { getSiteHistory } from '../api.js';
+import { EmptyState, Panel, Skeleton } from '../design/index.js';
 
 const W = 320, H = 72, PAD = 8;
 const fmt = (iso) => new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
@@ -53,26 +54,26 @@ export default function SiteHistory({ report }) {
     getSiteHistory(report.url).then((r) => live && setRows(r)).catch(() => live && setRows([]));
     return () => { live = false; };
   }, [report.url, report.id]);
-  if (!rows || rows.length < 2) return null;
+  if (!rows) return <Panel label="This site over time"><Skeleton rows={2} /></Panel>;
+  if (rows.length < 2) return <Panel><EmptyState title="This is the first finished test of this site" body="Test it again later to see the score over time and what changed." /></Panel>;
   const at = rows.findIndex((r) => r.id === report.id);
   const current = at === -1 ? rows[rows.length - 1] : rows[at];
   const previous = at > 0 ? rows[at - 1] : at === -1 ? rows[rows.length - 2] : null;
   const changes = previous ? changesBetween(previous, current) : [];
   return (
-    <section className="card history" aria-labelledby="history-title">
-      <h2 id="history-title">This site over time</h2>
-      <div className="history-row">
+    <Panel label="This site over time" className="history">
+      <div className="history-row ar-panel-body">
         <Sparkline points={rows} currentId={report.id} />
         <div>
-          <p className="muted">{rows.length} tests from {fmt(rows[0].testedAt)} to {fmt(rows[rows.length - 1].testedAt)}. The dashed line is 80 (ready).</p>
+          <p className="ar-muted">{rows.length} tests from {fmt(rows[0].testedAt)} to {fmt(rows[rows.length - 1].testedAt)}. The dashed line is 80 (ready).</p>
           {previous && (
             <>
               <h3>Since the test before (<a href={`#/app/test/${encodeURIComponent(previous.id)}`}>{fmt(previous.testedAt)}</a>)</h3>
-              {changes.length ? <ul className="history-changes">{changes.map((c) => <li key={c}>{c}</li>)}</ul> : <p className="muted">Nothing changed.</p>}
+              {changes.length ? <ul className="history-changes">{changes.map((c) => <li key={c}>{c}</li>)}</ul> : <p className="ar-muted">Nothing changed.</p>}
             </>
           )}
         </div>
       </div>
-    </section>
+    </Panel>
   );
 }

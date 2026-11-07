@@ -22,8 +22,8 @@ export async function api(path, { method = 'GET', body } = {}) {
 export const getHealth = () => api('/health');
 export const cancelTest = (id) => api(`/tests/${encodeURIComponent(id)}/cancel`, { method: 'POST' });
 export const cancelWatchCheck = (id) => api(`/watch/${encodeURIComponent(id)}/cancel`, { method: 'POST' });
-export const startTest = (url, customTask, { confirm = false } = {}) =>
-  api('/tests', { method: 'POST', body: { url, customTask: customTask || undefined, ...(confirm ? { confirm: true } : {}) } });
+export const startTest = (url, customTask, { confirm = false, pack } = {}) =>
+  api('/tests', { method: 'POST', body: { url, customTask: customTask || undefined, ...(confirm ? { confirm: true } : {}), ...(pack ? { pack } : {}) } });
 export const getEstimate = (tasks, confirm) => api(`/estimate?tasks=${tasks}${confirm ? '&confirm=1' : ''}`);
 export const getSiteHistory = (url) => api(`/sites/history?url=${encodeURIComponent(url)}`);
 export const getReport = (id) => api(`/tests/${encodeURIComponent(id)}`);
