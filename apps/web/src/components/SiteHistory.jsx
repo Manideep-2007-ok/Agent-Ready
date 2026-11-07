@@ -62,7 +62,7 @@ export default function SiteHistory({ report }) {
   const changes = previous ? changesBetween(previous, current) : [];
   return (
     <Panel label="This site over time" className="history">
-      <div className="history-row ar-panel-body">
+      <div className="sitehist-row ar-panel-body">
         <Sparkline points={rows} currentId={report.id} />
         <div>
           <p className="ar-muted">{rows.length} tests from {fmt(rows[0].testedAt)} to {fmt(rows[rows.length - 1].testedAt)}. The dashed line is 80 (ready).</p>

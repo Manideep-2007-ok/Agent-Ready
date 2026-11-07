@@ -100,15 +100,15 @@ a.ba-box:hover { background: var(--surface-2); text-decoration: none; }
 .timeline-steps li.is-stuck button { border-color: var(--fail); box-shadow: inset 0 0 0 1px var(--fail); }
 .timeline-steps li.is-current button { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .timeline-stuck { color: var(--fail); font-weight: 500; }
-.history-row { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 20px; align-items: start; }
-.history-row h3 { font-size: 14px; margin: 10px 0 4px; }
+.sitehist-row { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.sitehist-row h3 { font-size: 14px; margin: 10px 0 4px; }
 .history-spark { width: 100%; height: auto; background: var(--surface-2); border-radius: var(--radius); }
 .history-line { fill: none; stroke: var(--accent); stroke-width: 2; }
 .history-ready { stroke: var(--text-faint); stroke-dasharray: 4 4; stroke-width: 1; }
 .history-dot { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
 .history-dot.is-current { fill: var(--accent); }
 .history-changes { margin: 0; padding-left: 18px; line-height: 1.7; font-size: 14px; }
-@media (max-width: 760px) { .history-row { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .sitehist-row { grid-template-columns: minmax(0, 1fr); } }
 
 /* Screenshot viewer (ShotViewer.jsx) */
 .shot-viewer { position: fixed; inset: 0; z-index: 60; background: rgba(10, 10, 12, 0.86); display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
@@ -122,3 +122,41 @@ a.ba-box:hover { background: var(--surface-2); text-decoration: none; }
   .ar-tabpanel { break-before: auto; }
   .ar-panel, .ar-finding, .timeline-task { break-inside: avoid; }
 }
+
+/* Watch */
+.ar-h2 { margin: 0 0 4px; font-size: 17px; letter-spacing: -0.02em; }
+.ar-flush { margin: 0; }
+.ar-watch-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.3fr); gap: 12px; }
+.ar-watch-head { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.ar-watch-id { display: grid; gap: 2px; min-width: 0; }
+.ar-watch-body { padding: 14px; display: grid; gap: 12px; }
+.ar-watch-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.ar-watch-history { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); }
+.ar-watch-history .history-row { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 9px 12px; font-size: 14px; }
+.ar-watch-history .history-row + .history-row { border-top: 1px solid var(--border); }
+.ar-watch-history .history-row a { margin-left: auto; }
+@media (max-width: 760px) { .ar-watch-row { grid-template-columns: minmax(0, 1fr); } }
+
+/* Race */
+.ar-race-sites { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.ar-chips { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ar-race-status .ar-btn { margin-left: auto; }
+.race-lane { display: grid; gap: 8px; min-width: 0; }
+.race-lane-head { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.race-winner .ar-lane { border-color: var(--pass); box-shadow: inset 0 0 0 1px var(--pass); }
+.race-report-link { font-size: 13px; }
+.race-summary { display: grid; gap: 8px; padding: 14px; }
+.race-win-line { display: flex; gap: 10px; align-items: center; }
+.race-ranking { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.7; }
+
+/* Leaderboard */
+.lb-list { list-style: none; margin: 0; padding: 0; }
+.lb-row { display: grid; grid-template-columns: 36px minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr) auto; gap: 14px; align-items: center; padding: 12px 14px; background: var(--surface); }
+.lb-row + .lb-row { border-top: 1px solid var(--border); }
+.lb-rank { font: 500 13px/1 var(--font-mono); color: var(--text-faint); }
+.lb-site { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.lb-score { display: flex; gap: 8px; align-items: center; }
+.lb-num { font-size: 20px; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.lb-wall { font-size: 13px; color: var(--text-muted); }
+.lb-wall-bad { color: var(--fail); }
+@media (max-width: 760px) { .lb-row { grid-template-columns: 28px minmax(0, 1fr) auto; } .lb-wall { display: none; } .lb-score { grid-column: 2; } .lb-open { grid-column: 3; grid-row: 1; } }

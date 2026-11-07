@@ -2,10 +2,12 @@
 // polls the race itself for the ranking. The race id lives in the URL (#/race/<id>) so a refresh keeps the view.
 import { useEffect, useState } from 'react';
 import { TASK_LABELS } from '@agentready/engine/goals';
-import { cancelRace, getHealth, getRace, startRace, useLiveEvents, useQueueNote } from '../api.js';
-import { navigate } from '../nav.js';
-import Lane from '../components/Lane.jsx';
-import ShotViewer from '../components/ShotViewer.jsx';
+import { cancelRace, getHealth, getRace, startRace, useLiveEvents, useQueueNote } from '../../api.js';
+import { navigate } from '../../nav.js';
+import { href } from '../../routes.js';
+import Lane from '../../components/Lane.jsx';
+import ShotViewer from '../../components/ShotViewer.jsx';
+import { Badge, Button, Field, Panel } from '../../design/index.js';
 
 const RACE_TASKS = ['find_price', 'add_to_cart', 'find_returns', 'find_contact'];
 const MAX_SITES = 3;
@@ -37,38 +39,37 @@ function RaceForm({ busy, replay, demoStoreUrl, onStart }) {
   const submit = (e) => { e.preventDefault(); if (filled.length >= 2) onStart(taskId, filled); };
 
   return (
-    <form className="card race-form" onSubmit={submit}>
-      <div>
-        <h2>Race: who is easiest for AI shoppers?</h2>
-        <p className="muted">Pick one task and up to {MAX_SITES} websites. Agents try the same task on each site at the same time, and the site where they finish with the fewest steps wins.</p>
-      </div>
-      <label className="race-field">
-        <span>Task</span>
-        <select value={taskId} onChange={(e) => setTaskId(e.target.value)} disabled={busy} aria-label="Task to race">
-          {RACE_TASKS.map((id) => <option key={id} value={id}>{TASK_LABELS[id]}</option>)}
-        </select>
-      </label>
-      <div className="race-sites">
-        {sites.map((site, i) => (
-          <input key={i} type="text" value={site} onChange={(e) => setSite(i, e.target.value)} disabled={busy}
-            placeholder={i === 0 ? 'First site, e.g. nykaa.com' : `Site ${i + 1}`} aria-label={`Website ${i + 1}`} />
-        ))}
-      </div>
-      {replay && (
-        <div className="site-chips" role="group" aria-label="Sites we have recordings for">
-          <span className="muted">Try a recorded site:</span>
-          {chips.map((c) => (
-            <button key={c.name} type="button" className="secondary" onClick={() => addChip(c.url)} disabled={busy}>{c.name}</button>
+    <Panel label="New race">
+      <form className="ar-newtest-form" onSubmit={submit}>
+        <div>
+          <h2 className="ar-h2">Race: who is easiest for AI shoppers?</h2>
+          <p className="ar-muted ar-small ar-flush">Pick one task and up to {MAX_SITES} websites. Agents try the same task on each site at the same time, and the site where they finish with the fewest steps wins.</p>
+        </div>
+        <Field label="Task to race">
+          <select className="ar-select" value={taskId} onChange={(e) => setTaskId(e.target.value)} disabled={busy}>
+            {RACE_TASKS.map((id) => <option key={id} value={id}>{TASK_LABELS[id]}</option>)}
+          </select>
+        </Field>
+        <div className="ar-race-sites">
+          {sites.map((site, i) => (
+            <Field key={i} label={`Website ${i + 1}`}>
+              <input className="ar-input" type="text" value={site} onChange={(e) => setSite(i, e.target.value)} disabled={busy}
+                placeholder={i === 0 ? 'your-store.com' : 'a competitor'} />
+            </Field>
           ))}
         </div>
-      )}
-      <div className="race-actions">
-        {sites.length < MAX_SITES && (
-          <button type="button" className="link-button" onClick={() => setSites((p) => [...p, ''])} disabled={busy}>Add a third site</button>
+        {replay && (
+          <div className="ar-chips" role="group" aria-label="Sites we have recordings for">
+            <span className="ar-label">Recorded sites</span>
+            {chips.map((c) => <Button key={c.name} size="sm" onClick={() => addChip(c.url)} disabled={busy}>{c.name}</Button>)}
+          </div>
         )}
-        <button type="submit" disabled={busy || filled.length < 2}>{busy ? 'Racing…' : 'Start race'}</button>
-      </div>
-    </form>
+        <div className="ar-newtest-foot">
+          {sites.length < MAX_SITES && <Button variant="ghost" size="sm" onClick={() => setSites((p) => [...p, ''])} disabled={busy}>Add a third site</Button>}
+          <div className="ar-newtest-actions"><Button variant="primary" type="submit" disabled={busy || filled.length < 2} loading={busy}>Start race</Button></div>
+        </div>
+      </form>
+    </Panel>
   );
 }
 
@@ -83,12 +84,12 @@ function RaceLane({ lane, taskId, place, finished, onShotClick }) {
   return (
     <div className={classes}>
       <div className="race-lane-head">
-        <b>{host}</b>
-        {place ? <span className={`chip ${place === 1 ? 'band-pass' : ''}`}>{placeText(place)}</span> : null}
-        {finished && !place && task && <span className="chip">No place</span>}
+        <span className="ar-host">{host}</span>
+        {place ? <Badge tone={place === 1 ? 'pass' : 'neutral'}>{placeText(place)}</Badge> : null}
+        {finished && !place && task && <Badge tone="wait">No place</Badge>}
       </div>
       <Lane task={task} label={TASK_LABELS[taskId]} onShotClick={onShotClick} waitReason={waitReason} />
-      {live.report && <a className="race-report-link" href={`#/app/test/${encodeURIComponent(lane.reportId)}`}>Open the full report for {host}</a>}
+      {live.report && <a className="race-report-link" href={href('app', 'test', lane.reportId)}>Open the full report for {host}</a>}
     </div>
   );
 }
@@ -96,19 +97,19 @@ function RaceLane({ lane, taskId, place, finished, onShotClick }) {
 function Summary({ race }) {
   const winner = race.rank?.[0] && race.lanes.find((l) => l.reportId === race.rank[0].reportId);
   const stopped = race.lanes.every((l) => l.report?.status === 'cancelled');
-  if (stopped) return <section className="card stopped-card" role="status"><b>Race stopped.</b> <span className="muted">No winner is named for a stopped race.</span></section>;
+  if (stopped) return <div className="ar-banner ar-banner--wait stopped-card" role="status"><span className="ar-label">Race stopped</span> No winner is named for a stopped race.</div>;
   if (!winner) {
     return (
-      <section className="card race-summary" role="status">
-        <b>No winner.</b> <span className="muted">The agents could not finish this task on any of these sites. Open each report to see where they got stuck.</span>
+      <section className="ar-banner ar-banner--wait race-summary" role="status">
+        <span className="ar-label">No winner</span> <span>The agents could not finish this task on any of these sites. Open each report to see where they got stuck.</span>
       </section>
     );
   }
   const t = winner.task;
   return (
-    <section className="card race-summary race-summary-win" role="status">
-      <div className="race-win-line"><span className="chip band-pass">Winner</span> <b>{hostOf(winner.url)}</b></div>
-      <span className="muted">Finished in {stepsOf(t)} steps and {Math.round(t.seconds)} seconds. Fewest steps wins; the same number of steps goes to the faster site.</span>
+    <section className="ar-panel race-summary race-summary-win" role="status">
+      <div className="race-win-line"><Badge tone="pass">Winner</Badge> <b>{hostOf(winner.url)}</b></div>
+      <span className="ar-muted ar-small">Finished in {stepsOf(t)} steps and {Math.round(t.seconds)} seconds. Fewest steps wins; the same number of steps goes to the faster site.</span>
       <ol className="race-ranking" aria-label="Finishing order">
         {race.rank.map((r) => {
           const lane = race.lanes.find((l) => l.reportId === r.reportId);
@@ -167,17 +168,15 @@ export default function RacePage({ raceId }) {
   return (
     <>
       <RaceForm busy={starting || running} replay={replay} demoStoreUrl={demoStoreUrl} onStart={onStart} />
-      {error && <section className="card error" role="alert">{error}</section>}
+      {error && <p className="ar-error" role="alert">{error}</p>}
       {race && !error && (
         <>
           {running ? (
-            <section className="card">
-              <div className="progress">
-                <span className="big">{stopping ? 'Stopping…' : 'Racing…'}</span>
-                <span>{TASK_LABELS[race.taskId]}</span>
-                <button type="button" className="secondary stop-test" onClick={onStop} disabled={stopping}>{stopping ? 'Stopping…' : 'Stop race'}</button>
-              </div>
-            </section>
+            <div className="ar-banner ar-banner--wait ar-race-status" role="status">
+              <span className="ar-label">{stopping ? 'Stopping' : 'Racing'}</span>
+              <span>{TASK_LABELS[race.taskId]}</span>
+              <Button size="sm" onClick={onStop} disabled={stopping}>{stopping ? 'Stopping…' : 'Stop race'}</Button>
+            </div>
           ) : <Summary race={race} />}
           <section className="lanes race-lanes" aria-label="Racing sites">
             {race.lanes.map((lane) => (

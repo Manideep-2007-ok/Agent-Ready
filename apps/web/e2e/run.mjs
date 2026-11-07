@@ -361,6 +361,7 @@ try {
   const watch = await newPage(fast.base, { label: 'watch' });
   await t.step('Watch: create a watch for each scope', async () => {
     const { page } = watch;
+    await page.goto(fast.base + '/#/app');
     await page.getByRole('link', { name: 'Watch', exact: true }).click();
     await page.getByRole('heading', { name: 'Watch a site' }).waitFor();
     await page.getByLabel('Website to watch').fill(''); // the box is pre-filled with the demo store when nothing is watched yet
@@ -399,7 +400,7 @@ try {
     await card.getByText(/Check finished: \d+\/100/).waitFor();
     await card.getByRole('button', { name: 'Run now' }).waitFor();
     const row = card.locator('.history-row').first();
-    expect(/All passed|Problem/.test(await row.innerText()), 'history row has a verdict');
+    expect(/All passed|Problem/.test(await row.textContent()), 'history row has a verdict');
     await shot(page, 'watch-run');
     await row.getByRole('link', { name: 'Open report' }).click();
     await waitHash(page, /#\/app\/test\/rep_/);
@@ -423,7 +424,7 @@ try {
   const watchSlow = await newPage(slow.base, { label: 'watch-slow' });
   await t.step('Watch: Stop check and Pause while a check runs both cancel it', async () => {
     const { page } = watchSlow;
-    await page.getByRole('link', { name: 'Watch', exact: true }).click();
+    await page.goto(slow.base + '/#/app/watch');
     await page.locator('.watch-card').first().waitFor(); // the watch left over from the earlier step
     const had = await page.locator('.watch-card').count();
     await page.getByLabel('Website to watch').fill('https://www.nykaa.com');
@@ -472,7 +473,7 @@ try {
     await page.locator('.race-summary-win').waitFor({ timeout: 90000 });
     await page.locator('.race-winner').waitFor();
     expect(await page.locator('.race-winner').count() === 1, 'exactly one winner lane');
-    expect(await page.locator('.race-summary-win').innerText().then((x) => /Winner/.test(x) && /steps/.test(x)), 'summary names the winner');
+    expect(await page.locator('.race-summary-win').textContent().then((x) => /Winner/.test(x) && /steps/.test(x)), 'summary names the winner');
     expect(await page.locator('.race-lane .ar-lane').count() === 3, 'three lanes');
     expect(await noHScroll(page), 'race page fits');
     await shot(page, 'race-done');
