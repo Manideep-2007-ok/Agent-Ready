@@ -45,7 +45,7 @@ export const FIX_TEMPLATES = {
     passCheck: 'The stuck page loads with product or policy content on the first attempt.',
   },
   'needed-web-search': {
-    likelyCause: 'The page the shopper needs is not reachable from your navigation, so visitors have to search the wider web to find it.',
+    likelyCause: 'The page the visitor needs is not reachable from your navigation, so visitors have to search the wider web to find it.',
     fix: 'Link the page directly from the header or footer with a clear label, and list it in your sitemap.xml.',
     standard: 'Sitemaps protocol and clear navigation labels (WCAG 2.4.5 Multiple Ways)',
     passCheck: 'The page is found by following site links only, without any web search.',
@@ -177,6 +177,128 @@ export const FIX_TEMPLATES = {
       unknown: '<script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","name":"...","offers":{"@type":"Offer","price":"499","priceCurrency":"INR"}}</script>',
     },
   },
+  // ---- saas / content / local packs (D40) ----
+  'pricing-not-found': {
+    likelyCause: 'There is probably no plain "Pricing" link in the header or footer, or the plans are drawn as images, load only after a script runs, or are shown only after a form is filled in.',
+    fix: 'Add a "Pricing" link to the header and footer, and show each plan name and price as plain text on that page.',
+    standard: 'Clear navigation labels (WCAG 2.4.5 Multiple Ways); WCAG 1.1.1 Non-text Content',
+    passCheck: 'The plan names and prices are found in 5 steps or fewer.',
+    frameworkExamples: {
+      nextjs: 'Add <Link href="/pricing">Pricing</Link> to your Header and Footer components, and render each plan as <h3>Pro</h3><p>₹999 / month</p>.',
+      shopify: 'Online Store > Navigation > Main menu > add the Pricing page.',
+      unknown: '<a href="/pricing">Pricing</a> in the header, and <p class="price">₹999 / month</p> as text on the page.',
+    },
+  },
+  'signup-not-found': {
+    likelyCause: 'The sign-up button may be an icon or an unclear label ("Get going"), or the form may open only inside a script-driven pop-up that covers the page.',
+    fix: 'Label the main call to action in plain words ("Sign up", "Start free trial") and link it to a page with a real form whose fields have labels.',
+    standard: 'WCAG 2.4.4 Link Purpose; WCAG 3.3.2 Labels or Instructions',
+    passCheck: 'The sign-up form and the names of its fields are found in 5 steps or fewer.',
+    frameworkExamples: {
+      nextjs: '<Link href="/signup">Start free trial</Link> leading to a page with <label htmlFor="email">Work email</label><input id="email" />.',
+      unknown: '<a href="/signup">Start free trial</a> and <label for="email">Work email</label><input id="email" type="email">.',
+    },
+  },
+  'docs-not-found': {
+    likelyCause: 'There may be no "Docs", "API" or "Help" link in the header or footer, or the documentation lives on a separate address that nothing on the main site links to.',
+    fix: 'Link the docs or help center from the header and footer with a plain label, and list it in sitemap.xml.',
+    standard: 'Sitemaps protocol and clear navigation labels (WCAG 2.4.5 Multiple Ways)',
+    passCheck: 'The docs or help center is found in 5 steps or fewer.',
+    frameworkExamples: {
+      nextjs: 'Add <Link href="https://docs.example.com">Docs</Link> to your Header and Footer components and export it from app/sitemap.js.',
+      unknown: '<a href="/docs">Docs</a> in the header and footer of every page.',
+    },
+  },
+  'sales-contact-not-found': {
+    likelyCause: 'There may be no visible "Contact sales" or "Book a demo" link, or the only option is a form behind a login or a chat widget that does not load for every visitor.',
+    fix: 'Add a "Contact sales" or "Book a demo" link to the header and footer that opens a page with a form or an email address in plain text.',
+    standard: 'Clear navigation labels (WCAG 2.4.5 Multiple Ways)',
+    passCheck: 'A sales contact or demo booking is found in 5 steps or fewer.',
+    frameworkExamples: {
+      nextjs: 'Add <Link href="/contact-sales">Contact sales</Link> to your Header component.',
+      unknown: '<a href="/contact-sales">Contact sales</a> in the header and footer.',
+    },
+  },
+  'search-not-found': {
+    likelyCause: 'The site may have no search box, a search that returns nothing unless a script runs, or menus whose topics are not named in plain words.',
+    fix: 'Add a visible search box and topic links in the header, and make search results ordinary links to articles.',
+    standard: 'WCAG 2.4.5 Multiple Ways; WCAG 3.2.4 Consistent Identification',
+    passCheck: 'An article on the main topic is found in 5 steps or fewer.',
+    frameworkExamples: {
+      nextjs: '<form action="/search" role="search"><label htmlFor="q">Search</label><input id="q" name="q" /></form> in your Header component.',
+      unknown: '<form action="/search" role="search"><label for="q">Search</label><input id="q" name="q"></form>',
+    },
+  },
+  'article-not-readable': {
+    likelyCause: 'The article text may load only after a script runs, sit behind a pop-up or subscribe prompt, or lack a clear title, author and date.',
+    fix: 'Put the article text in the page itself, give it one heading, add schema.org Article data (headline, author, datePublished) and keep pop-ups off the first screen.',
+    standard: 'schema.org Article; WCAG 1.3.1 Info and Relationships',
+    passCheck: 'An article opens with its title, author and date readable in 5 steps or fewer.',
+    frameworkExamples: {
+      nextjs: '<script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({"@context":"https://schema.org","@type":"Article",headline,author:{"@type":"Person",name:author},datePublished})}} />',
+      unknown: '<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"...","author":{"@type":"Person","name":"..."},"datePublished":"2026-11-01"}</script>',
+    },
+  },
+  'newsletter-not-found': {
+    likelyCause: 'The subscribe form may appear only in a timed pop-up, or sit in the footer without a label that says what it is.',
+    fix: 'Add a visible "Subscribe" form or link to the footer of every page, with a labelled email field.',
+    standard: 'WCAG 3.3.2 Labels or Instructions',
+    passCheck: 'The newsletter form is found in 5 steps or fewer.',
+    frameworkExamples: {
+      nextjs: '<form action="/subscribe"><label htmlFor="nl">Email for our newsletter</label><input id="nl" type="email" /><button>Subscribe</button></form> in your Footer component.',
+      unknown: '<form action="/subscribe"><label for="nl">Email for our newsletter</label><input id="nl" type="email"><button>Subscribe</button></form>',
+    },
+  },
+  'author-contact-not-found': {
+    likelyCause: 'There may be no "About" or "Contact" link, or the byline may not link to an author page with an email address or profile.',
+    fix: 'Link every byline to an author page, and add "About" and "Contact" links to the footer with an email address or a form.',
+    standard: 'Clear navigation labels (WCAG 2.4.5 Multiple Ways)',
+    passCheck: 'A way to contact the author or the team is found in 5 steps or fewer.',
+    frameworkExamples: {
+      nextjs: 'Add <Link href="/contact">Contact the editors</Link> to your Footer component and link the byline to /authors/<name>.',
+      unknown: '<a href="/contact">Contact the editors</a> in the footer.',
+    },
+  },
+  'hours-not-found': {
+    likelyCause: 'The opening hours may be drawn inside an image, shown only inside a map widget, or left off the pages visitors reach first.',
+    fix: 'Write the opening hours as plain text in the footer and on the contact page, and add them to LocalBusiness markup.',
+    standard: 'schema.org LocalBusiness openingHours; WCAG 1.1.1 Non-text Content',
+    passCheck: 'The opening hours are found in 5 steps or fewer.',
+    frameworkExamples: {
+      nextjs: '<script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({"@context":"https://schema.org","@type":"Restaurant",name,openingHours:["Mo-Su 11:00-23:00"]})}} />',
+      unknown: '<script type="application/ld+json">{"@context":"https://schema.org","@type":"LocalBusiness","name":"...","openingHours":["Mo-Fr 09:00-18:00"]}</script> and the same hours as text in the footer.',
+    },
+  },
+  'location-not-found': {
+    likelyCause: 'The address may be drawn inside an image or shown only inside an embedded map, with no text and no link.',
+    fix: 'Write the full address as plain text on the contact page and in the footer, link to the map, and add the address to LocalBusiness markup.',
+    standard: 'schema.org LocalBusiness address; WCAG 1.1.1 Non-text Content',
+    passCheck: 'The address and a map link are found in 5 steps or fewer.',
+    frameworkExamples: {
+      nextjs: '<address>12 MG Road, Bengaluru 560001 · <a href="https://maps.google.com/?q=12+MG+Road+Bengaluru">Map</a></address> in your Footer component.',
+      unknown: '<address>12 MG Road, Bengaluru 560001 · <a href="https://maps.google.com/?q=12+MG+Road+Bengaluru">Map</a></address>',
+    },
+  },
+  'menu-not-found': {
+    likelyCause: 'The menu may be a PDF or a photo, or the services page may not be linked from the header.',
+    fix: 'Publish the menu or the services as a page of plain text with prices, and link it from the header.',
+    standard: 'WCAG 1.1.1 Non-text Content; Clear navigation labels (WCAG 2.4.5 Multiple Ways)',
+    passCheck: 'The menu or the services are found, with prices, in 5 steps or fewer.',
+    frameworkExamples: {
+      nextjs: 'Render the menu as <ul><li>Masala dosa · ₹120</li></ul> on /menu and link it with <Link href="/menu">Menu</Link>.',
+      unknown: '<ul><li>Masala dosa · ₹120</li></ul> on /menu, and <a href="/menu">Menu</a> in the header.',
+    },
+  },
+  'booking-not-found': {
+    likelyCause: 'The booking button may be an icon or an unclear label, or the form may sit inside a third-party widget that does not load for visitors without a script.',
+    fix: 'Add a "Book now" or "Reserve a table" link to the header and make the booking form a normal page with labelled fields.',
+    standard: 'WCAG 2.4.4 Link Purpose; WCAG 3.3.2 Labels or Instructions',
+    passCheck: 'The booking form and the names of its fields are found in 5 steps or fewer.',
+    frameworkExamples: {
+      nextjs: '<Link href="/book">Reserve a table</Link> leading to a page with labelled name, date and party-size fields.',
+      unknown: '<a href="/book">Reserve a table</a> leading to a form with <label for="date">Date</label><input id="date" type="date">.',
+    },
+  },
 };
 
 // Safety net: every contract type must have a template.
@@ -206,6 +328,18 @@ const KEYWORDS = {
   'price-in-image': ['price', '₹', 'rs.'],
   'returns-not-found': ['return', 'refund'],
   'contact-not-found': ['contact', 'support', 'help'],
+  'pricing-not-found': ['pricing', 'plans', 'price'],
+  'signup-not-found': ['sign up', 'signup', 'trial', 'get started'],
+  'docs-not-found': ['docs', 'documentation', 'api', 'help'],
+  'sales-contact-not-found': ['sales', 'demo', 'contact'],
+  'search-not-found': ['search', 'topics', 'articles'],
+  'article-not-readable': ['read', 'article', 'post'],
+  'newsletter-not-found': ['newsletter', 'subscribe'],
+  'author-contact-not-found': ['contact', 'about', 'author'],
+  'hours-not-found': ['hours', 'open'],
+  'location-not-found': ['address', 'location', 'map', 'directions'],
+  'menu-not-found': ['menu', 'services', 'price'],
+  'booking-not-found': ['book', 'reserve', 'appointment'],
   'unlabelled-buttons': ['cart', 'add'],
   'popup-blocking': ['close', 'dismiss', 'accept'],
 };

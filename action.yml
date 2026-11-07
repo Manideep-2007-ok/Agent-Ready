@@ -1,5 +1,5 @@
 name: AgentReady
-description: Test whether AI agents can really use your site (find a price, add to cart, find returns and contact). Posts one PR comment, a job summary and a badge.
+description: Test whether AI agents can really use your site - shop, SaaS, blog or local business (find a price, sign up, read an article, book a table). Posts one PR comment, a job summary and a badge.
 author: Team Mavericks
 branding:
   icon: check-circle
@@ -12,10 +12,18 @@ inputs:
   tinyfish-api-key:
     description: TinyFish API key. Pass it from a repository secret, never as plain text.
     required: true
-  tasks:
-    description: Comma separated tasks (find_price, add_to_cart, find_returns, find_contact). Every agent step costs about $0.016.
+  pack:
+    description: What kind of site this is - auto (read the site and pick), shop, saas, content (blog or news) or local (restaurant, clinic, salon). auto adds one Instant Scan before the agents start.
     required: false
-    default: find_price,add_to_cart
+    default: auto
+  tasks:
+    description: Comma separated task ids from any pack (for example find_price,add_to_cart or find_pricing_plans,reach_signup), or quick (the two key tasks of the pack), or none (only the task input). Every agent step costs about $0.016.
+    required: false
+    default: quick
+  task:
+    description: A task of your own in plain words (up to 300 characters). It is scored separately and is not part of the 100. Leave empty for none.
+    required: false
+    default: ''
   min-score:
     description: Fail the job when the score is below this number (0 to 100). 0 means report only.
     required: false
@@ -73,15 +81,21 @@ runs:
         TINYFISH_API_KEY: ${{ inputs.tinyfish-api-key }}
         TARGET_URL: ${{ inputs.url }}
         TASKS: ${{ inputs.tasks }}
+        PACK: ${{ inputs.pack }}
+        TASK_TEXT: ${{ inputs.task }}
       run: |
         set -uo pipefail
         mkdir -p agentready-out
         case "$TARGET_URL" in http://*|https://*) ;; *) echo "::error::url must start with http:// or https://"; echo "exit=2" >> "$GITHUB_OUTPUT"; exit 0;; esac
-        if ! [[ "$TASKS" =~ ^[a-z_]+(,[a-z_]+)*$ ]]; then echo "::error::tasks must look like find_price,add_to_cart"; echo "exit=2" >> "$GITHUB_OUTPUT"; exit 0; fi
+        if ! [[ "$TASKS" =~ ^[a-z_]+(,[a-z_]+)*$ ]]; then echo "::error::tasks must look like find_price,add_to_cart (or quick, or none)"; echo "exit=2" >> "$GITHUB_OUTPUT"; exit 0; fi
+        if ! [[ "$PACK" =~ ^(auto|shop|saas|content|local)$ ]]; then echo "::error::pack must be auto, shop, saas, content or local"; echo "exit=2" >> "$GITHUB_OUTPUT"; exit 0; fi
+        # The task text goes to the CLI as one argument (never through the shell text), and the CLI checks its length.
+        extra=()
+        if [ -n "$TASK_TEXT" ]; then extra+=(--task "$TASK_TEXT"); fi
         echo "::add-mask::$TINYFISH_API_KEY"
         # Run in the background so a cancelled job (runner sends SIGINT, then SIGTERM) passes the signal on: the CLI then
         # cancels its agent runs on TinyFish so they stop costing money.
-        node "${AGENTREADY_BIN}" "$TARGET_URL" --no-tunnel --json --tasks "$TASKS" --badge agentready-out/agentready-badge.svg \
+        node "${AGENTREADY_BIN}" "$TARGET_URL" --no-tunnel --json --pack "$PACK" --tasks "$TASKS" ${extra[@]+"${extra[@]}"} --badge agentready-out/agentready-badge.svg \
           > agentready-out/agentready-report.json 2> agentready-out/progress.log &
         pid=$!
         trap 'kill -TERM "$pid" 2>/dev/null; wait "$pid"; exit 143' INT TERM

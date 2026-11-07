@@ -10,6 +10,9 @@ export const USD_PER_STEP = 0.016;
 const VERDICT_RANK = { none: 0, 'blocks-cloud-agents': 1, 'blocks-automation': 2, 'site-broken': 3 };
 const SEVERITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 
+/** Counts in the 100: not the custom task, and not a replay placeholder (replay mode has no recording for it). */
+export const isScored = (t) => t.taskId !== 'custom' && !t.replayNote;
+
 /** Worst verdict across tasks: site-broken > blocks-automation > blocks-cloud-agents > none. */
 export function siteVerdict(tasks) {
   let worst = 'none';
@@ -71,6 +74,19 @@ const FAIL_FINDING = {
   find_price: ['price-not-found', 'high', 'No product price could be read', 'Prices may be drawn inside images or loaded so late that they are not in the page text.', 'Show prices as plain text next to the product name and add schema.org Product/Offer data.', 'WCAG 1.1.1 Non-text Content; schema.org Product', 'A product price is found in 5 steps or fewer'],
   find_returns: ['returns-not-found', 'medium', 'The return policy could not be found', 'There is probably no clear "Returns" link in the header or footer; the policy sits deep inside a help centre.', 'Add a "Returns" or "Refund policy" link to the footer and header of every page.', undefined, 'The return policy is found in 5 steps or fewer'],
   find_contact: ['contact-not-found', 'medium', 'No way to contact support could be found', 'There is probably no visible Contact or Support link, or contact options only open after login.', 'Add a "Contact us" link to the footer of every page with an email, phone or form that works without login.', undefined, 'The contact page is found in 5 steps or fewer'],
+  // ---- saas / content / local packs (D40). Same shape; wording names a site cause, never the agent (D22). ----
+  find_pricing_plans: ['pricing-not-found', 'high', 'The pricing plans could not be found', 'There may be no "Pricing" link in the header or footer, the plans may be drawn as images or load only after a script runs, or prices may be shown only after a form is filled in.', 'Add a "Pricing" link to the header and footer and show each plan name and price as plain text on that page.', 'Clear navigation labels (WCAG 2.4.5 Multiple Ways); WCAG 1.1.1 Non-text Content', 'The plan names and prices are found in 5 steps or fewer'],
+  reach_signup: ['signup-not-found', 'high', 'The sign-up or free-trial form could not be reached', 'The sign-up button may be an icon or unclear label such as "Get going", or the form may only open inside a script-driven pop-up that covers the page.', 'Label the main call to action in plain words ("Sign up", "Start free trial") and link it to a page with a real form whose fields have labels.', 'WCAG 2.4.4 Link Purpose; WCAG 3.3.2 Labels or Instructions', 'The sign-up form and its fields are found in 5 steps or fewer'],
+  find_docs: ['docs-not-found', 'medium', 'The documentation or help center could not be found', 'There may be no "Docs", "API" or "Help" link in the header or footer, or the docs may live on a separate address that nothing on the main site links to.', 'Link the docs or help center from the header and footer with a plain label ("Docs", "Help center") and list it in sitemap.xml.', 'Sitemaps protocol and clear navigation labels (WCAG 2.4.5 Multiple Ways)', 'The docs or help center is found in 5 steps or fewer'],
+  contact_sales: ['sales-contact-not-found', 'medium', 'No way to contact sales or book a demo could be found', 'There may be no visible "Contact sales" or "Book a demo" link, or the only option may be a form hidden behind a login or a chat widget that does not load.', 'Add a "Contact sales" or "Book a demo" link to the header and footer, pointing to a page with a form or an email address in plain text.', 'Clear navigation labels (WCAG 2.4.5 Multiple Ways)', 'A sales contact or demo booking is found in 5 steps or fewer'],
+  search_topic: ['search-not-found', 'medium', "An article on the site's main topic could not be found through its own search or menus", 'The site may have no search box, a search that returns nothing without a script, or menus whose topics are not named in plain words.', 'Add a visible search box and topic links in the header, and make search results work as normal links.', 'WCAG 2.4.5 Multiple Ways; WCAG 3.2.4 Consistent Identification', 'An article on the main topic is found in 5 steps or fewer'],
+  read_article: ['article-not-readable', 'high', 'An article could not be opened and read', 'Article text may load only after a script runs, sit behind a pop-up or paywall prompt, or be split into pieces with no clear title, author or date.', 'Serve the article text in the page itself, mark it up with one heading and schema.org Article data (headline, author, datePublished), and keep pop-ups off the first screen.', 'schema.org Article; WCAG 1.3.1 Info and Relationships', 'An article opens with its title, author and date readable in 5 steps or fewer'],
+  find_newsletter: ['newsletter-not-found', 'low', 'The newsletter sign-up could not be found', 'The subscribe form may only appear in a timed pop-up, or sit in the page footer without a label that says what it is.', 'Add a visible "Subscribe" form or link in the footer of every page, with a labelled email field.', 'WCAG 3.3.2 Labels or Instructions', 'The newsletter form is found in 5 steps or fewer'],
+  find_author_contact: ['author-contact-not-found', 'low', 'No way to contact the author or editorial team could be found', 'There may be no "About" or "Contact" link, or the byline may not link to an author page with an email or profile.', 'Link every byline to an author page and add "About" and "Contact" links to the footer with an email address or form.', 'Clear navigation labels (WCAG 2.4.5 Multiple Ways)', 'A way to contact the author or team is found in 5 steps or fewer'],
+  find_hours: ['hours-not-found', 'high', 'The opening hours could not be found', 'The hours may be drawn inside an image, shown only in a map widget, or missing from the pages visitors reach first.', 'Write the opening hours as plain text in the footer and on the contact page, and add them to LocalBusiness markup (openingHours).', 'schema.org LocalBusiness openingHours; WCAG 1.1.1 Non-text Content', 'The opening hours are found in 5 steps or fewer'],
+  find_location: ['location-not-found', 'high', 'The address and map could not be found', 'The address may be drawn inside an image or only shown inside an embedded map, with no text and no link.', 'Write the full address as plain text on the contact page and in the footer, with a link to the map, and add it to LocalBusiness markup (address).', 'schema.org LocalBusiness address; WCAG 1.1.1 Non-text Content', 'The address and a map link are found in 5 steps or fewer'],
+  find_menu_or_services: ['menu-not-found', 'medium', 'The menu or the list of services could not be found', 'The menu may be a PDF or a photo, or the services page may not be linked from the header.', 'Publish the menu or services as a page of plain text with prices, and link it from the header.', 'WCAG 1.1.1 Non-text Content; Clear navigation labels (WCAG 2.4.5 Multiple Ways)', 'The menu or services are found, with prices, in 5 steps or fewer'],
+  reach_booking: ['booking-not-found', 'high', 'The booking, reservation or appointment form could not be reached', 'The booking button may be an icon or unclear label, or the form may be hidden inside a third-party widget that does not load for visitors without a script.', 'Add a "Book now" or "Reserve a table" link to the header and make the booking form a normal page with labelled fields.', 'WCAG 2.4.4 Link Purpose; WCAG 3.3.2 Labels or Instructions', 'The booking form and its fields are found in 5 steps or fewer'],
 };
 
 /**
@@ -80,8 +96,8 @@ const FAIL_FINDING = {
  * @returns {{points:number, findings:Finding[]}}
  */
 export function scoreTask(task, context = {}) {
-  // A stopped task proves nothing about the site: no points, no findings.
-  if (task.status === 'cancelled') return { points: 0, findings: [] };
+  // A stopped task proves nothing about the site: no points, no findings. Neither does a replay placeholder (nothing was run).
+  if (task.status === 'cancelled' || task.replayNote) return { points: 0, findings: [] };
   const passed = task.status === 'passed';
   const verdict = task.verdict || 'none';
   const webSearch = (task.steps || []).some((s) => s.usedWebSearch);
@@ -222,14 +238,14 @@ export function scoreReport(report) {
     const { points, findings } = scoreTask(t, context);
     t.points = points;
     t.findings = findings;
-    if (t.taskId !== 'custom') score += points;
+    if (isScored(t)) score += points;
     all.push(...findings);
     totalSteps += t.attempts?.length ? t.attempts.reduce((n, a) => n + (a.numSteps || 0), 0) : t.numSteps || 0;
   }
   const topFixes = rankFixes(all);
   // Out of 100 for the tasks actually run: 4 tasks x 25 as before; a 2-task CLI or 1-task Watch run scales up,
   // so "both tasks passed" never reads as 50/100.
-  const scored = report.tasks.filter((t) => t.taskId !== 'custom').length;
+  const scored = report.tasks.filter(isScored).length;
   if (scored) score = Math.round((score * 4) / scored);
   return {
     score: Math.max(0, Math.min(100, score)),

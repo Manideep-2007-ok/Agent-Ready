@@ -34,6 +34,7 @@ cpSync(path.join(root, 'packages/engine/src'), path.join(out, 'engine'), { recur
 const rewrite = (file) => {
   const text = readFileSync(path.join(root, file), 'utf8')
     .replace(/(['"])@agentready\/engine\/env\1/g, "'../engine/env.js'")
+    .replace(/(['"])@agentready\/engine\/goals\1/g, "'../engine/goals.js'")
     .replace(/(['"])@agentready\/engine\1/g, "'../engine/index.js'");
   if (/@agentready\/engine/.test(text.replace(/\/\/.*$/gm, ''))) throw new Error(`${file}: an @agentready/engine import was not rewritten`);
   return text;
@@ -49,7 +50,7 @@ else console.warn('Note: the repo has no LICENSE file, so the package is publish
 const manifest = {
   name: cli.name,
   version: cli.version,
-  description: 'Test whether AI agents can really use your website: real cloud web agents try to find a price, add to cart, find returns and contact, and score the result.',
+  description: 'Test whether AI agents can really use your website (shop, SaaS, blog or local business): real cloud web agents try everyday tasks such as finding a price, signing up or booking, and score the result.',
   type: 'module',
   bin: { agentready: 'bin/agentready.js' },
   files: ['bin', 'src', 'engine', 'README.md', ...(hasLicense ? ['LICENSE'] : [])],

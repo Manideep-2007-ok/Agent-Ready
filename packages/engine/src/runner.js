@@ -1,5 +1,5 @@
 // Runs agent tasks (one attempt) and whole site tests. Talks to TinyFish only through tinyfish.js.
-import { buildGoal, DEFAULT_TASK_ORDER } from './goals.js';
+import { buildGoal, defaultTasksFor, normalisePack, packForTasks, SHOP_TASKS } from './goals.js';
 import { enqueue, QueueCancelled } from './queue.js';
 import { createRunContext } from './runContext.js';
 import { config } from './config.js';
@@ -78,6 +78,8 @@ function buildSteps(runId, run, progress) {
 
 /** Written on a custom task in replay mode: the recording is of one of our own tasks, not the user's. */
 export const REPLAY_CUSTOM_NOTE = 'Replay: this answer is from a recorded run, not your custom task. Custom tasks need live agents.';
+/** Written on a pack task in replay mode: recordings exist only for the four shop tasks. Nothing is run and nothing is scored. */
+export const REPLAY_PACK_NOTE = 'Replay: there is no recording for this task, so it was not run. Tasks for SaaS, blog and local sites need live agents.';
 const STOPPED_TEXT = 'The test was stopped before this task finished.';
 
 /**
@@ -121,6 +123,15 @@ export async function runTask({ url, taskId, customText, mode = 'lite', proxy = 
   let settleRunId = null; // set when a stop interrupted a run that TinyFish may have billed
 
   if (ctx?.cancelled) return stopped(); // a cancelled test never starts anything new
+
+  // Replay mode only has recordings of the shop tasks (and the custom task shows a note, below). A task from another
+  // pack would replay an unrelated shop run, so nothing is run: no steps, no points, a clear note (D35, D40).
+  if (config.mock && taskId !== 'custom' && !SHOP_TASKS.includes(taskId)) {
+    task.status = 'failed';
+    task.replayNote = REPLAY_PACK_NOTE;
+    if (emitFinal) update('failed');
+    return task;
+  }
 
   try {
     const result = await enqueue(async () => {
@@ -241,19 +252,23 @@ function makeReportId(url) {
  * Test a whole site: all tasks at once (the queue limits real parallelism), then score.
  * @returns {Promise<SiteReport>}
  */
-export async function runSiteTest({ url, tasks = DEFAULT_TASK_ORDER, customText, source = 'web', id, ctx: givenCtx } = {}, onEvent) {
+export async function runSiteTest({ url, tasks, pack, customText, source = 'web', id, ctx: givenCtx } = {}, onEvent) {
+  // `pack` names the kind of site (shop, saas, content, local); `tasks` may come from any pack. No tasks: the pack's four.
+  // No pack: the pack the tasks belong to. Neither: shop, as before packs existed.
+  const packId = normalisePack(pack) ?? (tasks?.length ? packForTasks(tasks) : 'shop');
+  tasks = tasks ?? defaultTasksFor(packId);
   // The test's cancel switch. cancelReport(id) finds it by id. A caller that wants to share one switch with extra
   // runs of its own (Watch's confirming re-run) passes `ctx` and releases it itself.
   const reportId = id || givenCtx?.id || makeReportId(url);
   const ctx = givenCtx ?? createRunContext({ id: reportId, source });
   try {
-    return await runSiteTestInner({ url, tasks, customText, source, reportId, ctx }, onEvent);
+    return await runSiteTestInner({ url, tasks, customText, source, reportId, ctx, packId }, onEvent);
   } finally {
     if (!givenCtx) ctx.release();
   }
 }
 
-async function runSiteTestInner({ url, tasks, customText, source, reportId, ctx }, onEvent) {
+async function runSiteTestInner({ url, tasks, customText, source, reportId, ctx, packId }, onEvent) {
   // Drop a task-update that exactly repeats the previous one of the same lane (e.g. the initial 'queued' and the queue's own
   // 'queued'). The key covers more than status, so an update whose content changed (new run, steps, attempts, verdict) still goes out.
   const lastKey = new Map();
@@ -286,8 +301,9 @@ async function runSiteTestInner({ url, tasks, customText, source, reportId, ctx 
   }));
 
   /** @type {SiteReport} */
-  const report = { id: reportId, url, source, testedAt: new Date().toISOString(), pack: 'shopping', status: ctx.cancelled ? 'cancelled' : 'complete',
-    score: 0, botWall: 'none', costRupees: 0, framework: 'unknown', instantScan: null, tasks: results, topFixes: [] };
+  const report = { id: reportId, url, source, testedAt: new Date().toISOString(), pack: packId, status: ctx.cancelled ? 'cancelled' : 'complete',
+    score: 0, botWall: 'none', costRupees: 0, framework: 'unknown', instantScan: null, tasks: results, topFixes: [],
+    ...(customText?.trim() ? { customText: customText.trim() } : {}) };
   Object.assign(report, scoreReport(report));
   // A stopped test has no score: half a test says nothing about the site. The cost of the steps already taken still counts.
   if (ctx.cancelled) { report.score = 0; report.botWall = 'none'; report.topFixes = []; }
