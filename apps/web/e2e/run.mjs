@@ -15,8 +15,8 @@ let shotNo = 0;
 const shot = (page, name) => page.screenshot({ path: path.join(shotsDir, `${String(++shotNo).padStart(2, '0')}-${name}.png`), fullPage: true });
 
 /** New browser page with error watching. Every page must end with zero problems. */
-async function newPage(base, { width = 1280, height = 900, label = 'page', colorScheme = 'light', init = null } = {}) {
-  const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce', colorScheme });
+async function newPage(base, { width = 1280, height = 900, label = 'page', colorScheme = 'light', init = null, motion = 'reduce' } = {}) {
+  const context = await browser.newContext({ viewport: { width, height }, reducedMotion: motion, colorScheme });
   const page = await context.newPage();
   if (init) await page.addInitScript(init);
   await page.addInitScript(() => {
@@ -60,6 +60,8 @@ try {
     const main = await page.locator('main').textContent();
     expect(!main.includes('Agents arrive as') && !main.includes('Live · 4 agents'), 'no arrival strip and no live-agents mock');
     expect(await page.locator('.ar-mock').count() <= 2, `at most two mock panels below the hero (${await page.locator('.ar-mock').count()})`);
+    expect(/^91/.test(await page.locator('.ar-hero-score').textContent()), 'reduced motion: the hero shows a finished run, not an animation');
+    expect(await page.locator('.ar-reveal:not(.is-in)').count() === 0, 'reduced motion: every section is shown at once');
     await shot(page, 'home');
   }, { page: home.page });
 
@@ -232,6 +234,34 @@ try {
   }, { page: home.page });
 
   await t.step('home: no browser errors', async () => { await closeWithCheck(home, 'home'); });
+
+  console.log('Landing motion');
+  const moving = await newPage(fast.base, { label: 'motion', motion: 'no-preference' });
+  await t.step('with motion on, the hero replays a run (steps tick, the score counts up) and sections rise in as you scroll', async () => {
+    const { page } = moving;
+    const hero = page.locator('.ar-hero-ledger');
+    await hero.waitFor();
+    expect((await hero.locator('.ar-hero-score').textContent()).startsWith('··'), 'no score before the agents finish');
+    await page.waitForFunction(() => [...document.querySelectorAll('.ar-hero-ledger tbody tr.is-running')].length > 0, null, { timeout: 5000 });
+    const running = await hero.locator('tbody tr.is-running').count();
+    expect(running >= 1 && running <= 2, `one or two agents run at a time (${running})`);
+    await page.waitForFunction(() => /^91/.test(document.querySelector('.ar-hero-score')?.textContent ?? ''), null, { timeout: 8000 });
+    await hero.getByText('Ready for AI agents').waitFor();
+    await hero.getByRole('button', { name: 'Flaws off' }).click();
+    expect(await hero.getByRole('button', { name: 'Flaws off' }).getAttribute('aria-pressed') === 'true', 'Flaws off is selected');
+    await page.waitForFunction(() => /^97/.test(document.querySelector('.ar-hero-score')?.textContent ?? ''), null, { timeout: 8000 });
+    const hidden = await page.locator('.ar-reveal:not(.is-in)').count();
+    expect(hidden > 0, 'sections below the fold wait to be revealed');
+    await page.locator('.ar-results').scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => document.querySelector('.ar-results')?.classList.contains('is-in'));
+    await page.waitForFunction(() => [...document.querySelectorAll('.ar-result-nums')].map((n) => n.textContent).join('|').includes('₹27'), null, { timeout: 4000 })
+      .catch(() => { throw new Error('results did not count to their after values'); });
+    // scroll down the page the way a reader does, so every section passes through the viewport
+    for (let y = 0; y <= await page.evaluate(() => document.body.scrollHeight); y += 400) { await page.evaluate((v) => window.scrollTo(0, v), y); await sleep(60); }
+    await page.waitForFunction(() => document.querySelectorAll('.ar-reveal:not(.is-in)').length === 0, null, { timeout: 4000 });
+    await shot(page, 'landing-motion');
+    await closeWithCheck(moving, 'motion');
+  }, { page: moving.page });
 
   console.log('Running a test');
   const run = await newPage(fast.base, { label: 'run' });

@@ -7,6 +7,7 @@ import { startTest } from '../../api.js';
 import { navigate } from '../../nav.js';
 import { href } from '../../routes.js';
 import HeroLedger from './HeroLedger.jsx';
+import { Reveal, Stagger, useCountUp, useInView } from './motion.jsx';
 import FeatureRow from './FeatureRow.jsx';
 import Faq from './Faq.jsx';
 
@@ -41,7 +42,7 @@ function HeroForm() {
 const TICKS = ['Real agents, live in your browser', 'A score with the exact fixes', 'Works on localhost and in CI'];
 
 const FIX_PANEL = (
-  <div className="ar-mock">
+  <Stagger className="ar-mock">
     <div className="ar-mock-head"><span className="ar-label">Findings · demo store</span><span className="ar-label">3 of 7</span></div>
     {[
       ['F1', 'A pop-up covers most of the page', 'fail', 'High'],
@@ -55,11 +56,11 @@ const FIX_PANEL = (
       <p>Give every pop-up a labelled close button and do not cover the whole page on first load.</p>
       <span className="ar-mono ar-faint">WCAG 2.1.2 · checked again on the next run</span>
     </div>
-  </div>
+  </Stagger>
 );
 
 const WATCH_PANEL = (
-  <div className="ar-mock">
+  <Stagger className="ar-mock">
     <div className="ar-mock-head"><span className="ar-label">Watch · every 20 min</span><Badge tone="fail">Alert</Badge></div>
     {[
       ['13:20', 'Add to cart', 'pass', 'Passed', '7 steps'],
@@ -72,8 +73,32 @@ const WATCH_PANEL = (
       <span className="ar-label">Sent to Slack</span>
       <p>AI shoppers can't add to cart on your store since 14:00. Last good: 13:40 (7 steps).</p>
     </div>
-  </div>
+  </Stagger>
 );
+
+// Before -> after from our demo store; the "after" number counts from the before value once the grid is on screen.
+const RESULTS = [['Agent steps', 35, 19, ''], ['Agent cost', 49, 27, '₹'], ['Score', 91, 97, '']];
+
+function Result({ label, before, after, unit, run }) {
+  const v = useCountUp(before, after, run);
+  return (
+    <div className="ar-result">
+      <span className="ar-label">{label}</span>
+      <span className="ar-result-nums" aria-label={`${unit}${before} before, ${unit}${after} after`}>
+        <span className="ar-result-before" aria-hidden="true">{unit}{before}</span><ArrowRight size={18} aria-hidden="true" /><span aria-hidden="true">{unit}{v}</span>
+      </span>
+    </div>
+  );
+}
+
+function ResultsGrid() {
+  const [ref, inView] = useInView({ once: true, amount: 0.5 });
+  return (
+    <div ref={ref} className="ar-results-grid">
+      {RESULTS.map(([l, a, b, u]) => <Result key={l} label={l} before={a} after={b} unit={u} run={inView} />)}
+    </div>
+  );
+}
 
 const CLI = 'npx @agentready/cli http://localhost:3000';
 const ACTION = `- uses: Manideep-2007-ok/Agent-Ready@v1
@@ -110,7 +135,7 @@ export default function Landing() {
           panel={WATCH_PANEL} />
       </div>
 
-      <section className="ar-dev" aria-labelledby="dev-title">
+      <Reveal as="section" className="ar-dev" aria-labelledby="dev-title">
         <div className="ar-dev-copy">
           <span className="ar-label ar-eyebrow">Developers</span>
           <h2 id="dev-title">Test before you ship.</h2>
@@ -121,31 +146,24 @@ export default function Landing() {
           <CodeBlock label="Terminal" code={CLI} />
           <CodeBlock label="GitHub Action" code={ACTION} />
         </div>
-      </section>
+      </Reveal>
 
-      <section className="ar-results" aria-labelledby="results-title">
+      <Reveal as="section" className="ar-results" aria-labelledby="results-title">
         <span className="ar-label ar-eyebrow">Results · our demo store · 1 Nov 2026</span>
         <h2 id="results-title">Four small fixes, half the work for agents.</h2>
-        <div className="ar-results-grid">
-          {[['Agent steps', '35', '19'], ['Agent cost', '₹49', '₹27'], ['Score', '91', '97']].map(([l, a, b]) => (
-            <div className="ar-result" key={l}>
-              <span className="ar-label">{l}</span>
-              <span className="ar-result-nums"><span className="ar-result-before">{a}</span><ArrowRight size={18} aria-hidden="true" /><span>{b}</span></span>
-            </div>
-          ))}
-        </div>
+        <ResultsGrid />
         <p className="ar-faint ar-small">A pop-up, prices drawn as images, an icon-only cart button and a buried returns page, switched off. The agents still finished every task with the flaws on; a pass/fail checker would have seen nothing wrong.</p>
-      </section>
+      </Reveal>
 
-      <Faq />
+      <Reveal><Faq /></Reveal>
 
-      <section className="ar-cta">
+      <Reveal as="section" className="ar-cta">
         <h2>See your site through an AI agent's eyes.</h2>
         <div className="ar-cta-actions">
           <Button as="a" href={href('app', 'tests')} variant="primary">Run a free test</Button>
           <Button as="a" href={href('docs', 'getting-started')}>Read the docs</Button>
         </div>
-      </section>
+      </Reveal>
     </div>
   );
 }

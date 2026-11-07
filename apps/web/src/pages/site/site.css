@@ -16,7 +16,7 @@
 .ar-ticks svg { color: var(--pass); }
 
 .ar-hero-ledger { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
-.ar-hero-ledger-head { display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.ar-hero-ledger-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px 8px 10px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
 .ar-hero-ledger-head .ar-label { color: var(--text-muted); }
 .ar-hero-ledger table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .ar-hero-ledger th { font: 500 11px/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--border); }
@@ -116,3 +116,30 @@
   .ar-mock-row { grid-template-columns: 38px minmax(0, 1fr); }
   .ar-mock-row .ar-badge { grid-column: 2; justify-self: start; }
 }
+
+/* Landing motion (motion.jsx, HeroLedger). base.css switches every transition and animation off under reduced motion. */
+.ar-hero-tabs { display: flex; gap: 2px; }
+.ar-hero-tab { font: 500 11px/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); background: none; border: 1px solid transparent; border-radius: 3px; padding: 5px 8px; cursor: pointer; }
+.ar-hero-tab:hover { color: var(--text); }
+.ar-hero-tab[aria-pressed='true'] { color: var(--text); background: var(--surface); border-color: var(--border); }
+.ar-hero-body { transition: opacity 300ms var(--ease); }
+.ar-hero-body.is-fading { opacity: 0; }
+.ar-hero-url { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; min-height: 40px; overflow-wrap: anywhere; }
+.ar-caret { display: inline-block; width: 7px; height: 1.05em; margin-left: 1px; vertical-align: -0.15em; background: var(--accent); animation: ar-blink 1s steps(1) infinite; }
+@keyframes ar-blink { 50% { opacity: 0; } }
+.ar-hero-ledger tbody tr.is-running td { background: var(--accent-soft); }
+.ar-hero-ledger td.is-right.ar-mono { font-variant-numeric: tabular-nums; }
+.ar-hero-score { font-variant-numeric: tabular-nums; }
+.ar-hero-note { margin: 0; padding: 0 16px 14px; }
+
+.ar-reveal { opacity: 0; transform: translateY(18px); transition: opacity 500ms var(--ease), transform 500ms var(--ease); }
+.ar-reveal.is-in { opacity: 1; transform: none; }
+.ar-stagger > * { opacity: 0; transform: translateY(8px); transition: opacity 400ms var(--ease), transform 400ms var(--ease); }
+.ar-stagger.is-in > * { opacity: 1; transform: none; }
+.ar-stagger.is-in > :nth-child(2) { transition-delay: 120ms; }
+.ar-stagger.is-in > :nth-child(3) { transition-delay: 240ms; }
+.ar-stagger.is-in > :nth-child(4) { transition-delay: 360ms; }
+.ar-stagger.is-in > :nth-child(5) { transition-delay: 600ms; }
+@media (prefers-reduced-motion: reduce) { .ar-reveal, .ar-stagger > * { opacity: 1; transform: none; } }
+@media print { .ar-reveal, .ar-stagger > * { opacity: 1 !important; transform: none !important; } }
+@media (max-width: 639px) { .ar-reveal { transform: translateY(10px); } }

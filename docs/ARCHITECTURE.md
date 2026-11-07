@@ -393,7 +393,7 @@ Redesign (D44; the spec is in the private repo): one design system for the app, 
 
 | Route | Page |
 |---|---|
-| `#/` | Landing: URL box that starts a test, live ledger panel, features, CLI/Action, demo-store results, FAQ |
+| `#/` | Landing: URL box that starts a test, a looping replay of the demo store's real runs (`heroDemo.js`, pure, tested), features, CLI/Action, demo-store results, FAQ. Motion (`pages/site/motion.jsx`, no library) pauses off screen and settles under reduced motion |
 | `#/pricing` | Free / Watch / Team, no invented prices; cost of a test from `/api/estimate` |
 | `#/docs/<slug>` | Ten docs pages; findings (grouped by kind of site, one row each) and task packs come from `src/docs/generated.json` (`npm run docs:data`) |
 | `#/app` | Tests home: new test (address, kind of site, own task, Confirm results, cost line), the last 8 tests (Show all for the rest) |
