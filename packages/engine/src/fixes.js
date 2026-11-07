@@ -211,6 +211,17 @@ export const FIX_TEMPLATES = {
       unknown: '<a href="/cart">Cart (2)</a>',
     },
   },
+  'not-in-search': {
+    likelyCause: 'The page may be missing from sitemap.xml, blocked by robots.txt or a noindex tag, reachable only through a script, or named in words people do not search for.',
+    fix: 'List the page in sitemap.xml, let search engines index it (no noindex), link it from the footer with plain words ("Returns", "Pricing", "Opening hours"), and use those words in its title.',
+    standard: 'Sitemaps protocol; clear page titles (WCAG 2.4.2 Page Titled)',
+    passCheck: 'Searching the site for the topic finds the page.',
+    frameworkExamples: {
+      nextjs: 'app/sitemap.js: export default () => [{ url: "https://your-site.com/returns" }]; and export const metadata = { title: "Returns and refunds" }',
+      shopify: 'Shopify adds policy pages to sitemap.xml once they are linked from a menu: Online Store -> Navigation -> Footer menu -> add "Refund policy".',
+      unknown: '<url><loc>https://your-site.com/returns</loc></url>  <!-- in sitemap.xml -->\n<title>Returns and refunds</title>',
+    },
+  },
   'no-product-schema': {
     likelyCause: 'The product page has no schema.org Product/Offer markup, so machines must guess the name and price from the layout.',
     fix: 'Add JSON-LD Product markup with name, image, offers.price and offers.priceCurrency.',
@@ -389,6 +400,7 @@ const KEYWORDS = {
   'popup-blocking': ['close', 'dismiss', 'accept'],
   'no-cart-feedback': ['add to cart', 'cart'],
   'no-cart-link': ['cart', 'bag', 'basket'],
+  'not-in-search': ['return', 'contact', 'pricing', 'docs', 'hours'],
 };
 
 /**

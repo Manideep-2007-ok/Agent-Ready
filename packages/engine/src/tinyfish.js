@@ -205,10 +205,13 @@ export async function fetchPages(urls) {
   });
 }
 
-/** TinyFish Search (free). Returns results[]. */
-export async function search(query) {
+/** TinyFish Search (free). Returns results[]. includeDomains limits results to those sites (comma-separated). */
+export async function search(query, { includeDomains, location } = {}) {
   if (config.mock) return mock.search(query);
-  const res = await fetch(`${SEARCH_API}?query=${encodeURIComponent(query)}`, { headers: headers(), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  const qs = new URLSearchParams({ query });
+  if (includeDomains) qs.set('include_domains', includeDomains);
+  if (location) qs.set('location', location);
+  const res = await fetch(`${SEARCH_API}?${qs}`, { headers: headers(), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   await check(res, 'search');
   const j = await res.json();
   return j.results || [];
@@ -230,6 +233,35 @@ export async function closeBrowserSession(sessionId) {
   if (config.mock) return mock.closeBrowserSession(sessionId);
   const res = await fetch(`${BROWSER_API}/${encodeURIComponent(sessionId)}`, { method: 'DELETE', headers: headers(), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   if (!res.ok && res.status !== 404) await check(res, 'close browser');
+}
+
+// ---- Monitor (P2-5): a Page Monitor re-reads one page on a schedule ($0.005 a run) and posts each run to webhookUrl ----
+/** Create a Page Monitor. Returns {monitorId}. TinyFish captures a baseline straight away. */
+export async function createPageMonitor({ url, cron, webhookUrl, name, purpose }) {
+  if (config.mock) return mock.createPageMonitor({ url, cron, webhookUrl, name, purpose });
+  const body = { type: 'fetch', config: { url, format: 'markdown' }, schedule_cron: cron, webhook_url: webhookUrl };
+  if (name) body.name = String(name).slice(0, 100);
+  if (purpose) body.purpose = String(purpose).slice(0, 2000);
+  const res = await fetch(`${AGENT}/v1/monitors`, { method: 'POST', headers: headers(true), body: JSON.stringify(body), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  await check(res, 'create monitor');
+  const j = await res.json();
+  return { monitorId: j.monitor?.id ?? j.id };
+}
+
+/** Pause or resume a Monitor ('paused' | 'active'). A status update is sent alone, as the API asks. */
+export async function setMonitorStatus(monitorId, status) {
+  if (config.mock) return mock.setMonitorStatus(monitorId, status);
+  const res = await fetch(`${AGENT}/v1/monitors/${encodeURIComponent(monitorId)}`, { method: 'PATCH', headers: headers(true), body: JSON.stringify({ status }), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  await check(res, 'update monitor');
+  return { ok: true };
+}
+
+/** Delete a Monitor and its schedule. A Monitor that is already gone (404) counts as deleted. */
+export async function deleteMonitor(monitorId) {
+  if (config.mock) return mock.deleteMonitor(monitorId);
+  const res = await fetch(`${AGENT}/v1/monitors/${encodeURIComponent(monitorId)}`, { method: 'DELETE', headers: headers(), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  if (!res.ok && res.status !== 404) await check(res, 'delete monitor');
+  return { ok: true };
 }
 
 export async function getWallet() {

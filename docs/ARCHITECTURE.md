@@ -295,6 +295,7 @@ Run in parallel:
   - `schemaTypes` and `keywordHits` (D40): the schema.org `@type` names in the JSON-LD, and how often words for cart, pricing, sign-up, docs, article, newsletter, hours, booking and menu appear in the page text (each count capped at 20). Same page evaluate, no extra cost. `detectPack(scan)` (`packs.js`, pure) turns them into a pack: product schema, Add to cart or price text score for `shop`; software schema, pricing/sign-up/docs words for `saas`; article schema, blog/newsletter words for `content`; LocalBusiness schema, opening hours, reserve/appointment/menu words for `local`. Highest score wins; no signal or a tie goes to `content`, then `saas`, `local`, `shop` (shop wins only through product signals). A scan that read nothing means "auto" falls back to `shop`.
 - Then open one same-origin product link from the home page (`/product`, `/products/`, `/p/`, `/dp/`, 12 s cap) and run the same audit there; counts add up, a problem on either page counts. Many flaws (icon-only Add to cart, price images) live on product pages.
 - robots.txt / sitemap that Fetch could not read are reported as `missing`; `error` only when the whole Fetch call failed.
+- **Search check (P2-5, D46):** after the page audit, TinyFish Search (free) restricted to the site's own domain looks for the two key pages of its pack (`SEARCH_TOPICS`: shop = return policy, contact page; saas = pricing, docs; content = newsletter, about/contact; local = opening hours, address). `instantScan(url, {pack})` uses the pack it is given, else `detectPack` on the scan. Result `searchFindable: [{topic, found, url}]`; a topic not found is one `not-in-search` finding (low). A failed search says nothing.
 - Always `closeBrowserSession` in `finally`. Instant Scan findings: `popup-blocking`, `unlabelled-buttons`, `price-in-image` (no price text but price expected), `no-product-schema` (low severity), and from Scan v2 `robots-blocks-ai-agents` (high when an assistant that visits for a person, `*-User`, is blocked, else medium; needs only Fetch) and `no-cart-link` (medium, shop only; only when the scan measured `cartLink`). Price, product-data and cart findings are shop-only: `instantScanFindings(scan, pack)` never flags a blog, SaaS or local site for "no price" (D40).
 - The server stores them as `SiteReport.scanFindings` (`instantScanFindings(scan, pack)`) as soon as the scan finishes. They are not part of the 100-point score (`pointsIfFixed: 0`), are shown in the findings list next to task findings, and can enter the Top 3 (D25).
 
@@ -335,7 +336,7 @@ For each finding:
 | `POST /api/watch/:id/cancel` | | `{ok, cancelled}`; stop the running check (the watch stays scheduled) |
 | `GET /api/watch/:id/history` | | `SiteReport[]` |
 | `PATCH /api/watch/:id` | `{enabled?, everyMinutes?}` | `Watch`. `enabled:false` also cancels the check running right now |
-| `POST /api/webhooks/tinyfish` | TinyFish webhook | `200` |
+| `POST /api/webhooks/tinyfish` | TinyFish webhook: a finished run, or a Page Monitor run (`fetch_monitor_id`) | `200` |
 | `GET /api/estimate` | `?tasks=1-5&confirm=1` | `{tasks, confirm, lowRupees, highRupees, worstRupees, rupeesPerStep, mock, budget}` before a test starts (D43) |
 | `GET /api/sites/history` | `?url=` | every finished report of that host (www. ignored, live + cached), oldest first: `{id, url, testedAt, score, botWall, costRupees, source, pack, confirm, tasks:[{taskId,status,numSteps,seconds,points,flaky}], findingTypes}` |
 | `GET /api/badge/:id.svg` | | flat SVG badge with the report's score (`image/svg+xml`, `Cache-Control: max-age=300`); a missing or invalid id returns a grey "unknown" badge with status 404 |
@@ -381,6 +382,7 @@ Store API: `saveReport(r)`, `getReport(id)`, `listReports()`, `siteHistory(url)`
   Recovery: `🟢 AgentReady: <task label> on <site> works again (<time>).`
 - Priority: a Watch check waits behind a person's test for a free agent slot (D30). Pausing a watch, or `POST /api/tests/:checkId/cancel`, cancels the running check (no history row, no alert; D29).
 - Publish `watch-alert` / `watch-recovered` LiveEvents to dashboard subscribers of `watch:<id>`.
+- **Page Monitor (P2-5, D46):** a watch that checks every 120 minutes or less often gets a TinyFish Page Monitor on its URL (hourly, $0.005 a run, `watch.monitorId`) when `PUBLIC_BASE_URL` is set (never in replay). The monitor's webhook (`POST /api/webhooks/tinyfish` with `fetch_monitor_id`) starts the check at once when `outcome` is `changed` and the purpose check does not say it is irrelevant, at most once an hour per watch. Pausing the watch pauses the monitor; a shorter interval deletes it.
 - Demo: watch the demo store every 20 min from ~14:00.
 
 ---

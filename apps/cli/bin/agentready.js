@@ -154,7 +154,7 @@ try {
   // ---- which pack? --pack names it; explicit task ids name it too; otherwise the Instant Scan decides (auto) ----
   // The Instant Scan runs next to the agents (it never throws; a failed scan just has no findings). Only "auto" with no
   // task ids has to wait for it, because the pack decides which tasks to run.
-  const scanPromise = opts.noScan ? null : instantScan(testUrl).catch(() => null);
+  const scanPromise = opts.noScan ? null : instantScan(testUrl, { pack: opts.pack }).catch(() => null);
   let pack = opts.pack && opts.pack !== 'auto' ? opts.pack : null;
   let how = 'flag';
   const idsGiven = Array.isArray(opts.tasks) && opts.tasks.length > 0 && !flags.quick;

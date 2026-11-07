@@ -2,9 +2,9 @@
 // Never throws. Findings from the scan are NOT part of the 100-point score (pointsIfFixed = 0).
 import { chromium } from 'playwright-core';
 import { config } from './config.js';
-import { fetchPages, createBrowserSession, closeBrowserSession } from './tinyfish.js';
+import { fetchPages, createBrowserSession, closeBrowserSession, search } from './tinyfish.js';
 import { detectFramework, FIX_TEMPLATES } from './fixes.js';
-import { KEYWORD_SOURCES, KEYWORD_CAP } from './packs.js';
+import { KEYWORD_SOURCES, KEYWORD_CAP, detectPack } from './packs.js';
 import { normalisePack } from './goals.js';
 
 /** @typedef {import('./types.js').InstantScan} InstantScan */
@@ -173,6 +173,51 @@ export async function auditSite(page, url) {
   return { ...mergeAudits(home, product), framework };
 }
 
+// ---- Search (P2-5): can an assistant that searches before it visits find the key pages? ----
+// Two topics per pack, searched with TinyFish Search (free) restricted to the site's own domain. A hit is a result on
+// the site whose address or title uses the topic's words; the home page alone does not count.
+export const SEARCH_TOPICS = {
+  shop: [{ label: 'return policy', query: 'return policy refund', words: /return|refund|exchange/i },
+    { label: 'contact page', query: 'contact customer support', words: /contact|support|help|customer.?care/i }],
+  saas: [{ label: 'pricing page', query: 'pricing plans', words: /pricing|plans|price/i },
+    { label: 'documentation', query: 'documentation docs', words: /docs|documentation|guide|help|api/i }],
+  content: [{ label: 'newsletter sign-up', query: 'newsletter subscribe', words: /newsletter|subscribe/i },
+    { label: 'about or contact page', query: 'about contact', words: /about|contact|team|authors?/i }],
+  local: [{ label: 'opening hours', query: 'opening hours timings', words: /hours|timings|open|contact|locat/i },
+    { label: 'address and location', query: 'address location directions', words: /address|locat|direction|contact|branch|clinic|store/i }],
+};
+const bareHost = (u) => { try { return new URL(u).hostname.replace(/^www\./, '').toLowerCase(); } catch { return ''; } };
+
+/** Is this search result the topic's page on this site? */
+export function topicHit(host, topic, result) {
+  const h = host.replace(/^www\./, '').toLowerCase();
+  const rh = bareHost(result?.url);
+  if (!rh || (rh !== h && !rh.endsWith(`.${h}`))) return false;
+  let path = '';
+  try { path = new URL(result.url).pathname; } catch { /* keep empty */ }
+  return topic.words.test(`${path} ${result.title || ''}`);
+}
+
+/** One entry per topic whose search answered: found (with the first matching address) or not. */
+export function findability(host, topics, resultLists) {
+  return topics.flatMap((topic, i) => {
+    const results = resultLists[i];
+    if (!Array.isArray(results)) return [];
+    const hit = results.find((r) => topicHit(host, topic, r));
+    return [{ topic: topic.label, found: Boolean(hit), url: hit?.url ?? null }];
+  });
+}
+
+async function searchPart(url, pack) {
+  const host = bareHost(url);
+  const topics = SEARCH_TOPICS[pack] ?? SEARCH_TOPICS.shop;
+  if (!host) return {};
+  const brand = host.split('.')[0];
+  const lists = await Promise.all(topics.map((t) => withTimeout(search(`${brand} ${t.query}`, { includeDomains: host }), 15_000, 'search').catch(() => null)));
+  const out = findability(host, topics, lists);
+  return out.length ? { searchFindable: out } : {};
+}
+
 const BROWSER_DEFAULTS = { unlabelledButtons: 0, totalButtonsAndLinks: 0, imagesWithoutAlt: 0, totalImages: 0, priceAsText: false, overlayCoveringPage: false, productSchema: false, framework: 'unknown', schemaTypes: [], keywordHits: {}, cartLink: false };
 
 async function browserPart(url) {
@@ -228,9 +273,10 @@ const MOCKS = {
 
 /**
  * @param {string} url
+ * @param {{pack?: string}} [opts]  the pack the site is tested as; 'auto' or none: decided from the scan itself
  * @returns {Promise<InstantScan>}
  */
-export async function instantScan(url) {
+export async function instantScan(url, { pack } = {}) {
   const t0 = Date.now();
   const done = (o) => ({ ...o, seconds: Math.round((Date.now() - t0) / 1000) });
   try {
@@ -245,7 +291,9 @@ export async function instantScan(url) {
       return done({ llmsTxt: 'missing', aiBlockedAgents: [], cartLink: m.keywordHits?.cart > 0, ...m });
     }
     const [f, b] = await Promise.all([fetchPart(url), browserPart(url)]);
-    return done({ ...BROWSER_DEFAULTS, ...b, ...f });
+    const scan = { ...BROWSER_DEFAULTS, ...b, ...f };
+    const known = pack && pack !== 'auto' ? normalisePack(pack) : null;
+    return done({ ...scan, ...(await searchPart(url, known ?? detectPack(scan)).catch(() => ({}))) });
   } catch {
     return done({ ...BROWSER_DEFAULTS, pageTextChars: 0, robotsTxt: 'error', sitemap: 'error', llmsTxt: 'error', aiBlockedAgents: [] });
   }
@@ -273,6 +321,11 @@ export function instantScanFindings(scan, pack = 'shop') {
     const userAgents = blocked.filter((a) => /-User$/.test(a));
     out.push(mk('robots-blocks-ai-agents', userAgents.length ? 'high' : 'medium',
       `robots.txt tells ${blocked.length} AI agent${blocked.length === 1 ? '' : 's'} to stay away from the whole site (${blocked.join(', ')})${userAgents.length ? ', including assistants that visit on behalf of a person' : ''}.`));
+  }
+  // Search (P2-5) needs no browser either. Only pages a search answered about; a failed search says nothing.
+  const unfound = (scan.searchFindable || []).filter((x) => !x.found).map((x) => x.topic);
+  if (unfound.length) {
+    out.push(mk('not-in-search', 'low', `Searching this site does not find its ${unfound.join(' or its ')}, so AI assistants that search before they visit may never reach ${unfound.length === 1 ? 'it' : 'them'}.`));
   }
   // If the browser part failed, its fields are defaults (0 controls, 0 images): do not report findings from them.
   const browserRan = (scan.totalButtonsAndLinks || 0) > 0 || (scan.totalImages || 0) > 0;
