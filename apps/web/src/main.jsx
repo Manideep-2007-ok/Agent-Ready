@@ -7,6 +7,7 @@ import './tailwind.css';
 import './design/kit.css';
 import './shell/shell.css';
 import './pages/app/app.css';
+import './pages/site/site.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

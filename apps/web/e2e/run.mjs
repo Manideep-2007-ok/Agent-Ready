@@ -49,50 +49,39 @@ const clickTest = (page) => runButton(page).click();
 try {
   console.log('Home page');
   let home = await newPage(fast.base, { label: 'home' });
-  await t.step('home loads with the hero, URL box and no errors', async () => {
+  await t.step('landing loads with the headline, URL box and no errors', async () => {
     const { page } = home;
-    await page.getByRole('heading', { level: 1 }).waitFor();
+    await page.getByRole('heading', { level: 1, name: 'Can AI agents actually use your website?' }).waitFor();
     expect((await page.title()).length > 0, 'page has a title');
     await page.getByLabel('Website to test').waitFor();
-    await page.locator('.hero-facts .fact').first().waitFor();
+    expect(await runButton(page).isDisabled(), 'Run test is disabled while the box is empty');
+    await page.locator('.ar-hero-ledger').waitFor();
     await shot(page, 'home');
   }, { page: home.page });
 
-  await t.step('fact cards open their reports (Instant Scan, before/after, Watch)', async () => {
+  await t.step('landing: the URL box runs a test and opens its report in the app', async () => {
     const { page } = home;
-    const facts = [
-      { text: /Caught in seconds/, hash: /#\/app\/test\/rep_demo_flaws_on$/, expect: async () => page.locator('.ar-report-score').waitFor() },
-      { text: /35 → 19 steps/, hash: /#\/app\/test\/rep_demo_flaws_off\/rep_demo_flaws_on/, expect: async () => page.locator('.ba-before').waitFor() },
-      { text: /Alert in 6 min/, hash: /#\/app\/watch/, expect: async () => page.getByRole('heading', { name: 'Watch a site' }).waitFor() },
-    ];
-    for (const f of facts) {
-      await page.goto(fast.base + '/#/');
-      await page.locator('.hero-facts .fact', { hasText: f.text }).click();
-      await waitHash(page, f.hash);
-      await f.expect();
-    }
+    await typeUrl(page, 'nykaa.com');
+    await clickTest(page);
+    await waitHash(page, /#\/app\/test\/rep_/);
+    await page.locator('.ar-lane').first().waitFor();
     await page.goto(fast.base + '/#/');
+    await page.getByRole('heading', { level: 1 }).waitFor();
   }, { page: home.page });
 
-  await t.step('every "See it" link on the feature grid goes somewhere that works', async () => {
+  await t.step('landing links: Open app, Pricing (three plans, no invented prices), Docs', async () => {
     const { page } = home;
+    await page.getByRole('link', { name: 'Open app' }).first().click();
+    await waitHash(page, /^#\/app$/);
     await page.goto(fast.base + '/#/');
-    const count = await page.locator('.features a:visible', { hasText: 'See it' }).count();
-    expect(count === 7, `expected 7 visible "See it" links, saw ${count}`);
-    const seen = [];
-    for (let i = 0; i < count; i++) {
-      await page.goto(fast.base + '/#/');
-      const link = page.locator('.features a:visible', { hasText: 'See it' }).nth(i);
-      const href = await link.getAttribute('href');
-      await link.scrollIntoViewIfNeeded();
-      await link.click();
-      await waitHash(page, new RegExp('^' + href.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&') + '$'));
-      if (/rep_/.test(href)) await page.locator('.ar-report-score').waitFor();
-      else if (/watch/.test(href)) await page.getByRole('heading', { name: 'Watch a site' }).waitFor();
-      else await page.getByRole('heading', { level: 1 }).waitFor();
-      seen.push(href);
-    }
-    expect(new Set(seen).size >= 4, `links lead to different places: ${seen.join(', ')}`);
+    await page.getByRole('navigation', { name: 'Site' }).getByRole('link', { name: 'Pricing' }).click();
+    await waitHash(page, /^#\/pricing$/);
+    for (const plan of ['Free', 'Watch', 'Team']) await page.getByRole('heading', { level: 2, name: plan, exact: true }).waitFor();
+    const text = await page.locator('main').innerText();
+    expect(!/₹\s?\d[\d,]*\s*(\/|per)\s*(mo|month)/i.test(text), 'no monthly price is invented');
+    await shot(page, 'pricing');
+    await page.getByRole('navigation', { name: 'Site' }).getByRole('link', { name: 'Docs' }).click();
+    await waitHash(page, /^#\/docs\//);
     await page.goto(fast.base + '/#/');
   }, { page: home.page });
 

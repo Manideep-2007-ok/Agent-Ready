@@ -1,12 +1,13 @@
 // Three areas on hash routes (routes.js): the public site (#/, #/pricing), docs (#/docs/<slug>) and the app
 // (#/app/...). Old dashboard links redirect with location.replace, so Back never loops. No router library.
 import { useEffect, useState } from 'react';
-import TestPage from './pages/TestPage.jsx';
 import TestsHome from './pages/app/TestsHome.jsx';
 import ReportPage from './pages/app/ReportPage.jsx';
 import WatchPage from './pages/app/WatchPage.jsx';
 import RacePage from './pages/app/RacePage.jsx';
 import LeaderboardPage from './pages/app/LeaderboardPage.jsx';
+import Landing from './pages/site/Landing.jsx';
+import Pricing from './pages/site/Pricing.jsx';
 import AppShell from './shell/AppShell.jsx';
 import SiteShell from './shell/SiteShell.jsx';
 import { EmptyState, ToastProvider } from './design/index.js';
@@ -54,7 +55,7 @@ export default function App() {
       {route.area === 'app' && <AppArea route={route} health={health} />}
       {route.area === 'site' && (
         <SiteShell active={route.page === 'pricing' ? 'pricing' : 'product'}>
-          <div className="ar-site-temp"><TestPage reportId={null} /></div>
+          {route.page === 'pricing' ? <Pricing /> : <Landing />}
         </SiteShell>
       )}
       {route.area === 'docs' && (

@@ -36,7 +36,8 @@ export default function SiteShell({ active, children }) {
           <div className="ar-site-actions">
             <ThemeToggle className="theme-toggle" />
             <Button as="a" href={href('app', 'tests')} size="sm" className="hide-phone">Open app</Button>
-            <Button as="a" href={href('site', 'landing')} variant="primary" size="sm" onClick={runFreeTest}>Run a free test</Button>
+            {/* Landing and pricing have their own primary action; one per view. */}
+            {active === 'docs' && <Button as="a" href={href('site', 'landing')} variant="primary" size="sm" onClick={runFreeTest}>Run a free test</Button>}
             <button type="button" className="ar-btn ar-btn--ghost ar-btn--sm ar-icon-btn ar-site-menu" aria-expanded={open}
               aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen((v) => !v)}>
               {open ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
