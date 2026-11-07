@@ -109,6 +109,8 @@ try {
     await nav.waitFor();
     await shot(page, 'docs-not-found');
     await page.goto(fast.base + '/#/');
+    await page.getByRole('heading', { level: 1 }).waitFor();
+    expect(await page.title() === 'AgentReady', `leaving the docs resets the tab title (${await page.title()})`);
   }, { page: home.page });
 
   await t.step('theme toggle switches light and dark and remembers the choice', async () => {

@@ -29,24 +29,6 @@
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   color-scheme: light;
 
-  /* Old names still read by styles.css and the pages not yet moved to the kit (removed in plan Task 8). */
-  --card: var(--surface);
-  --muted: var(--text-muted);
-  --line: var(--border);
-  --line-strong: var(--border-strong);
-  --soft: var(--surface-2);
-  --link: var(--accent);
-  --accent-hover: var(--accent);
-  --chrome: var(--surface);
-  --pass-bg: var(--pass-soft);
-  --warn-bg: var(--warn-soft);
-  --fail-bg: var(--fail-soft);
-  --wait-bg: var(--surface-2);
-  --radius-sm: var(--radius);
-  --shadow: none;
-  --shadow-lift: var(--shadow-pop);
-  --font: var(--font-sans);
-  --display: var(--font-sans);
 }
 
 :root[data-theme='dark'] {

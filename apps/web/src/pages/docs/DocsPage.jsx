@@ -24,7 +24,10 @@ function OnThisPage({ slug, body }) {
 export default function DocsPage({ slug }) {
   const body = useRef(null);
   const doc = DOCS[slug];
-  useEffect(() => { document.title = doc ? `${doc.title} · AgentReady docs` : 'Docs · AgentReady'; }, [doc]);
+  useEffect(() => {
+    document.title = doc ? `${doc.title} · AgentReady docs` : 'Docs · AgentReady';
+    return () => { document.title = 'AgentReady'; }; // leaving the docs must not keep their title
+  }, [doc]);
   const Page = doc?.default;
   return (
     <div className="ar-docs">

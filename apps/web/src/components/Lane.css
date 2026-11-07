@@ -6,33 +6,33 @@
 .ar-lane-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .ar-lane-title { font-family: inherit; font-weight: 500; font-size: 0.9375rem; letter-spacing: -0.01em; line-height: 1.3; margin: 0; }
 .ar-lane-chip { font: 500 12px/1 var(--font-mono); padding: 4px 7px; border-radius: 3px; white-space: nowrap; }
-.ar-lane-chip--waiting { background: var(--wait-bg); color: var(--wait); }
+.ar-lane-chip--waiting { background: var(--surface-2); color: var(--wait); }
 .ar-lane-chip--running { background: var(--accent-soft); color: var(--accent); }
 .ar-lane-chip--running::before {
   content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; vertical-align: 1px;
   background: currentColor; animation: ar-pulse 1.4s ease-in-out infinite;
 }
-.ar-lane-chip--passed { background: var(--pass-bg); color: var(--pass); }
-.ar-lane-chip--failed, .ar-lane-chip--blocked { background: var(--fail-bg); color: var(--fail); }
-.ar-lane-chip--cancelled { background: var(--wait-bg); color: var(--muted); }
-.ar-lane-wait { font-size: 0.8125rem; line-height: 1.4; color: var(--muted); }
-.ar-lane-replay { font-size: 0.8125rem; line-height: 1.5; padding: 8px 10px; border-radius: var(--radius); background: var(--wait-bg); color: var(--text); }
+.ar-lane-chip--passed { background: var(--pass-soft); color: var(--pass); }
+.ar-lane-chip--failed, .ar-lane-chip--blocked { background: var(--fail-soft); color: var(--fail); }
+.ar-lane-chip--cancelled { background: var(--surface-2); color: var(--text-muted); }
+.ar-lane-wait { font-size: 0.8125rem; line-height: 1.4; color: var(--text-muted); }
+.ar-lane-replay { font-size: 0.8125rem; line-height: 1.5; padding: 8px 10px; border-radius: var(--radius); background: var(--surface-2); color: var(--text); }
 @keyframes ar-pulse { 50% { opacity: 0.25; } }
-.ar-lane-meta { display: flex; gap: 12px; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ar-lane-meta { display: flex; gap: 12px; font-size: 0.8125rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .ar-lane-step { font-size: 0.8125rem; color: var(--text); min-height: 18px; line-height: 1.4; }
 .ar-lane-attempt { font-size: 0.75rem; font-weight: 600; }
 .ar-lane-attempt--retry {
-  background: var(--warn-bg); color: var(--warn); border-radius: var(--radius); padding: 8px 10px;
+  background: var(--warn-soft); color: var(--warn); border-radius: var(--radius); padding: 8px 10px;
   display: flex; flex-direction: column; gap: 2px;
 }
-.ar-lane-view { position: relative; aspect-ratio: 16 / 10; background: var(--soft); border-radius: var(--radius); overflow: hidden; }
+.ar-lane-view { position: relative; aspect-ratio: 16 / 10; background: var(--surface-2); border-radius: var(--radius); overflow: hidden; }
 .ar-lane-view iframe, .ar-lane-view img { width: 100%; height: 100%; border: 0; object-fit: cover; display: block; }
 .ar-lane-shot { padding: 0; border-radius: 0; background: none; cursor: zoom-in; width: 100%; height: 100%; }
 .ar-lane-shot:hover:not(:disabled) { background: none; }
 .ar-lane-shot:active:not(:disabled) { transform: none; }
-.ar-lane-empty { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 0.8125rem; color: var(--muted); }
+.ar-lane-empty { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 0.8125rem; color: var(--text-muted); }
 .ar-lane-result { font-size: 0.8125rem; line-height: 1.5; overflow-wrap: anywhere; }
-.ar-lane-result strong { display: block; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 2px; }
+.ar-lane-result strong { display: block; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 2px; }
 .ar-lane-result--bad strong { color: var(--fail); }
-.ar-lane-note { font-size: 0.8125rem; line-height: 1.4; padding: 6px 10px; border-radius: var(--radius); background: var(--pass-bg); color: var(--pass); }
-.ar-lane-note--warn { background: var(--warn-bg); color: var(--warn); }
+.ar-lane-note { font-size: 0.8125rem; line-height: 1.4; padding: 6px 10px; border-radius: var(--radius); background: var(--pass-soft); color: var(--pass); }
+.ar-lane-note--warn { background: var(--warn-soft); color: var(--warn); }

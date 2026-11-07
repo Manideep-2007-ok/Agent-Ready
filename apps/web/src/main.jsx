@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import './design/fonts.css';
 import './design/tokens.css';
-import './tailwind.css';
+import './design/base.css';
 import './design/kit.css';
 import './shell/shell.css';
 import './pages/app/app.css';
