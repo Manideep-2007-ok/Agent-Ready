@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs, normaliseUrl, findTunnelUrl, buildTestUrl, LOCAL_RE, checkPackFlags, resolveTasks, packLine } from '../src/lib.js';
-import { startServer, call, waitFor, sleep, NO_ENV_FILE } from '../../server/test/helpers.js';
+import { startServer, call, waitFor, sleep, NO_ENV_FILE, nodeOnlyPath } from '../../server/test/helpers.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const bin = path.join(root, 'apps/cli/bin/agentready.js');
@@ -169,7 +169,7 @@ test('upload failures are explained, the test result is kept', async () => {
 });
 
 test('a site on localhost without cloudflared gets install help (exit 2)', async () => {
-  const r = await cli(['http://localhost:5500'], { env: { PATH: path.dirname(process.execPath) } });
+  const r = await cli(['http://localhost:5500'], { env: { PATH: nodeOnlyPath() } });
   assert.equal(r.code, 2);
   assert.match(r.stderr, /needs "cloudflared"/);
   assert.match(r.stderr, /brew install cloudflared/);

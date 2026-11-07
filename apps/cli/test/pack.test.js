@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { NO_ENV_FILE } from '../../server/test/helpers.js';
+import { NO_ENV_FILE, nodeOnlyPath } from '../../server/test/helpers.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const out = path.join(root, 'dist/cli-test'); // dist/ is gitignored; the script refuses folders outside the repo
@@ -57,7 +57,8 @@ test('packed CLI outside the repo: replay mode explains itself instead of crashi
   fs.symlinkSync(path.join(root, 'node_modules/playwright-core'), path.join(away, 'pkg/node_modules/playwright-core'), 'dir');
   const awayBin = path.join(away, 'pkg/bin/agentready.js');
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'ar-pack-env-'));
-  const go = (args, env = {}) => spawnSync(process.execPath, [awayBin, ...args], { cwd, encoding: 'utf8', env: { PATH: path.dirname(process.execPath), ...env } }); // PATH = node only: no cloudflared
+  const nodeOnly = nodeOnlyPath();
+  const go = (args, env = {}) => spawnSync(process.execPath, [awayBin, ...args], { cwd, encoding: 'utf8', env: { PATH: nodeOnly, ...env } }); // PATH = node only: no cloudflared
 
   const mock = go(['https://example.com'], { TINYFISH_MOCK: '1' });
   assert.equal(mock.status, 2);
