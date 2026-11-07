@@ -10,14 +10,14 @@
 .ar-lane-chip--running { background: var(--accent-soft); color: var(--accent); }
 .ar-lane-chip--running::before {
   content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; vertical-align: 1px;
-  background: currentColor; animation: ar-pulse 1.4s ease-in-out infinite;
+  background: currentColor; animation: ar-dot-pulse 1.4s ease-in-out infinite;
 }
 .ar-lane-chip--passed { background: var(--pass-soft); color: var(--pass); }
 .ar-lane-chip--failed, .ar-lane-chip--blocked { background: var(--fail-soft); color: var(--fail); }
 .ar-lane-chip--cancelled { background: var(--surface-2); color: var(--text-muted); }
 .ar-lane-wait { font-size: 0.8125rem; line-height: 1.4; color: var(--text-muted); }
 .ar-lane-replay { font-size: 0.8125rem; line-height: 1.5; padding: 8px 10px; border-radius: var(--radius); background: var(--surface-2); color: var(--text); }
-@keyframes ar-pulse { 50% { opacity: 0.25; } }
+@keyframes ar-dot-pulse { 50% { opacity: 0.25; } } /* its own name: kit.css has the skeleton's ar-pulse */
 .ar-lane-meta { display: flex; gap: 12px; font-size: 0.8125rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .ar-lane-step { font-size: 0.8125rem; color: var(--text); min-height: 18px; line-height: 1.4; }
 .ar-lane-attempt { font-size: 0.75rem; font-weight: 600; }

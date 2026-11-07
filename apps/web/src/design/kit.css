@@ -134,3 +134,34 @@
 /* A section with no box: spacing and the ledger's own hairlines separate it (fewer borders on busy pages) */
 .ar-panel--plain { background: none; border: 0; border-radius: 0; }
 .ar-panel--plain > .ar-panel-head { padding: 0 0 8px; min-height: 0; border-bottom: 0; }
+
+/* Motion (UX pass). Every rule here is switched off under reduced motion by base.css. */
+@keyframes ar-fade-in { from { opacity: 0; } }
+@keyframes ar-rise-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes ar-drop-in { from { opacity: 0; transform: translateY(-6px); } }
+@keyframes ar-zoom-in { from { opacity: 0; transform: scale(0.97); } }
+
+/* The top loading bar (RouteProgress): grows while busy, fills and fades when done */
+.ar-progress { position: fixed; z-index: 100; top: 0; left: 0; right: 0; height: 2px; pointer-events: none; }
+.ar-progress span { display: block; height: 100%; width: 0; background: var(--accent); opacity: 0; box-shadow: 0 0 8px var(--accent-soft); }
+.ar-progress[data-state='busy'] span { width: 80%; opacity: 1; transition: width 2.4s cubic-bezier(0.1, 0.7, 0.2, 1), opacity 120ms; }
+.ar-progress[data-state='done'] span { width: 100%; opacity: 0; transition: width 180ms var(--ease), opacity 300ms 180ms; }
+
+/* Skip link: off screen until it has keyboard focus */
+.ar-skip { position: fixed; z-index: 110; top: 8px; left: 8px; padding: 8px 12px; background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius); transform: translateY(-160%); }
+.ar-skip:focus { transform: none; }
+main:focus { outline: none; }
+
+/* A report tab, a toast, a details row: arrive instead of appearing */
+[role='tabpanel']:not([hidden]) { animation: ar-fade-in 180ms var(--ease); }
+.ar-toast { animation: ar-rise-in 200ms var(--ease); }
+
+/* Rows that open (FAQ, findings docs, a finding's More) open smoothly where the browser can animate to auto height */
+@supports (interpolate-size: allow-keywords) {
+  :root { interpolate-size: allow-keywords; }
+  .ar-faq details::details-content, .ar-doc-finding::details-content, .ar-finding-more::details-content {
+    height: 0; overflow: clip; transition: height 220ms var(--ease), content-visibility 220ms allow-discrete;
+  }
+  .ar-faq details[open]::details-content, .ar-doc-finding[open]::details-content, .ar-finding-more[open]::details-content { height: auto; }
+}
+@media print { .ar-finding-more::details-content { height: auto !important; } }

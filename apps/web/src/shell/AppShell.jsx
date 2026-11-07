@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { BookOpen, ExternalLink, FlaskConical, Menu, Radar, Swords, Tag, Trophy, X } from 'lucide-react';
 import { Logo, ThemeToggle } from '../design/index.js';
 import { href } from '../routes.js';
+import { skipToMain } from './skip.js';
 
 const WORKSPACE = [
   { page: 'tests', label: 'Tests', Icon: FlaskConical, match: ['tests', 'test'] },
@@ -69,6 +70,7 @@ export default function AppShell({ page, features, replay, version, title, crumb
 
   return (
     <div className="ar-app">
+      <a className="ar-skip" href="#main" onClick={skipToMain}>Skip to content</a>
       <header className="ar-topbar">
         <Logo size={22} href={href('app', 'tests')} />
         <button ref={menuButton} type="button" className="ar-btn ar-btn--ghost ar-btn--sm ar-icon-btn" aria-expanded={open}
@@ -95,7 +97,7 @@ export default function AppShell({ page, features, replay, version, title, crumb
             {actions && <div className="ar-pagehead-actions">{actions}</div>}
           </div>
         )}
-        <main className="ar-content">{children}</main>
+        <main className="ar-content" id="main" tabIndex={-1}>{children}</main>
       </div>
     </div>
   );

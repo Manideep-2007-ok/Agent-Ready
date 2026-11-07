@@ -114,7 +114,9 @@ a.ba-box:hover { background: var(--surface-2); text-decoration: none; }
 @media (max-width: 760px) { .sitehist-row { grid-template-columns: minmax(0, 1fr); } }
 
 /* Screenshot viewer (ShotViewer.jsx) */
-.shot-viewer { position: fixed; inset: 0; z-index: 60; background: rgba(10, 10, 12, 0.86); display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
+.shot-viewer { position: fixed; inset: 0; z-index: 60; background: rgba(10, 10, 12, 0.86); display: grid; place-items: center; padding: 24px; cursor: zoom-out; animation: ar-fade-in 160ms var(--ease); }
+.shot-viewer:focus { outline: none; }
+.shot-viewer img { animation: ar-zoom-in 200ms var(--ease); }
 .shot-viewer img { max-width: 100%; max-height: calc(100vh - 80px); border-radius: var(--radius); }
 .shot-viewer-hint { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); font: 500 12px/1 var(--font-mono); color: rgba(255, 255, 255, 0.85); }
 

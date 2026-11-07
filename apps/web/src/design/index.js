@@ -13,3 +13,6 @@ export { default as CodeBlock } from './CodeBlock.jsx';
 export { default as Logo, LogoMark } from './Logo.jsx';
 export { default as ThemeToggle } from './ThemeToggle.jsx';
 export { statusBadge, scoreBand } from './status.js';
+export { default as RouteProgress } from './RouteProgress.jsx';
+export { progress } from './progress.js';
+export { runTransition } from './viewTransition.js';
