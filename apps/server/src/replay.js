@@ -1,6 +1,7 @@
 // Replay mode (TINYFISH_MOCK=1, e.g. the public demo copy) can only replay runs we recorded. For any other site it
 // would show a recording of a different site under the new name, so those are refused with a plain explanation.
 import { config } from './config.js';
+import { SHOP_TASKS, defaultTasksFor, normalisePack } from '@agentready/engine/goals';
 
 // Exact domains (and their subdomains): a look-alike such as nykaa.evil.example or evil-nykaa.com must not get Nykaa's recording.
 const RECORDED = ['nykaa.com', 'myntra.com', 'swiggy.com'];
@@ -35,4 +36,21 @@ export function recordedDemoReport(url) {
   try { if (config.demoStoreUrl) demoHost = new URL(config.demoStoreUrl).hostname; } catch { /* keep default */ }
   if (u.hostname !== demoHost && u.hostname !== 'agent-ready-demo.vercel.app') return null;
   return u.searchParams.get('flaws') === 'off' ? 'rep_demo_flaws_off' : 'rep_demo_flaws_on';
+}
+
+export const REPLAY_PACK_MESSAGE =
+  'This public demo replays real agent runs we recorded, and we only recorded the online-store tasks (find a price, add to cart, ' +
+  'find the return policy, find support). Tasks for SaaS, blog and local-business sites need live agents: run them from our ' +
+  'laptop, or from your own copy with a TinyFish key.';
+
+/**
+ * Throws a 400 in replay mode when the request asks for tasks from a pack other than shop (there is nothing to replay).
+ * 'auto' is fine: in replay mode it always means shop.
+ * @param {string|undefined} pack  'auto', a pack id or undefined
+ * @param {string[]|undefined} tasks
+ */
+export function assertReplayPack(pack, tasks) {
+  if (!config.mock) return;
+  const wanted = tasks?.length ? tasks : pack && pack !== 'auto' ? defaultTasksFor(normalisePack(pack)) : [];
+  if (wanted.some((t) => t !== 'custom' && !SHOP_TASKS.includes(t))) throw Object.assign(new Error(REPLAY_PACK_MESSAGE), { status: 400 });
 }

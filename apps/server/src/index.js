@@ -16,6 +16,7 @@ import * as store from './store.js';
 import { logEvent } from './log.js';
 import { errorHandler } from './errors.js';
 import { isJobActive } from './reportJob.js';
+import { budgetState } from './budget.js';
 
 const { engine, stubbed: stubbedEngine } = await loadEngine();
 const { events, stubbed: stubbedEvents } = await loadEvents();
@@ -64,11 +65,12 @@ const version = (() => {
   try { return JSON.parse(readFileSync(path.join(config.repoRoot, 'package.json'), 'utf8')).version || 'dev'; } catch { return 'dev'; }
 })();
 // queue = who is using the agent slots right now (the dashboard uses it to explain "Waiting for an agent").
-app.get('/api/health', (_req, res) => res.json({
+app.get('/api/health', async (_req, res) => res.json({
   ok: true, version, mock: config.mock, demoStoreUrl: config.demoStoreUrl || null,
   features: { ...config.features },
   queue: engine.getQueueState?.() ?? null,
   activeTests: engine.activeReportIds?.().length ?? 0,
+  budget: await budgetState().catch(() => null),
 }));
 app.use('/api', safe(testsRoutes(deps)));
 app.use('/api', safe(raceRoutes(deps)));

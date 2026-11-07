@@ -4,16 +4,25 @@ import path from 'node:path';
 import { Router } from 'express';
 import { TASK_IDS } from '@agentready/engine/types';
 import { badgeForReport } from '@agentready/engine';
+import { normalisePack } from '@agentready/engine/goals';
 import { config } from '../config.js';
 import * as store from '../store.js';
-import { startReport, isJobActive } from '../reportJob.js';
+import { startReport, isJobActive, cancelDetection } from '../reportJob.js';
 import { logEvent } from '../log.js';
 import { rateLimit } from '../rateLimit.js';
-import { SAFE_ID, SCORED_TASKS, assertSafeId, httpError, parseSiteUrl, parseTasks, parseCustomTask } from '../validate.js';
-import { assertReplayable, recordedDemoReport } from '../replay.js';
+import { SAFE_ID, assertSafeId, httpError, parseSiteUrl, parseTasks, parseCustomTask, parsePack } from '../validate.js';
+import { assertReplayable, assertReplayPack, recordedDemoReport } from '../replay.js';
+import { budgetState } from '../budget.js';
 
 const RUN_ID = SAFE_ID;
-export { httpError, parseSiteUrl, parseTasks, parseCustomTask };
+
+/** `confirm` in a request body: true, false or left out. Anything else is refused so a typo is not silently ignored. */
+export function parseConfirm(value) {
+  if (value === undefined || value === null) return false;
+  if (typeof value !== 'boolean') throw httpError(400, 'confirm must be true or false.');
+  return value;
+}
+export { httpError, parseSiteUrl, parseTasks, parseCustomTask, parsePack };
 
 /**
  * A finished SiteReport posted by the CLI. The CLI prints <server>/#/test/<id> from its own id, so the id is kept
@@ -30,8 +39,10 @@ export function parseUploadedReport(body) {
   if (!Array.isArray(body.tasks) || body.tasks.some((t) => !t || !TASK_IDS.includes(t.taskId) || !Array.isArray(t.steps ?? []))) {
     throw bad(`tasks must be a list of task results (${TASK_IDS.join(', ')})`);
   }
+  if (body.pack !== undefined && !normalisePack(body.pack)) throw bad('pack must be shop, saas, content or local');
   return {
     ...body,
+    pack: normalisePack(body.pack) ?? 'shop',
     source: 'cli',
     status: 'complete',
     topFixes: Array.isArray(body.topFixes) ? body.topFixes : [],
@@ -46,6 +57,11 @@ export function parseUploadedReport(body) {
 export async function cancelRunningReport(report, { engine, events }) {
   if (report.status !== 'running') return { ok: true, cancelled: false, status: report.status };
   const result = await engine.cancelReport?.(report.id, 'user');
+  // Still working out which pack fits (waiting for the Instant Scan): no agent has started, so ending the wait is the stop.
+  if (!result?.found && cancelDetection(report.id)) {
+    logEvent('test.cancel', { id: report.id, by: 'user', runsCancelled: 0, droppedFromQueue: 0 });
+    return { ok: true, cancelled: true, status: 'cancelling' };
+  }
   // The agents already finished and only the Instant Scan is still closing: nothing is left to stop (or pay for).
   if (!result?.found && isJobActive(report.id)) return { ok: true, cancelled: false, status: 'finishing' };
   if (!result?.found) {
@@ -70,19 +86,36 @@ export default function testsRoutes({ engine, events }) {
   router.post('/tests', rateLimit('tests'), async (req, res) => {
     const url = parseSiteUrl(req.body?.url);
     assertReplayable(url);
+    const pack = parsePack(req.body?.pack);
+    const tasks = parseTasks(req.body?.tasks);
+    assertReplayPack(pack, tasks); // replay mode has recordings of the shop tasks only
     // Replay mode: our demo store opens its real recorded report (91 with flaws, 97 fixed) instead of a sample run.
     const recorded = req.body?.customTask ? null : recordedDemoReport(url);
     if (recorded) return res.status(202).json({ reportId: recorded });
-    const tasks = parseTasks(req.body?.tasks);
     const customText = parseCustomTask(req.body?.customTask);
-    const reportId = await startReport(
-      { url, customText, tasks: customText ? [...(tasks ?? SCORED_TASKS), 'custom'] : tasks },
-      { engine, events },
-    );
+    const confirm = parseConfirm(req.body?.confirm);
+    // pack: 'auto' lets the Instant Scan choose; omitted means shop (what every client before packs meant).
+    const reportId = await startReport({ url, customText, tasks, confirm, pack: pack ?? (tasks ? undefined : 'shop') }, { engine, events });
     res.status(202).json({ reportId });
   });
 
   router.get('/tests', async (_req, res) => res.json(await store.listReports()));
+
+  // What a test will probably cost before it starts (P2-8), with the limits it runs under. ?tasks=4&confirm=1
+  router.get('/estimate', async (req, res) => {
+    const n = Number(req.query.tasks ?? 4);
+    if (!Number.isInteger(n) || n < 1 || n > 5) throw httpError(400, 'tasks must be a whole number from 1 to 5.');
+    const confirm = ['1', 'true'].includes(String(req.query.confirm ?? ''));
+    res.json({ tasks: n, confirm, ...engine.estimateCost({ tasks: n, confirm }), mock: config.mock, budget: await budgetState() });
+  });
+
+  // Every finished test of one site, oldest first (P3-4): the score over time and what changed. ?url=https://shop.example
+  router.get('/sites/history', async (req, res) => {
+    let url;
+    try { url = new URL(String(req.query.url ?? '')); } catch { throw httpError(400, 'Give the site address as ?url=https://...'); }
+    if (!['http:', 'https:'].includes(url.protocol)) throw httpError(400, 'The address must start with http:// or https://.');
+    res.json(await store.siteHistory(url.href));
+  });
 
   // Agent-Ready badge for a dashboard report (README / LinkedIn). Always an SVG: an unknown or invalid id gets a grey badge.
   router.get('/badge/:file', async (req, res) => {

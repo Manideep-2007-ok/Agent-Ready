@@ -36,3 +36,5 @@
 .ar-lane-result { font-size: 0.8125rem; line-height: 1.5; overflow-wrap: anywhere; }
 .ar-lane-result strong { display: block; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 2px; }
 .ar-lane-result--bad strong { color: var(--fail); }
+.ar-lane-note { font-size: 0.8125rem; line-height: 1.4; padding: 6px 10px; border-radius: 8px; background: var(--pass-bg); color: var(--pass); }
+.ar-lane-note--warn { background: var(--warn-bg); color: var(--warn); }

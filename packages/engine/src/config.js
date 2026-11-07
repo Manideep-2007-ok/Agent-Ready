@@ -11,6 +11,9 @@ export const config = Object.freeze({
   publicBaseUrl: process.env.PUBLIC_BASE_URL || '',
   llmProvider: process.env.LLM_PROVIDER || '',
   llmApiKey: process.env.LLM_API_KEY || '',
+  // Cost limit per test in rupees (D43): the test stops when its agents have spent this much. 0 turns it off.
+  budgetPerTestRupees: Number.isFinite(Number(process.env.BUDGET_PER_TEST_RUPEES)) && process.env.BUDGET_PER_TEST_RUPEES !== ''
+    ? Math.max(0, Number(process.env.BUDGET_PER_TEST_RUPEES)) : 300,
 });
 
 /** Call before a REAL TinyFish request. Returns the key or throws a plain message (never prints the key). */

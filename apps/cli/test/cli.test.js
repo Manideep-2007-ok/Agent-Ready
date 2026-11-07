@@ -5,8 +5,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseArgs, normaliseUrl, findTunnelUrl, buildTestUrl, LOCAL_RE } from '../src/lib.js';
-import { startServer, call, waitFor, sleep, NO_ENV_FILE } from '../../server/test/helpers.js';
+import { parseArgs, normaliseUrl, findTunnelUrl, buildTestUrl, LOCAL_RE, checkPackFlags, resolveTasks, packLine } from '../src/lib.js';
+import { startServer, call, waitFor, sleep, NO_ENV_FILE, nodeOnlyPath } from '../../server/test/helpers.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const bin = path.join(root, 'apps/cli/bin/agentready.js');
@@ -31,6 +31,8 @@ function cli(args, { env = {}, signal: killWith, killAfterMs } = {}) {
 test('parseArgs: values, inline values, flags, and complaints', () => {
   const a = parseArgs(['localhost:3000', '--tasks', 'find_price,add_to_cart', '--json', '--min-score=80', '--no-tunnel', '--no-scan']);
   assert.deepEqual([a.url, a.tasks, a.json, a.minScore, a.noTunnel, a.noScan, a.errors], ['localhost:3000', ['find_price', 'add_to_cart'], true, 80, true, true, []]);
+  assert.equal(parseArgs(['x.com', '--confirm']).confirm, true);
+  assert.equal(parseArgs(['x.com']).confirm, false);
   assert.deepEqual(parseArgs([]).errors, []);
   assert.match(parseArgs(['x.com', '--bogus']).errors[0], /Unknown option: --bogus/);
   assert.match(parseArgs(['x.com', '--tasks']).errors[0], /needs a value/);
@@ -169,7 +171,7 @@ test('upload failures are explained, the test result is kept', async () => {
 });
 
 test('a site on localhost without cloudflared gets install help (exit 2)', async () => {
-  const r = await cli(['http://localhost:5500'], { env: { PATH: path.dirname(process.execPath) } });
+  const r = await cli(['http://localhost:5500'], { env: { PATH: nodeOnlyPath() } });
   assert.equal(r.code, 2);
   assert.match(r.stderr, /needs "cloudflared"/);
   assert.match(r.stderr, /brew install cloudflared/);
@@ -188,4 +190,137 @@ test('--version prints the package version; --badge writes an SVG with the score
   const bad = await cli(['https://www.nykaa.com', '--badge']);
   assert.equal(bad.code, 2);
   assert.match(bad.stderr, /--badge needs a value/);
+});
+
+// ---- task packs (D40) ----
+test('parseArgs: --pack, --task, --tasks quick and none', () => {
+  const a = parseArgs(['x.com', '--pack', 'SaaS', '--task', 'Find the refund terms', '--tasks', 'quick']);
+  assert.deepEqual([a.pack, a.task, a.tasks, a.errors], ['saas', 'Find the refund terms', ['quick'], []]);
+  assert.deepEqual(parseArgs(['x.com', '--tasks', 'none', '--task', 'x']).tasks, []);
+  assert.deepEqual(parseArgs(['x.com', '--tasks=find_docs,find_price']).tasks, ['find_docs', 'find_price']);
+  assert.equal(parseArgs(['x.com']).pack, null);
+  assert.equal(parseArgs(['x.com']).task, null);
+  assert.match(parseArgs(['x.com', '--pack']).errors[0], /needs a value/);
+  assert.match(parseArgs(['x.com', '--task']).errors[0], /needs a value/);
+});
+
+test('checkPackFlags: unknown pack, unknown task ids, task text, none and quick rules', () => {
+  const check = (argv) => checkPackFlags(parseArgs(['x.com', ...argv]));
+  assert.deepEqual(check([]).errors, []);
+  assert.deepEqual(check(['--pack', 'auto']).errors, []);
+  assert.deepEqual(check(['--pack', 'local', '--tasks', 'find_docs,find_price']).errors, [], 'ids from any pack, whatever the pack');
+  assert.match(check(['--pack', 'blog']).errors[0], /Unknown pack: blog\. Choose one of: auto, shop, saas, content, local/);
+  assert.match(check(['--tasks', 'find_docs,nope']).errors[0], /Unknown task\(s\): nope/);
+  assert.match(check(['--tasks', 'custom']).errors[0], /Unknown task/);
+  assert.match(check(['--tasks', 'none']).errors[0], /needs a task of your own/);
+  assert.deepEqual(check(['--tasks', 'none', '--task', 'find the fee']).errors, []);
+  assert.match(check(['--tasks', 'none', '--task', 'x', '--min-score', '50']).errors[0], /no score/);
+  assert.match(check(['--task', '   ']).errors[0], /needs some text/);
+  assert.match(check(['--task', 'x'.repeat(301)]).errors[0], /300 characters/);
+  assert.deepEqual(check(['--task', '\u00e9'.repeat(300)]).errors, [], '300 characters is fine');
+  assert.equal(check(['--task', '  a\u0007b  ']).customText, 'ab');
+  assert.equal(check(['--tasks', 'quick']).quick, true);
+  assert.match(check(['--tasks', 'quick,find_price']).errors[0], /cannot be mixed|Unknown task/);
+});
+
+test('resolveTasks and packLine', () => {
+  assert.deepEqual(resolveTasks(null, 'saas'), ['find_pricing_plans', 'reach_signup', 'contact_sales', 'find_docs']);
+  assert.deepEqual(resolveTasks(['quick'], 'local'), ['find_hours', 'reach_booking']);
+  assert.deepEqual(resolveTasks(['find_price', 'find_price', 'find_docs'], 'content'), ['find_price', 'find_docs']);
+  assert.deepEqual(resolveTasks([], 'shop'), []);
+  assert.equal(packLine({ how: 'detected', pack: 'saas' }), 'Detected: SaaS site \u2014 using the saas pack (override with --pack)');
+  assert.match(packLine({ how: 'undetected', pack: 'shop' }), /Could not tell what kind of site this is.*using the shop pack/);
+  assert.match(packLine({ how: 'no-scan', pack: 'shop' }), /Instant Scan is off.*using the shop pack \(choose one with --pack\)/);
+  assert.equal(packLine({ how: 'detected', pack: 'local', usingPack: false }), 'Detected: Local business (override with --pack)');
+});
+
+test('usage errors for packs exit 2 with a plain message; --help lists the packs and their tasks', async () => {
+  for (const [args, re] of [
+    [['nykaa.com', '--pack', 'banking'], /Unknown pack: banking/],
+    [['nykaa.com', '--tasks', 'none'], /needs a task of your own/],
+    [['nykaa.com', '--task', 'x'.repeat(301)], /300 characters/],
+    [['nykaa.com', '--tasks', 'none', '--task', 'x', '--min-score', '10'], /no score/],
+    [['nykaa.com', '--tasks', 'find_docs,hack'], /Unknown task\(s\): hack/],
+  ]) {
+    const r = await cli(args);
+    assert.equal(r.code, 2, args.join(' '));
+    assert.match(r.stderr, re);
+  }
+  const help = await cli(['--help']);
+  assert.equal(help.code, 0);
+  for (const re of [/--pack/, /--task TEXT/, /quick/, /none/, /saas\s+find_pricing_plans, reach_signup, contact_sales, find_docs/, /local\s+reach_booking/, /content\s+search_topic/, /shop\s+find_returns/]) assert.match(help.stderr, re);
+});
+
+test('--pack shop runs the four shop tasks; the report says so and the terminal prints "Tested as"', async () => {
+  const r = await cli(['https://www.nykaa.com', '--no-tunnel', '--no-scan', '--pack', 'shop', '--tasks', 'find_price']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout, /Tested as: Online store\n/);
+  const j = await cli(['https://www.nykaa.com', '--no-tunnel', '--no-scan', '--json', '--pack', 'shop']);
+  const report = JSON.parse(j.stdout);
+  assert.equal(report.pack, 'shop');
+  assert.deepEqual(report.tasks.map((t) => t.taskId).sort(), ['add_to_cart', 'find_contact', 'find_price', 'find_returns']);
+});
+
+test('auto: the Instant Scan picks the pack and the terminal says so; the pack tasks are listed (replay: no recordings, so not run)', async () => {
+  const r = await cli(['https://saas.example.com', '--no-tunnel', '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stderr, /Detected: SaaS site \u2014 using the saas pack \(override with --pack\)/);
+  const report = JSON.parse(r.stdout);
+  assert.equal(report.pack, 'saas');
+  assert.equal(report.packDetected, true);
+  assert.deepEqual(report.tasks.map((t) => t.taskId).sort(), ['contact_sales', 'find_docs', 'find_pricing_plans', 'reach_signup']);
+  assert.ok(report.tasks.every((t) => /no recording/.test(t.replayNote)));
+  assert.ok(!report.scanFindings.some((f) => ['price-in-image', 'no-product-schema'].includes(f.type)), 'a SaaS site is not flagged for a missing product price');
+  for (const [host, pack] of [['blog.example.com', 'content'], ['clinic.example.com', 'local'], ['www.nykaa.com', 'shop']]) {
+    const x = await cli([`https://${host}`, '--no-tunnel', '--json', '--tasks', 'quick']);
+    assert.equal(JSON.parse(x.stdout).pack, pack, host);
+  }
+});
+
+test('auto: a page with no signals in replay mode stays a shop test; --no-scan without --pack says shop; explicit task ids name the pack', async () => {
+  const a = await cli(['https://example.com', '--no-tunnel', '--json', '--tasks', 'find_price']);
+  assert.equal(JSON.parse(a.stdout).pack, 'shop');
+  const none = await cli(['https://example.com', '--no-tunnel', '--no-scan', '--json', '--tasks', 'quick']);
+  assert.match(none.stderr, /Instant Scan is off, so the kind of site was not detected \u2014 using the shop pack/);
+  assert.equal(JSON.parse(none.stdout).pack, 'shop');
+  assert.deepEqual(JSON.parse(none.stdout).tasks.map((t) => t.taskId).sort(), ['add_to_cart', 'find_price']);
+  const hours = await cli(['https://clinic.example.com', '--no-tunnel', '--json', '--tasks', 'find_hours,reach_booking']);
+  const rep = JSON.parse(hours.stdout);
+  assert.equal(rep.pack, 'local');
+  assert.doesNotMatch(hours.stderr, /Detected:/, 'task ids name the pack, no waiting for the scan');
+  const flag = await cli(['https://clinic.example.com', '--no-tunnel', '--json', '--no-scan', '--pack', 'content', '--tasks', 'read_article']);
+  assert.equal(JSON.parse(flag.stdout).pack, 'content', '--pack wins');
+});
+
+test('--tasks quick runs the two key tasks of the pack', async () => {
+  const r = await cli(['https://www.nykaa.com', '--no-tunnel', '--no-scan', '--json', '--tasks', 'quick']);
+  assert.deepEqual(JSON.parse(r.stdout).tasks.map((t) => t.taskId).sort(), ['add_to_cart', 'find_price']);
+});
+
+test('--task adds a custom task that is scored separately; --tasks none runs only that task', async () => {
+  const both = await cli(['https://www.nykaa.com', '--no-tunnel', '--no-scan', '--json', '--tasks', 'find_price', '--task', 'Find the delivery fee']);
+  const rep = JSON.parse(both.stdout);
+  assert.deepEqual(rep.tasks.map((t) => t.taskId).sort(), ['custom', 'find_price']);
+  assert.equal(rep.customText, 'Find the delivery fee');
+  assert.equal(rep.score, JSON.parse((await cli(['https://www.nykaa.com', '--no-tunnel', '--no-scan', '--json', '--tasks', 'find_price'])).stdout).score, 'the custom task is outside the 100');
+  assert.match(both.stderr, /\[Your task\]/);
+  const text = await cli(['https://www.nykaa.com', '--no-tunnel', '--no-scan', '--tasks', 'find_price', '--task', 'Find the delivery fee']);
+  assert.match(text.stdout, /Your task: "Find the delivery fee"/);
+
+  const only = await cli(['https://www.nykaa.com', '--no-tunnel', '--no-scan', '--tasks', 'none', '--task', 'Find the delivery fee']);
+  assert.equal(only.code, 0, only.stderr);
+  assert.match(only.stdout, /AgentReady score: none \(only your own task ran/);
+  assert.match(only.stdout, /with 1 AI agent task/);
+  const j = JSON.parse((await cli(['https://www.nykaa.com', '--no-tunnel', '--json', '--tasks', 'none', '--task', 'Find the delivery fee'])).stdout);
+  assert.deepEqual(j.tasks.map((t) => t.taskId), ['custom']);
+  assert.equal(j.pack, 'shop', 'the scan of a recorded shop says shop');
+});
+
+test('--tasks none with a scan: the pack is detected only to choose the scan findings', async () => {
+  const r = await cli(['https://blog.example.com', '--no-tunnel', '--json', '--tasks', 'none', '--task', 'Find the author page']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stderr, /Detected: Blog or news site \(override with --pack\)/);
+  const report = JSON.parse(r.stdout);
+  assert.equal(report.pack, 'content');
+  assert.ok(!report.scanFindings.some((f) => f.type === 'price-in-image'));
 });

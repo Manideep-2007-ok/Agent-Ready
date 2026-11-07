@@ -20,6 +20,7 @@ export function runRecord({ runId, status = 'COMPLETED', steps = 5, result = { s
  *   runSse?: (call:{index:number, body:any, runId:string}) => {events?:object[], end?:'complete'|'hang'|'drop'|'http', status?:number, run?:object},
  *   cancelStatus?: number,
  *   getRunStatuses?: (runId:string, n:number) => object|number,
+ *   pages?: Record<string,string>,
  * }} handlers
  */
 export function installFakeTinyFish(handlers = {}) {
@@ -29,6 +30,14 @@ export function installFakeTinyFish(handlers = {}) {
 
   globalThis.fetch = async (input, init = {}) => {
     const url = new URL(typeof input === 'string' ? input : input.url);
+    // TinyFish Fetch: `handlers.pages` maps a URL to its page text (a missing URL comes back as an error, like the real API).
+    if (url.host === 'api.fetch.tinyfish.ai' && handlers.pages) {
+      const { urls } = JSON.parse(init.body);
+      calls.fetch = [...(calls.fetch ?? []), ...urls];
+      const results = urls.filter((u) => handlers.pages[u] != null).map((u) => ({ url: u, text: handlers.pages[u] }));
+      const errors = urls.filter((u) => handlers.pages[u] == null).map((u) => ({ url: u, error: 'HTTP 404' }));
+      return new Response(JSON.stringify({ results, errors }), { status: 200 });
+    }
     if (url.host !== 'agent.tinyfish.ai') {
       calls.blocked.push(url.href);
       throw new Error(`fake network: unexpected call to ${url.href}`);

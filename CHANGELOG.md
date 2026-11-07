@@ -8,6 +8,14 @@ Notable changes to AgentReady. Dates are in 2026.
 - MIT license, contributor guide, security policy, issue and pull request templates.
 - `npm test` runs on every push and pull request (replay mode, no credits).
 - `.gitattributes` keeps line endings consistent across Windows, macOS and Linux.
+- **Task packs:** shop, SaaS, content and local sites, each with four tasks; the Instant Scan can pick the pack.
+- **Confirm results:** an opt-in second run per task (a third when they disagree); the majority counts and a disagreement is flagged.
+- **Claim checks:** the page an agent names is re-read to check the price, return days or contact details it reported.
+- **New findings:** no feedback after Add to cart, price read from an image, inconsistent results, unconfirmed claims, robots.txt blocking AI agents, no cart link.
+- **Spending limits:** a cost estimate before every test, a per-test limit (default ₹300) and an optional daily limit.
+- **Instant Scan v2:** robots.txt rules for AI agents, llms.txt, a visible cart link.
+- **Report page:** Detailed Fix Report button, copy link, Save as PDF, score history for the site with what changed, and a step-by-step timeline with replay.
+- **Demo store v2:** two flaws that change the outcome (`qtyTwo`, `slowCart`, or `?flaws=all`).
 
 ## 0.2.0 (2 Nov)
 

@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { chromium } = require('playwright');
+const { chromium } = (() => { try { return require('playwright'); } catch { return require('playwright-core'); } })();
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
@@ -21,7 +21,7 @@ const server = http.createServer((req, res) => {
 });
 await new Promise((r) => server.listen(0, r));
 const base = `http://127.0.0.1:${server.address().port}`;
-const browser = await chromium.launch();
+const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const ctx = await browser.newContext({ viewport: { width: 1000, height: 700 } });
 const page = await ctx.newPage();
 const body = () => page.evaluate(() => document.body.innerText);
@@ -84,6 +84,30 @@ assert.match(await body(), /₹499/); ok('?flaws=off reset persisted');
 await page.goto(base + '/index.html?hiddenReturns=on');
 assert.equal(await page.locator('footer a', { hasText: 'Returns' }).count(), 0);
 assert.match(await body(), /₹499/); ok('individual flag works');
+
+// v2: ?flaws=on keeps the four classic flaws; ?flaws=all adds the outcome-changing ones
+await page.goto(base + '/product.html?id=1&flaws=on');
+assert.equal(await page.locator('#qty').count(), 0); ok('flaws=on: no quantity box (classic four only)');
+await page.goto(base + '/product.html?id=1&flaws=off');
+await page.evaluate(() => localStorage.removeItem('chai_cart'));
+await page.goto(base + '/product.html?id=1&qtyTwo=on');
+assert.equal(await page.locator('#qty').inputValue(), '2'); ok('qtyTwo: the quantity box starts at 2');
+await page.locator('.add-btn').click();
+assert.equal(await page.evaluate(() => Cart.count()), 2); ok('qtyTwo: one click adds two units');
+await page.goto(base + '/product.html?id=1&flaws=off');
+await page.evaluate(() => localStorage.removeItem('chai_cart'));
+await page.goto(base + '/product.html?id=1&slowCart=on');
+await page.locator('.add-btn').click();
+await page.waitForTimeout(500);
+assert.equal(await page.evaluate(() => Cart.count()), 0);
+assert.equal(await page.locator('#added').textContent(), ''); ok('slowCart: nothing added and no message right after the click');
+await page.waitForTimeout(4000);
+assert.equal(await page.evaluate(() => Cart.count()), 1); ok('slowCart: added after 4 s');
+await page.goto(base + '/product.html?id=1&flaws=all');
+assert.equal(await page.locator('#qty').count(), 1);
+assert.equal(await page.locator('#sale-popup').count(), 1); ok('flaws=all: all six flaws');
+await page.goto(base + '/index.html?flaws=off');
+assert.equal(await page.evaluate(() => JSON.stringify(window.Flaws)), JSON.stringify({ popup: false, priceImg: false, iconCart: false, hiddenReturns: false, qtyTwo: false, slowCart: false })); ok('flaws=off clears v2 too');
 
 await browser.close();
 server.close();

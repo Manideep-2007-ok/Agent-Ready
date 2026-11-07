@@ -8,7 +8,7 @@ buildWeb();
 
 // fast: a full replay test takes ~5 s.  slow: lanes stay busy long enough to click Stop in the middle.
 const [fast, slow] = await Promise.all([startServer({ port: 4230, speed: 30 }), startServer({ port: 4231, speed: 3 })]);
-const browser = await chromium.launch();
+const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const t = harness();
 const problemsAll = [];
 let shotNo = 0;

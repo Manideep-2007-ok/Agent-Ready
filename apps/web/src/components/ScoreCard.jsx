@@ -60,6 +60,12 @@ export default function ScoreCard({ report, onJump }) {
             {viaWorkaround > 0 && ` (${viaWorkaround} more only with a workaround)`} · Agent cost ≈ ₹{report.costRupees}
             {report.testedAt && <> · Tested {new Date(report.testedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</>}
           </div>
+          {report.confirm && (
+            <div className="muted">
+              Confirmed: every task ran at least twice and the majority counts
+              {scored.some((t) => t.flaky) && ` (${scored.filter((t) => t.flaky).length} gave different results on different runs)`}
+            </div>
+          )}
           {custom && (
             <div className="muted">
               {TASK_LABELS.custom}: {custom.replayNote ? 'not run in replay mode (live agents only)' : custom.status === 'passed' ? 'passed' : 'not done'} (not part of the 100)

@@ -326,7 +326,7 @@ button.secondary:hover:not(:disabled) { background: var(--line-strong); }
 .hero { grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); }
 .hero-globe { position: relative; width: 100%; aspect-ratio: 1; max-width: 520px; justify-self: center; }
 .hero-shadow { font-style: italic; color: var(--text); }
-@media (max-width: 900px) { .hero-globe { max-width: 340px; } }
+@media (max-width: 900px) { .hero { grid-template-columns: 1fr; } .hero-globe { max-width: 340px; } }
 .hero-facts { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 .hero-facts .fact { background: var(--card); box-shadow: var(--shadow); }
 .hero-facts .fact:hover { box-shadow: var(--shadow-lift); }
@@ -406,3 +406,56 @@ button.secondary:hover:not(:disabled) { background: var(--line-strong); }
   .lb-score, .lb-wall, .lb-open { grid-column: 2; }
 }
 @media (max-width: 480px) { .tab { padding: 6px 11px; } .tabs { max-width: 100%; } }
+
+/* ---- Confirm results, cost estimate (Phase 2) ---- */
+.confirm-toggle { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9375rem; line-height: 1.45; padding: 0 4px; cursor: pointer; }
+.confirm-toggle input { margin-top: 3px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.cost-line { margin: 0; padding: 0 4px; font-size: 0.875rem; }
+.error-text { color: var(--fail); margin: 6px 0 0; }
+
+/* ---- Report actions, history, step timeline (Phase 3) ---- */
+.report-actions { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+.report-actions h2 { margin: 0 0 4px; }
+.report-actions p { margin: 0; max-width: 60ch; }
+.report-actions-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.history-row { display: grid; grid-template-columns: minmax(0, 340px) 1fr; gap: 20px; align-items: start; }
+.history-row h3 { font-size: 0.9375rem; margin: 10px 0 4px; }
+.history-spark { width: 100%; height: auto; background: var(--soft); border-radius: 12px; }
+.history-line { fill: none; stroke: var(--accent); stroke-width: 2; }
+.history-ready { stroke: var(--muted); stroke-dasharray: 4 4; stroke-width: 1; opacity: 0.6; }
+.history-dot { fill: var(--card); stroke: var(--accent); stroke-width: 2; }
+.history-dot.is-current { fill: var(--accent); }
+.history-changes { margin: 0; padding-left: 18px; line-height: 1.6; }
+
+.timeline-task { border-top: 1px solid var(--line, var(--wait-bg)); padding-top: 14px; margin-top: 14px; }
+.timeline-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.timeline-head h3 { margin: 0; font-size: 1rem; }
+.timeline-head button { margin-left: auto; }
+.timeline-stage { margin: 12px 0 0; }
+.timeline-stage-shot { display: block; width: 100%; padding: 0; background: var(--soft); border-radius: 12px; overflow: hidden; aspect-ratio: 16 / 10; }
+.timeline-stage-shot img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.timeline-stage figcaption { font-size: 0.875rem; margin-top: 6px; }
+.timeline-steps { list-style: none; padding: 0; margin: 12px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.timeline-steps button { display: grid; gap: 6px; width: 100%; padding: 6px; text-align: left; background: var(--soft); color: var(--text); border-radius: 10px; border: 2px solid transparent; font-weight: 400; }
+.timeline-steps button:hover:not(:disabled) { background: var(--wait-bg); }
+.timeline-steps img, .timeline-noshot { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 6px; background: var(--wait-bg); display: grid; place-items: center; }
+.timeline-label { font-size: 0.75rem; line-height: 1.35; }
+.timeline-steps li.is-stuck button { border-color: var(--fail); }
+.timeline-steps li.is-current button { border-color: var(--accent); }
+.timeline-stuck { color: var(--fail); }
+
+@media (max-width: 720px) {
+  .history-row { grid-template-columns: 1fr; }
+  .timeline-head button { margin-left: 0; }
+}
+
+/* ---- Save as PDF (P3-3): the report only, on white, nothing interactive ---- */
+@media print {
+  .topbar, .replay-banner, .test-form, .no-print, .ar-lane-view iframe, .stop-test, .celebrate-canvas, .celebrate-burst, .pointer-cursor { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .card, .ar-lane { box-shadow: none !important; border: 1px solid #ccc; break-inside: avoid; }
+  .finding, .timeline-task { break-inside: avoid; }
+  .timeline-stage { display: none; }
+  a { color: inherit; text-decoration: none; }
+}

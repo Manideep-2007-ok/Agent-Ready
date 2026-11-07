@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import cron from 'node-cron';
-import { runSiteTest, runTaskWithBotWall, scoreReport, createRunContext, TASK_LABELS, DEFAULT_TASK_ORDER } from '@agentready/engine';
+import { runSiteTest, runTaskWithBotWall, scoreReport, createRunContext, TASK_LABELS, DEFAULT_TASK_ORDER, normalisePack, packForTasks } from '@agentready/engine';
 import { logEvent, safeUrl } from './log.js';
 import { sendAlert } from './alerts.js';
 
@@ -135,7 +135,8 @@ export function formatAlert({ watch, lastGood, current, task }) {
   else if (passed(task)) now = `it takes ${task.numSteps} steps (was ${good?.numSteps ?? '?'})`;
   now = String(now).trim().replace(/[.\s]+$/, ''); // the message adds its own full stop
   if (now.length > 220) now = now.slice(0, 217).trimEnd() + '…'; // keep chat alerts short (Discord max 2000)
-  return `🔴 AgentReady: AI shoppers can't ${label} on ${hostOf(watch.url)} since ${hhmm(current.testedAt)}. ` +
+  const who = (normalisePack(watch.pack) ?? packForTasks(watch.tasks)) === 'shop' ? 'AI shoppers' : 'AI agents'; // a clinic has visitors, not shoppers
+  return `🔴 AgentReady: ${who} can't ${label} on ${hostOf(watch.url)} since ${hhmm(current.testedAt)}. ` +
     `Last good: ${lastGoodText}. Now: ${now}. Report: ${dashLink(current.id)}`;
 }
 
@@ -156,11 +157,11 @@ export async function getHistory(id) {
   return reports.filter(Boolean);
 }
 
-export async function createWatch({ url, everyMinutes = 20, tasks = DEFAULT_TASK_ORDER }) {
+export async function createWatch({ url, everyMinutes = 20, tasks = DEFAULT_TASK_ORDER, pack }) {
   /** @type {Watch} */
   const watch = {
     id: 'w_' + crypto.randomBytes(4).toString('hex'),
-    url, tasks, everyMinutes, enabled: true,
+    url, tasks, pack: normalisePack(pack) ?? packForTasks(tasks), everyMinutes, enabled: true,
     createdAt: new Date().toISOString(), lastGoodReportId: null, failing: false,
   };
   await (await getStore()).saveWatch(watch);
@@ -258,7 +259,7 @@ export async function runCheck(watch, { reportId } = {}) {
   try {
     const store = await getStore();
     // Save a "running" report first so the dashboard can open it (and its live lanes) during the check.
-    const live = { id, url: watch.url, source: 'watch', testedAt: new Date().toISOString(), pack: 'shopping', status: 'running',
+    const live = { id, url: watch.url, source: 'watch', testedAt: new Date().toISOString(), pack: normalisePack(watch.pack) ?? packForTasks(watch.tasks), status: 'running',
       score: 0, botWall: 'none', costRupees: 0, framework: 'unknown', instantScan: null, tasks: [], topFixes: [] };
     await store.saveReport(live);
     // Forward engine events to dashboard subscribers of this report (same LiveEvent shape as normal tests).
@@ -267,7 +268,7 @@ export async function runCheck(watch, { reportId } = {}) {
       else if (e.kind === 'step') publish({ type: 'step', reportId: id, taskId: e.taskId, step: e.step });
       else if (e.kind === 'streaming-url') publish({ type: 'streaming-url', reportId: id, taskId: e.taskId, url: e.url });
     };
-    const report = await runSiteTest({ url: watch.url, tasks: watch.tasks, source: 'watch', id, ctx }, onEvent);
+    const report = await runSiteTest({ url: watch.url, tasks: watch.tasks, pack: normalisePack(watch.pack) ?? packForTasks(watch.tasks), source: 'watch', id, ctx }, onEvent);
     publish({ type: 'report-complete', reportId: id, report });
     await store.saveReport(report);
     if (report.status === 'cancelled') {

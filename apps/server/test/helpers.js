@@ -10,6 +10,13 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 // so a laptop with a .env runs the same tests as CI. A test can still pass its own AGENTREADY_ENV_FILE.
 export const NO_ENV_FILE = path.join(os.tmpdir(), 'ar-no-such-env-file');
 
+/** A PATH holding only `node`, so tools installed next to it (cloudflared in /usr/bin) stay out of reach. */
+export function nodeOnlyPath() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ar-node-only-'));
+  fs.symlinkSync(process.execPath, path.join(dir, 'node'));
+  return dir;
+}
+
 /**
  * @param {{port:number, env?:Record<string,string>, dataDir?:string}} opts
  * @returns {Promise<{base:string, dataDir:string, stop:()=>Promise<void>, kill:()=>Promise<void>, pid:number, logs:()=>string}>}

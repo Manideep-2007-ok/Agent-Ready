@@ -1,15 +1,20 @@
 // Switchable accessibility flaws for the AgentReady demo. Loaded first on every page.
-// ?flaws=on|off sets all; ?popup=on&priceImg=on&iconCart=on&hiddenReturns=on set one each.
+// ?flaws=on|off sets the four classic flaws; ?flaws=all also turns on the two that change the outcome (v2):
+//   qtyTwo:    the quantity box on the product page starts at 2, so the cart total is for two units
+//   slowCart:  Add to cart takes 4 s, shows no message and leaves the cart count alone until then
+// ?popup=on&priceImg=on&iconCart=on&hiddenReturns=on&qtyTwo=on&slowCart=on set one each.
 // Saved to localStorage; default is everything off.
 (function () {
-  const NAMES = ['popup', 'priceImg', 'iconCart', 'hiddenReturns'];
+  const CLASSIC = ['popup', 'priceImg', 'iconCart', 'hiddenReturns'];
+  const NAMES = CLASSIC.concat(['qtyTwo', 'slowCart']);
   const KEY = 'agentready_flaws';
-  let state = { popup: false, priceImg: false, iconCart: false, hiddenReturns: false };
+  let state = { popup: false, priceImg: false, iconCart: false, hiddenReturns: false, qtyTwo: false, slowCart: false };
   try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
 
   const q = new URLSearchParams(location.search);
   const all = q.get('flaws');
-  if (all === 'on' || all === 'off') NAMES.forEach((n) => (state[n] = all === 'on'));
+  if (all === 'on' || all === 'off') NAMES.forEach((n) => (state[n] = all === 'on' && CLASSIC.includes(n)));
+  if (all === 'all') NAMES.forEach((n) => (state[n] = true));
   NAMES.forEach((n) => { const v = q.get(n); if (v === 'on' || v === 'off') state[n] = v === 'on'; });
   try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
 

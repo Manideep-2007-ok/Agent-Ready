@@ -72,3 +72,35 @@ test('command line: writes comment + summary files and GITHUB_OUTPUT lines', () 
   assert.equal(missing.status, 0);
   assert.match(missing.stdout, /no score/);
 });
+
+test('the comment says which kind of site was tested (older reports say "shopping" = online store)', () => {
+  const r = demo('rep_demo_flaws_on.json');
+  assert.match(formatReport(r).markdown, /Tested as: Online store\n/, `pack in the recorded report: ${r.pack}`);
+  const saas = {
+    ...r, pack: 'saas', packDetected: true, score: 75,
+    tasks: [{ taskId: 'find_pricing_plans', status: 'passed', numSteps: 4, seconds: 40 }, { taskId: 'reach_signup', status: 'failed', numSteps: 9, seconds: 90 },
+      { taskId: 'custom', status: 'passed', numSteps: 3, seconds: 30 }],
+    topFixes: [{ type: 'signup-not-found', severity: 'high', text: 'The sign-up or free-trial form could not be reached.', fix: 'Label the main call to action.', pointsIfFixed: 25 }],
+  };
+  const { markdown } = formatReport(saas, { target: 'https://app.example.com' });
+  assert.match(markdown, /Tested as: SaaS site \(detected automatically\)/);
+  assert.match(markdown, /\| Find the pricing plans \| passed \|/);
+  assert.match(markdown, /\| Reach the sign-up form \| failed \|/);
+  assert.match(markdown, /\| Your own task \(not in the score\) \| passed \|/);
+  assert.match(markdown, /\(2 tasks, score scaled to 100\)/, 'the custom task is not counted');
+  assert.match(markdown, /signup-not-found/);
+  assert.ok(!markdown.includes('undefined'));
+  assert.match(formatReport({ ...saas, pack: 'local', packDetected: false }).markdown, /Tested as: Local business\n/);
+});
+
+test('action.yml has pack (default auto) and task inputs, passes them as arguments and not through the shell text', () => {
+  const yml = fs.readFileSync(path.join(root, 'action.yml'), 'utf8');
+  assert.match(yml, /\n  pack:\n(?:.*\n)*?    default: auto/);
+  assert.match(yml, /\n  task:\n/);
+  assert.match(yml, /PACK: \$\{\{ inputs\.pack \}\}/);
+  assert.match(yml, /TASK_TEXT: \$\{\{ inputs\.task \}\}/);
+  assert.match(yml, /--pack "\$PACK"/);
+  assert.match(yml, /extra\+=\(--task "\$TASK_TEXT"\)/);
+  assert.match(yml, /\$\{extra\[@\]\+"\$\{extra\[@\]\}"\}/, 'an empty list must not trip set -u on older bash');
+  assert.doesNotMatch(yml, /\$\{\{ inputs\.task \}\}.*node/, 'the task text never sits inside the command line');
+});
